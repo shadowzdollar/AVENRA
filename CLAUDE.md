@@ -39,5 +39,5 @@ Read before working in this repository.
 
 ## Commands
 
-Defined in the root `Makefile` once Phase 1 step 2 lands
-(`make setup | dev | test | lint | check`).
+Use the root `Makefile` (`make help`). Local ports: PostgreSQL 15432,
+Redis 16379, S3 18333. Maven needs `JAVA_HOME` pointing at JDK 25.
