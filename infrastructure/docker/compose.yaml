@@ -1,0 +1,84 @@
+# Local development infrastructure. Not used for any shared environment.
+# Run through the root Makefile (`make infra-up`), which supplies ../../.env.
+# Ports bind to 127.0.0.1 only.
+
+name: avenra
+
+services:
+  postgres:
+    image: postgres:18.6
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?set in .env}
+      AVENRA_DB_NAME: ${POSTGRES_DB:?set in .env}
+      AVENRA_DB_OWNER_USER: ${AVENRA_DB_OWNER_USER:?set in .env}
+      AVENRA_DB_OWNER_PASSWORD: ${AVENRA_DB_OWNER_PASSWORD:?set in .env}
+      AVENRA_DB_APP_USER: ${AVENRA_DB_APP_USER:?set in .env}
+      AVENRA_DB_APP_PASSWORD: ${AVENRA_DB_APP_PASSWORD:?set in .env}
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-15432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:8.10.2
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD:?set in .env}
+      - --appendonly
+      - "no"
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-16379}:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.48
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?set in .env}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?set in .env}
+    # Credentials are written to a config file at start so they never live in
+    # the repository.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        printf '{"identities":[{"name":"avenra","credentials":[{"accessKey":"%s","secretKey":"%s"}],"actions":["Admin","Read","Write","List","Tagging"]}]}' \
+          "$$S3_ACCESS_KEY" "$$S3_SECRET_KEY" > /tmp/s3.json
+        exec weed server -dir=/data -s3 -s3.port=8333 -s3.config=/tmp/s3.json -ip.bind=0.0.0.0
+    ports:
+      - "127.0.0.1:${S3_PORT:-18333}:8333"
+    volumes:
+      - seaweedfs-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status && wget -q -S -O /dev/null http://127.0.0.1:8333/ 2>&1 | grep -q 'HTTP/'"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  seaweedfs-init:
+    image: chrislusf/seaweedfs:4.48
+    depends_on:
+      seaweedfs:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - echo "s3.bucket.create -name ${S3_BUCKET:?set in .env}" | weed shell -master=seaweedfs:9333
+    restart: "no"
+
+volumes:
+  postgres-data:
+  seaweedfs-data:
