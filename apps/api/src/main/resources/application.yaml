@@ -1,5 +1,8 @@
 # Configuration is supplied by the environment; nothing environment-specific
 # is hard-coded here (Guidelines §91). A missing required value stops startup.
+#
+# Exactly one environment profile must be active: local, development, staging
+# or production. It sets avenra.environment, which is required.
 spring:
   application:
     name: avenra-api
@@ -38,5 +41,53 @@ spring:
         jdbc:
           time_zone: UTC
 
+avenra:
+  web:
+    # Comma-separated list in environment variables: AVENRA_WEB_ALLOWED_ORIGINS.
+    allowed-origins: []
+    max-request-body-size: 1MB
+
 server:
-  port: 8080
+  port: ${PORT:8080}
+  max-http-request-header-size: 16KB
+  tomcat:
+    connection-timeout: 20s
+    max-http-form-post-size: 1MB
+    max-swallow-size: 2MB
+  # Errors never expose internals (Guidelines §34).
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    include-exception: false
+
+# Health: /health/liveness and /health/readiness (Guidelines §94, ADR-011).
+management:
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      show-components: never
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
+
+# Structured JSON logs (Guidelines §62). The local profile switches to plain text.
+logging:
+  structured:
+    format:
+      console: ecs
+    ecs:
+      service:
+        name: avenra-api
+        # Filled in at build time from the Maven project version.
+        version: "@project.version@"
+        environment: ${avenra.environment}

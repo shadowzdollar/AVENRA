@@ -2,6 +2,7 @@ package com.avenra;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
 import org.springframework.modulith.Modulithic;
 
 /**
@@ -11,7 +12,8 @@ import org.springframework.modulith.Modulithic;
  * top-level package is its public API; its sub-packages are internal and may not be used by other
  * modules. This is verified by {@code com.avenra.architecture.ModularityTest}.
  */
-@SpringBootApplication
+// The fallback in-memory user is excluded: it prints a generated password to the log (ADR-011).
+@SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
 @Modulithic(systemName = "Avenra", sharedModules = "platform")
 public class AvenraApplication {
 

@@ -16,9 +16,9 @@ public final class PostgresTestDatabase {
 
     public static final String DATABASE = "avenra";
     public static final String OWNER_USER = "avenra_owner";
-    public static final String OWNER_PASSWORD = "test-owner";
+    public static final String OWNER_PASSWORD = "it-owner-K4mZ8pQw";
     public static final String APP_USER = "avenra_app";
-    public static final String APP_PASSWORD = "test-app";
+    public static final String APP_PASSWORD = "it-app-7Q2xV9rT";
 
     private static final Path ROLE_SCRIPT = Path.of("../../infrastructure/docker/postgres/init/01-roles.sh");
 

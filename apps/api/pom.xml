@@ -47,6 +47,21 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
+        <!-- HTTP security baseline: headers, CORS, deny by default (ADR-011). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <!-- Liveness and readiness health endpoints (Guidelines §94). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!-- Bean Validation at trust boundaries (Guidelines §64). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
         <!-- Enforces module boundaries (ADR-001, Guidelines §14). -->
         <dependency>
             <groupId>org.springframework.modulith</groupId>
@@ -198,6 +213,9 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
                     <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
+                    <systemPropertyVariables>
+                        <avenra.version>${project.version}</avenra.version>
+                    </systemPropertyVariables>
                 </configuration>
                 <executions>
                     <execution>

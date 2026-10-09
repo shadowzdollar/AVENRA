@@ -25,3 +25,4 @@ Statuses: `Proposed` → `Accepted` → (`Superseded by ADR-NNN` | `Deprecated`)
 | [008](ADR-008-contract-first-openapi.md) | Contract-first OpenAPI | Accepted |
 | [009](ADR-009-monorepo-tooling.md) | Monorepo tooling | Accepted |
 | [010](ADR-010-trunk-based-branching.md) | Trunk-based branching | Accepted |
+| [011](ADR-011-web-security-baseline.md) | Web security baseline before authentication | Accepted |

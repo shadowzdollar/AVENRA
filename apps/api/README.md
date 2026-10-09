@@ -16,6 +16,26 @@ make api-run      # run locally on :8080
 Or inside `apps/api`, run `./mvnw <goal>`. The build refuses to run unless
 `JAVA_HOME` is JDK 25 and Maven comes from the wrapper.
 
+## Configuration
+
+All environment-specific values come from environment variables (see the
+root `.env.example`). Exactly one profile must be active through
+`SPRING_PROFILES_ACTIVE`: `local`, `development`, `staging` or `production`.
+The app refuses to start with missing or unsafe configuration.
+
+| Setting | Purpose |
+|---|---|
+| `AVENRA_DB_URL`, `AVENRA_DB_APP_*`, `AVENRA_DB_OWNER_*` | Database URL; runtime role; migration role |
+| `AVENRA_WEB_ALLOWED_ORIGINS` | Comma-separated CORS origins (no wildcards) |
+| `AVENRA_WEB_MAX_REQUEST_BODY_SIZE` | Request body limit (default `1MB`) |
+
+## HTTP baseline (ADR-011)
+
+- Deny by default. Public endpoints: `GET /health/liveness`, `GET /health/readiness`.
+- Every response has an `X-Request-Id` header. Errors are always
+  `{"code","message","requestId"}`, plus `details` for validation errors.
+- Logs are ECS JSON (plain text under the `local` profile) and include the request id.
+
 ## Module structure
 
 Every direct sub-package of `com.avenra` is an **application module**:

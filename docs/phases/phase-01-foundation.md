@@ -39,11 +39,11 @@ later phase builds on it rather than retrofitting it.
 | 1.5 | Module boundary rules enforced by tests that fail the build on violation | `ModularityTest`, `ArchitectureTest`; `ArchitectureRulesSelfTest` proves each rule fails on broken fixtures | ☑ |
 | 1.6 | Flyway migrations run on startup in local and in tests; app connects with a non-owner role | `DatabaseRolesIT` (7 tests: non-privileged role, schema changes denied with SQLSTATE 42501, history table hidden, UTC); `make api-run` applied V1 to local DB | ☑ |
 | 1.7 | Integration tests run against real PostgreSQL via Testcontainers | Local: 8 ITs pass on postgres:18.6 with the real role script. CI log pending (step 12) | ◐ |
-| 1.8 | Typed, environment-specific configuration (local/development/staging/production profiles); app fails fast on missing required config | Unit + startup test | ☐ |
-| 1.9 | Structured JSON logs with request id, trace id; sensitive fields never logged | Test asserting log output and redaction | ☐ |
-| 1.10 | Every response carries a request id; errors use the structured format; no stack traces leak | API tests | ☐ |
-| 1.11 | Liveness and readiness are separate; readiness reflects the database | API tests | ☐ |
-| 1.12 | Secure headers, CORS policy, request size limits configured | API tests | ☐ |
+| 1.8 | Typed, environment-specific configuration (local/development/staging/production profiles); app fails fast on missing required config | `AvenraProperties` (validated); `StartupFailFastIT`: no profile, missing DB URL and wildcard CORS each stop startup | ☑ |
+| 1.9 | Structured JSON logs with request id, trace id; sensitive fields never logged | `StructuredLoggingIT`: every line from startup to shutdown is ECS JSON in UTC with service name/version; request line carries the request id; DB passwords and generated-password notice absent. Trace id arrives with OpenTelemetry in step 10 | ◐ |
+| 1.10 | Every response carries a request id; errors use the structured format; no stack traces leak | `PlatformWebIT` (RequestIds, ErrorFormat): 400/401/404/405/413/415/500 all return `{code,message,requestId}`; the 500 body omits the exception message | ☑ |
+| 1.11 | Liveness and readiness are separate; readiness reflects the database | `PlatformWebIT` (Health); `ReadinessWithoutDatabaseIT`: DB unreachable → liveness 200, readiness 503 | ☑ |
+| 1.12 | Secure headers, CORS policy, request size limits configured | `PlatformWebIT` (Security, RequestSizeLimits): headers asserted; CORS allowed vs denied origin; 413 for declared and streamed oversize bodies; unknown paths 401 (ADR-011) | ☑ |
 | 1.13 | OpenAPI contract linted; Java interfaces and TS client generated; drift fails the build | CI log | ☐ |
 | 1.14 | Web: strict TS, no `any`, lint clean, design tokens from §144, unit tests, builds | CI log | ☐ |
 | 1.15 | AI service: typed, linted, tested, health endpoint | CI log | ☐ |
@@ -62,6 +62,7 @@ Legend: ☑ proven · ◐ proven locally, CI evidence pending · ☐ not started
 | Shared development, staging, production environments | Needs a cloud provider and accounts (not yet chosen). Phase 1 delivers the configuration profiles and container images they will use. | Decision before Phase 13; provisioning in Phase 13 |
 | Terraform infrastructure | Depends on the cloud provider decision | Phase 13 |
 | Production secret manager | Depends on the cloud provider decision | Phase 13 |
+| HSTS and forwarded-header handling behind a TLS-terminating proxy | HSTS is only sent over HTTPS; there is no TLS locally. Configured now, verified against the real proxy | Phase 13 |
 | GitHub branch protection on `main` | Must be enabled by the repository owner in GitHub settings | Owner action during Phase 1 |
 
 ## Hardening record

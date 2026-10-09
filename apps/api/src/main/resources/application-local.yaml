@@ -1,0 +1,13 @@
+avenra:
+  environment: LOCAL
+  web:
+    allowed-origins: http://localhost:3000
+
+# Human-readable logs for local development only; still shows the request id
+# and structured key-value fields.
+logging:
+  structured:
+    format:
+      console: ""
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{requestId:-}] %logger{36} - %msg %kvp%n%wEx"
