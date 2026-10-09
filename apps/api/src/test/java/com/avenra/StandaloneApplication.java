@@ -29,15 +29,27 @@ public final class StandaloneApplication {
      * Properties are passed as command-line arguments, the highest-precedence property source, so
      * they override the application and profile YAML files just like real deployment overrides.
      */
-    public static ConfigurableApplicationContext start(Map<String, Object> properties) {
+    public static ConfigurableApplicationContext start(Map<String, Object> properties, Class<?>... extraSources) {
         String[] args = properties.entrySet().stream()
                 .map(entry -> "--" + entry.getKey() + "=" + entry.getValue())
                 .toArray(String[]::new);
-        return new SpringApplicationBuilder(AvenraApplication.class).run(args);
+        return new SpringApplicationBuilder(AvenraApplication.class)
+                .sources(extraSources)
+                .run(args);
     }
 
     public static void withRunning(Map<String, Object> properties, Consumer<ConfigurableApplicationContext> test) {
-        try (var context = start(properties)) {
+        withRunning(properties, new Class<?>[0], test);
+    }
+
+    public static void withRunning(
+            Map<String, Object> properties, Class<?> extraSource, Consumer<ConfigurableApplicationContext> test) {
+        withRunning(properties, new Class<?>[] {extraSource}, test);
+    }
+
+    private static void withRunning(
+            Map<String, Object> properties, Class<?>[] extraSources, Consumer<ConfigurableApplicationContext> test) {
+        try (var context = start(properties, extraSources)) {
             test.accept(context);
         }
     }

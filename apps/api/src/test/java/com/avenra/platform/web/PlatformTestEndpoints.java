@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
@@ -24,6 +25,18 @@ import org.springframework.web.bind.annotation.RestController;
 class PlatformTestEndpoints {
 
     static final String SECRET_IN_EXCEPTION = "boom-secret-Z9xQ";
+
+    private final JdbcTemplate jdbc;
+
+    PlatformTestEndpoints(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    /** Touches the database, so tracing tests can see a SQL span inside the HTTP span. */
+    @GetMapping("/db")
+    Integer db() {
+        return jdbc.queryForObject("select 1", Integer.class);
+    }
 
     record Echo(@NotBlank @Size(max = 20) String name) {}
 

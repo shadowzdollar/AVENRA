@@ -62,7 +62,31 @@ server:
     include-exception: false
 
 # Health: /health/liveness and /health/readiness (Guidelines §94, ADR-011).
+# Telemetry: OpenTelemetry traces exported over OTLP when an endpoint is set
+# (Guidelines §60). Logs go to stdout with trace and request ids.
 management:
+  tracing:
+    sampling:
+      probability: ${AVENRA_TRACING_SAMPLING_PROBABILITY:1.0}
+    propagation:
+      type: w3c
+  opentelemetry:
+    resource-attributes:
+      service.name: avenra-api
+      service.version: "@project.version@"
+      deployment.environment.name: ${avenra.environment}
+    # The OTLP trace exporter is created only when an endpoint is configured:
+    # MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT in deployments,
+    # the local Jaeger under the local profile.
+  logging:
+    export:
+      otlp:
+        enabled: false
+  otlp:
+    metrics:
+      export:
+        enabled: ${AVENRA_OTLP_METRICS_ENABLED:false}
+        url: ${AVENRA_OTLP_METRICS_URL:http://127.0.0.1:4318/v1/metrics}
   endpoints:
     web:
       base-path: /

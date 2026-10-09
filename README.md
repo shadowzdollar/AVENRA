@@ -43,7 +43,7 @@ Applications are added during Phase 1; see the
 
 ```bash
 make setup      # creates .env from .env.example and installs JS dependencies
-make infra-up   # starts PostgreSQL, Redis and S3-compatible storage
+make infra-up   # starts PostgreSQL, Redis, S3-compatible storage and Jaeger
 make api-run    # backend on :8080
 make web-dev    # web app on :3000
 make ai-run     # AI service on 127.0.0.1:8090
@@ -52,4 +52,4 @@ make help       # lists every command
 
 Local services bind to `127.0.0.1` only, on non-default ports (PostgreSQL
 15432, Redis 16379, S3 18333) to avoid clashing with locally installed
-services.
+services. Traces from the local API appear in Jaeger at http://127.0.0.1:16686.

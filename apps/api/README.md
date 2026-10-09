@@ -36,6 +36,26 @@ The app refuses to start with missing or unsafe configuration.
   `{"code","message","requestId"}`, plus `details` for validation errors.
 - Logs are ECS JSON (plain text under the `local` profile) and include the request id.
 
+## Observability (Guidelines §60–§62, §101)
+
+- **Traces:** OpenTelemetry through Spring Boot's native starter. One request
+  is one trace: HTTP server span → application → SQL spans
+  (`datasource-micrometer`). Incoming W3C `traceparent` headers are continued.
+  Every HTTP span carries `avenra.request_id`.
+- **Export:** OTLP over HTTP, only when an endpoint is configured
+  (`MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT`). The `local`
+  profile sends to the Jaeger started by `make infra-up`:
+  http://127.0.0.1:16686.
+- **Sampling:** `AVENRA_TRACING_SAMPLING_PROBABILITY` (default `1.0`).
+- **Logs:** stdout, with `traceId`, `spanId` and `requestId` on every line
+  written during a request.
+- **Metrics:** collected by Micrometer (HTTP, JVM, connection pool). OTLP
+  export is off until a metrics backend exists
+  (`AVENRA_OTLP_METRICS_ENABLED`, `AVENRA_OTLP_METRICS_URL`).
+- **Naming:** standard OpenTelemetry semantic conventions for technical
+  telemetry; Avenra's own attributes and events use the `avenra.` prefix
+  (`avenra.request_id`, and later `avenra.work.completed` and so on).
+
 ## Module structure
 
 Every direct sub-package of `com.avenra` is an **application module**:

@@ -1,5 +1,6 @@
 package com.avenra.platform.web;
 
+import io.micrometer.common.KeyValue;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,16 +14,22 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.filter.ServerHttpObservationFilter;
 
 /**
- * Assigns the request id before anything else runs, so every log line, response header and error
- * body for the request carries it, including responses produced by the security layer. Logs one
- * line per completed request. The query string is never logged because it can carry sensitive
- * values.
+ * Assigns the request id before the application and the security layer run, so every log line,
+ * response header and error body for the request carries it. Logs one line per completed request.
+ * The query string is never logged because it can carry sensitive values.
+ *
+ * <p>Runs just inside Spring's HTTP observation filter ({@code HIGHEST_PRECEDENCE + 1}), so the
+ * request log line carries the trace id and the request id is recorded on the trace.
  */
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Ordered.HIGHEST_PRECEDENCE + 2)
 class RequestIdFilter extends OncePerRequestFilter {
+
+    /** Span attribute holding the request id, so a trace can be found from a request id. */
+    static final String SPAN_ATTRIBUTE = "avenra.request_id";
 
     private static final Logger log = LoggerFactory.getLogger(RequestIdFilter.class);
 
@@ -33,6 +40,8 @@ class RequestIdFilter extends OncePerRequestFilter {
         request.setAttribute(RequestIds.ATTRIBUTE, requestId);
         response.setHeader(RequestIds.HEADER, requestId);
         MDC.put(RequestIds.MDC_KEY, requestId);
+        ServerHttpObservationFilter.findObservationContext(request)
+                .ifPresent(context -> context.addHighCardinalityKeyValue(KeyValue.of(SPAN_ATTRIBUTE, requestId)));
         long started = System.nanoTime();
         try {
             chain.doFilter(request, response);

@@ -40,14 +40,14 @@ later phase builds on it rather than retrofitting it.
 | 1.6 | Flyway migrations run on startup in local and in tests; app connects with a non-owner role | `DatabaseRolesIT` (7 tests: non-privileged role, schema changes denied with SQLSTATE 42501, history table hidden, UTC); `make api-run` applied V1 to local DB | ☑ |
 | 1.7 | Integration tests run against real PostgreSQL via Testcontainers | Local: 8 ITs pass on postgres:18.6 with the real role script. CI log pending (step 12) | ◐ |
 | 1.8 | Typed, environment-specific configuration (local/development/staging/production profiles); app fails fast on missing required config | `AvenraProperties` (validated); `StartupFailFastIT`: no profile, missing DB URL and wildcard CORS each stop startup | ☑ |
-| 1.9 | Structured JSON logs with request id, trace id; sensitive fields never logged | `StructuredLoggingIT`: every line from startup to shutdown is ECS JSON in UTC with service name/version; request line carries the request id; DB passwords and generated-password notice absent. Trace id arrives with OpenTelemetry in step 10 | ◐ |
+| 1.9 | Structured JSON logs with request id, trace id; sensitive fields never logged | `StructuredLoggingIT`: every line is ECS JSON in UTC with service name/version, request line carries the request id, DB passwords absent; `TracingIT`: the request log line carries the trace id and span id of the request's trace | ☑ |
 | 1.10 | Every response carries a request id; errors use the structured format; no stack traces leak | `PlatformWebIT` (RequestIds, ErrorFormat): 400/401/404/405/413/415/500 all return `{code,message,requestId}`; the 500 body omits the exception message | ☑ |
 | 1.11 | Liveness and readiness are separate; readiness reflects the database | `PlatformWebIT` (Health); `ReadinessWithoutDatabaseIT`: DB unreachable → liveness 200, readiness 503 | ☑ |
 | 1.12 | Secure headers, CORS policy, request size limits configured | `PlatformWebIT` (Security, RequestSizeLimits): headers asserted; CORS allowed vs denied origin; 413 for declared and streamed oversize bodies; unknown paths 401 (ADR-011) | ☑ |
 | 1.13 | OpenAPI contract linted; Java interfaces and TS client generated; drift fails the build | `make contract-check`; lint-rule self-test; renaming the operation in the contract broke both the Java compile and the TS type check, restoring fixed both; `ContractConformanceIT` (5 tests). CI run and breaking-change check pending (step 12) | ◐ |
 | 1.14 | Web: strict TS, no `any`, lint clean, design tokens from §144, unit tests, builds | `make web-check`: ESLint 0 warnings, strict tsc, 16 tests (token values checked against §144); build fails without API URL; production build in headless Chrome shows a live API connection with 0 CSP violations and nonce on every script. CI run pending (step 12) | ◐ |
 | 1.15 | AI service: typed, linted, tested, health endpoint | `make ai-check`: ruff (incl. security rules), mypy --strict, 16 tests (request ids, error format without internals, JSON logs, no query strings or client-library URLs in logs, config fail-fast); `make ai-run` serves on 127.0.0.1 only. CI run pending (step 12) | ◐ |
-| 1.16 | Traces visible end to end (HTTP → app → DB) locally; telemetry names follow §101 | Screenshot/trace export | ☐ |
+| 1.16 | Traces visible end to end (HTTP → app → DB) locally; telemetry names follow §101 | `TracingIT`: one trace from HTTP span to SQL span, `avenra.request_id` on the span, inbound `traceparent` continued; real requests to the local API appear in Jaeger (`make infra-up`, http://127.0.0.1:16686) with request ids, DB connection spans and service/version/environment attributes; naming documented in `apps/api/README.md` | ☑ |
 | 1.17 | Dockerfiles: non-root, minimal base, pinned, health checks; images build in CI | CI log | ☐ |
 | 1.18 | CI runs on every PR: lint, type checks, unit, integration, dependency scan, secret scan, static analysis, build | Green CI run | ☐ |
 | 1.19 | Docs: README, CONTRIBUTING, SECURITY, ARCHITECTURE overview, CLAUDE.md | Files | ☐ |
@@ -64,6 +64,8 @@ Legend: ☑ proven · ◐ proven locally, CI evidence pending · ☐ not started
 | Production secret manager | Depends on the cloud provider decision | Phase 13 |
 | HSTS and forwarded-header handling behind a TLS-terminating proxy | HSTS is only sent over HTTPS; there is no TLS locally. Configured now, verified against the real proxy | Phase 13 |
 | Service-to-service authentication between API and AI service | No AI endpoints exist yet; the service binds to 127.0.0.1 only | Phase 6 (with the first AI capability) |
+| Metrics backend and dashboards; OTLP log export | Metrics are collected but need a backend to be useful; logs go to stdout for the platform's log collector | Phase 13 (monitoring and alerting) |
+| Tracing in the AI service | No AI calls exist yet; the API → AI hop is traced when the first call is added | Phase 6 |
 | GitHub branch protection on `main` | Must be enabled by the repository owner in GitHub settings | Owner action during Phase 1 |
 
 ## Hardening record

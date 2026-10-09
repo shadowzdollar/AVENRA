@@ -25,8 +25,8 @@ setup: .env js-install ## Prepare a fresh clone for local development
 # --- Local infrastructure ---------------------------------------------------
 
 .PHONY: infra-up
-infra-up: .env ## Start PostgreSQL, Redis and S3 storage, wait until healthy
-	$(COMPOSE) up -d --wait postgres redis seaweedfs
+infra-up: .env ## Start PostgreSQL, Redis, S3 storage and Jaeger, wait until healthy
+	$(COMPOSE) up -d --wait postgres redis seaweedfs jaeger
 	$(COMPOSE) run --rm seaweedfs-init
 
 .PHONY: infra-down

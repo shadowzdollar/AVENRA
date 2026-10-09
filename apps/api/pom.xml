@@ -29,6 +29,7 @@
         <spotless-maven-plugin.version>2.43.0</spotless-maven-plugin.version>
         <palantir-java-format.version>2.102.0</palantir-java-format.version>
         <openapi-generator.version>7.26.0</openapi-generator.version>
+        <datasource-micrometer.version>2.3.0</datasource-micrometer.version>
         <!-- The API contract is the source of truth (ADR-008). -->
         <avenra.contract>${project.basedir}/../../packages/contracts/openapi/avenra.v1.yaml</avenra.contract>
     </properties>
@@ -59,6 +60,17 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!-- OpenTelemetry traces and metrics (Guidelines §60). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-opentelemetry</artifactId>
+        </dependency>
+        <!-- Database spans, so a trace covers HTTP -> application -> SQL (Guidelines §60). -->
+        <dependency>
+            <groupId>net.ttddyy.observation</groupId>
+            <artifactId>datasource-micrometer-spring-boot</artifactId>
+            <version>${datasource-micrometer.version}</version>
         </dependency>
         <!-- Bean Validation at trust boundaries (Guidelines §64). -->
         <dependency>
@@ -93,6 +105,16 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-opentelemetry-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-sdk-testing</artifactId>
             <scope>test</scope>
         </dependency>
         <!-- Integration tests run against real PostgreSQL (ADR-002). -->

@@ -20,7 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * (chunked) are counted while being read and fail once they pass the limit.
  */
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE + 1)
+@Order(Ordered.HIGHEST_PRECEDENCE + 3)
 class RequestBodySizeLimitFilter extends OncePerRequestFilter {
 
     private final long maxBytes;
