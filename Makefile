@@ -84,3 +84,24 @@ api-format: ## Backend: apply code formatting
 .PHONY: api-run
 api-run: .env ## Backend: run the API locally against local infrastructure
 	$(WITH_ENV) $(MVNW) spring-boot:run
+
+# --- AI service (apps/ai) ---------------------------------------------------
+
+UV := cd apps/ai && uv
+
+.PHONY: ai-check
+ai-check: ## AI service: lint, format check, strict types, tests
+	$(UV) sync --locked
+	$(UV) run ruff check .
+	$(UV) run ruff format --check .
+	$(UV) run mypy src tests
+	$(UV) run pytest
+
+.PHONY: ai-format
+ai-format: ## AI service: apply formatting and safe lint fixes
+	$(UV) run ruff format .
+	$(UV) run ruff check --fix .
+
+.PHONY: ai-run
+ai-run: .env ## AI service: run locally on 127.0.0.1:8090
+	$(WITH_ENV) $(UV) run uvicorn avenra_ai.main:create_app --factory --host 127.0.0.1 --port 8090 --no-access-log

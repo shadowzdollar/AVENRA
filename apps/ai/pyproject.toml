@@ -1,0 +1,60 @@
+[project]
+name = "avenra-ai"
+version = "0.1.0"
+description = "Avenra AI service: controlled AI workloads that return structured results. Owns no business data (Guidelines §6)."
+requires-python = ">=3.14,<3.15"
+license = "LicenseRef-Avenra-Proprietary"
+dependencies = [
+    "fastapi>=0.120",
+    "uvicorn>=0.38",
+    "pydantic>=2.12",
+    "pydantic-settings>=2.11",
+]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.13.1",
+    "mypy>=1.18",
+    "pytest>=8.4",
+    "ruff>=0.14",
+]
+
+[build-system]
+requires = ["uv_build>=0.9,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv]
+# Supply-chain safeguard, same policy as pnpm: only versions published at
+# least 7 days ago are eligible.
+exclude-newer = "7 days"
+
+[tool.ruff]
+line-length = 120
+target-version = "py314"
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F",  # pycodestyle, pyflakes
+    "I",            # import order
+    "B",            # bugbear
+    "UP",           # modern syntax
+    "S",            # security (bandit)
+    "N",            # naming
+    "ANN",          # type annotations everywhere
+    "T20",          # no print()
+    "SIM", "RET", "PTH", "RUF",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # assert is how pytest works
+
+[tool.mypy]
+strict = true
+python_version = "3.14"
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+xfail_strict = true
+filterwarnings = ["error"]

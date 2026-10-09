@@ -46,6 +46,7 @@ make setup      # creates .env from .env.example and installs JS dependencies
 make infra-up   # starts PostgreSQL, Redis and S3-compatible storage
 make api-run    # backend on :8080
 make web-dev    # web app on :3000
+make ai-run     # AI service on 127.0.0.1:8090
 make help       # lists every command
 ```
 
