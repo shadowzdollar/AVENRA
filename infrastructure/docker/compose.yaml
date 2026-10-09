@@ -75,8 +75,12 @@ services:
       seaweedfs:
         condition: service_healthy
     entrypoint: ["/bin/sh", "-c"]
+    # Idempotent: an existing bucket counts as success.
     command:
-      - echo "s3.bucket.create -name ${S3_BUCKET:?set in .env}" | weed shell -master=seaweedfs:9333
+      - |
+        out=$$(echo "s3.bucket.create -name ${S3_BUCKET:?set in .env}" | weed shell -master=seaweedfs:9333 2>&1)
+        echo "$$out"
+        echo "$$out" | grep -qE "created bucket|already exists"
     restart: "no"
 
 volumes:
