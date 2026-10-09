@@ -45,7 +45,7 @@ later phase builds on it rather than retrofitting it.
 | 1.11 | Liveness and readiness are separate; readiness reflects the database | `PlatformWebIT` (Health); `ReadinessWithoutDatabaseIT`: DB unreachable → liveness 200, readiness 503 | ☑ |
 | 1.12 | Secure headers, CORS policy, request size limits configured | `PlatformWebIT` (Security, RequestSizeLimits): headers asserted; CORS allowed vs denied origin; 413 for declared and streamed oversize bodies; unknown paths 401 (ADR-011) | ☑ |
 | 1.13 | OpenAPI contract linted; Java interfaces and TS client generated; drift fails the build | `make contract-check`; lint-rule self-test; renaming the operation in the contract broke both the Java compile and the TS type check, restoring fixed both; `ContractConformanceIT` (5 tests). CI run and breaking-change check pending (step 12) | ◐ |
-| 1.14 | Web: strict TS, no `any`, lint clean, design tokens from §144, unit tests, builds | CI log | ☐ |
+| 1.14 | Web: strict TS, no `any`, lint clean, design tokens from §144, unit tests, builds | `make web-check`: ESLint 0 warnings, strict tsc, 16 tests (token values checked against §144); build fails without API URL; production build in headless Chrome shows a live API connection with 0 CSP violations and nonce on every script. CI run pending (step 12) | ◐ |
 | 1.15 | AI service: typed, linted, tested, health endpoint | CI log | ☐ |
 | 1.16 | Traces visible end to end (HTTP → app → DB) locally; telemetry names follow §101 | Screenshot/trace export | ☐ |
 | 1.17 | Dockerfiles: non-root, minimal base, pinned, health checks; images build in CI | CI log | ☐ |

@@ -6,3 +6,10 @@ packages:
 # 7 days ago (in minutes), giving the ecosystem time to catch compromised
 # releases. Do not add exclusions without a documented reason.
 minimumReleaseAge: 10080
+
+# Dependency install scripts are blocked by default. Each entry below is a
+# deliberate decision; prefer denying over allowing.
+# unrs-resolver (via eslint-config-next): ships prebuilt binaries as optional
+# dependencies; its script is only a fallback downloader.
+allowBuilds:
+  unrs-resolver: false

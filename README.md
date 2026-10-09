@@ -42,8 +42,10 @@ Applications are added during Phase 1; see the
 ## Getting started
 
 ```bash
-make setup      # creates .env from .env.example (local-only values)
+make setup      # creates .env from .env.example and installs JS dependencies
 make infra-up   # starts PostgreSQL, Redis and S3-compatible storage
+make api-run    # backend on :8080
+make web-dev    # web app on :3000
 make help       # lists every command
 ```
 

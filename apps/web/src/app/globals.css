@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/*
+ * Avenra design tokens (Guidelines §144.2). These are the ONLY colors
+ * available: Tailwind's default palette is removed, so a component cannot
+ * introduce an arbitrary color. A new semantic color is added here first.
+ * `design-tokens.test.ts` checks these values against the Guidelines.
+ */
+@theme {
+  --color-*: initial;
+
+  --color-background: #ffffff;
+  --color-text-primary: #0b0d0f;
+  --color-text-secondary: #667085;
+  --color-brand: #2563eb;
+  --color-brand-surface: #eff6ff;
+  --color-border: #e5e7eb;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-error: #dc2626;
+
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-background text-text-primary font-sans antialiased;
+  }
+}

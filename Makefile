@@ -7,6 +7,8 @@ SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 
 COMPOSE := docker compose --env-file .env -f infrastructure/docker/compose.yaml
+# Loads .env into the environment for commands that run an application.
+WITH_ENV := set -a && . ./.env && set +a &&
 
 .PHONY: help
 help: ## List available commands
@@ -51,11 +53,25 @@ js-install: ## Install JavaScript workspace dependencies (lockfile is respected)
 contract-check: ## Contract: lint, prove lint rules, generate TS client, type-check
 	pnpm --filter @avenra/contracts run check
 
+# --- Web (apps/web) ---------------------------------------------------------
+
+.PHONY: web-check
+web-check: ## Web: lint (zero warnings), strict type check, unit tests
+	pnpm --filter @avenra/contracts run generate
+	pnpm --filter @avenra/web run check
+
+.PHONY: web-build
+web-build: .env ## Web: production build (needs NEXT_PUBLIC_AVENRA_API_URL)
+	$(WITH_ENV) pnpm --filter @avenra/web run build
+
+.PHONY: web-dev
+web-dev: .env ## Web: run the development server on :3000
+	pnpm --filter @avenra/contracts run generate
+	$(WITH_ENV) pnpm --filter @avenra/web run dev
+
 # --- Backend (apps/api) -----------------------------------------------------
 
 MVNW := cd apps/api && ./mvnw -B
-# Loads .env into the environment for commands that run the application.
-WITH_ENV := set -a && . ./.env && set +a &&
 
 .PHONY: api-verify
 api-verify: ## Backend: format check, compile, unit + integration tests
