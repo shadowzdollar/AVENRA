@@ -26,3 +26,4 @@ Statuses: `Proposed` → `Accepted` → (`Superseded by ADR-NNN` | `Deprecated`)
 | [009](ADR-009-monorepo-tooling.md) | Monorepo tooling | Accepted |
 | [010](ADR-010-trunk-based-branching.md) | Trunk-based branching | Accepted |
 | [011](ADR-011-web-security-baseline.md) | Web security baseline before authentication | Accepted |
+| [012](ADR-012-typescript-5.md) | TypeScript 5.9 for the JavaScript workspace | Accepted |

@@ -1,0 +1,62 @@
+# Contract linting (ADR-008). Recommended rules plus Avenra's own: every
+# operation must declare the Guidelines §32 properties and use the shared
+# error format.
+extends:
+  - recommended-strict
+
+apis:
+  v1:
+    root: openapi/avenra.v1.yaml
+    x-openapi-ts:
+      output: src/generated/v1.ts
+
+rules:
+  operation-operationId: error
+  operation-summary: error
+  operation-tag-defined: error
+  operation-4xx-response: error
+  security-defined: error
+  no-server-example.com: error
+  info-license: error
+
+  rule/operation-declares-permission:
+    subject:
+      type: Operation
+      property: x-avenra-permission
+    assertions:
+      defined: true
+      pattern: /^(public|[a-z]+(\.[a-z]+)+)$/
+    message: Every operation must declare x-avenra-permission (`public` or a permission such as `work.read`).
+
+  rule/operation-declares-audit:
+    subject:
+      type: Operation
+      property: x-avenra-audit
+    assertions:
+      enum: [required, none]
+      defined: true
+    message: Every operation must declare x-avenra-audit (required | none).
+
+  rule/operation-declares-idempotency:
+    subject:
+      type: Operation
+      property: x-avenra-idempotency
+    assertions:
+      enum: [safe, idempotent, key-required]
+      defined: true
+    message: Every operation must declare x-avenra-idempotency (safe | idempotent | key-required).
+
+  rule/operation-declares-rate-limit:
+    subject:
+      type: Operation
+      property: x-avenra-rate-limit
+    assertions:
+      defined: true
+    message: Every operation must declare x-avenra-rate-limit.
+
+  rule/paths-are-versioned:
+    subject:
+      type: Paths
+    assertions:
+      pattern: /^\/api\/v[0-9]+\//
+    message: Every path must be versioned, starting with /api/v<N>/ (Guidelines §33).

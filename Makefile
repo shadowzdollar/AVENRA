@@ -18,7 +18,7 @@ help: ## List available commands
 	@echo "Created .env from .env.example (local-only values)."
 
 .PHONY: setup
-setup: .env ## Prepare a fresh clone for local development
+setup: .env js-install ## Prepare a fresh clone for local development
 
 # --- Local infrastructure ---------------------------------------------------
 
@@ -40,6 +40,16 @@ infra-reset: ## Stop local infrastructure and DELETE its data volumes
 .PHONY: infra-status
 infra-status: ## Show local infrastructure status
 	$(COMPOSE) ps
+
+# --- API contract (packages/contracts) --------------------------------------
+
+.PHONY: js-install
+js-install: ## Install JavaScript workspace dependencies (lockfile is respected)
+	pnpm install --frozen-lockfile
+
+.PHONY: contract-check
+contract-check: ## Contract: lint, prove lint rules, generate TS client, type-check
+	pnpm --filter @avenra/contracts run check
 
 # --- Backend (apps/api) -----------------------------------------------------
 

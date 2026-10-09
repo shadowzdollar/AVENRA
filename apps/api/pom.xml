@@ -28,6 +28,9 @@
         <archunit.version>1.5.1</archunit.version>
         <spotless-maven-plugin.version>2.43.0</spotless-maven-plugin.version>
         <palantir-java-format.version>2.102.0</palantir-java-format.version>
+        <openapi-generator.version>7.26.0</openapi-generator.version>
+        <!-- The API contract is the source of truth (ADR-008). -->
+        <avenra.contract>${project.basedir}/../../packages/contracts/openapi/avenra.v1.yaml</avenra.contract>
     </properties>
 
     <dependencyManagement>
@@ -145,6 +148,54 @@
                                 <dependencyConvergence/>
                                 <banDuplicatePomDependencyVersions/>
                             </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Generates server interfaces and DTOs from the contract. Controllers
+                 implement the interfaces, so code that drifts from the contract
+                 does not compile. Generated code is not committed. -->
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi-generator.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-api-v1</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${avenra.contract}</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <library>spring-boot</library>
+                            <apiPackage>com.avenra.contract.v1.api</apiPackage>
+                            <modelPackage>com.avenra.contract.v1.model</modelPackage>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateModelDocumentation>false</generateModelDocumentation>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <configOptions>
+                                <interfaceOnly>true</interfaceOnly>
+                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <!-- Spring 7 null-safety annotations; the Spring ones are deprecated. -->
+                                <useJspecify>true</useJspecify>
+                                <generateJsonIncludeAnnotations>false</generateJsonIncludeAnnotations>
+                                <useJakartaEe>true</useJakartaEe>
+                                <useBeanValidation>true</useBeanValidation>
+                                <useTags>true</useTags>
+                                <openApiNullable>false</openApiNullable>
+                                <documentationProvider>none</documentationProvider>
+                                <annotationLibrary>none</annotationLibrary>
+                                <serializableModel>false</serializableModel>
+                                <dateLibrary>java8</dateLibrary>
+                                <useResponseEntity>true</useResponseEntity>
+                                <sourceFolder>src/main/java</sourceFolder>
+                            </configOptions>
                         </configuration>
                     </execution>
                 </executions>

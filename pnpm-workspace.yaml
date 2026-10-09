@@ -1,3 +1,8 @@
 packages:
   - apps/web
   - packages/*
+
+# Supply-chain safeguard: only install package versions published at least
+# 7 days ago (in minutes), giving the ecosystem time to catch compromised
+# releases. Do not add exclusions without a documented reason.
+minimumReleaseAge: 10080

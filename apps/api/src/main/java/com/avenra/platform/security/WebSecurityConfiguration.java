@@ -27,7 +27,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration(proxyBeanMethods = false)
 class WebSecurityConfiguration {
 
-    static final List<String> PUBLIC_HEALTH_PATHS = List.of("/health/liveness", "/health/readiness");
+    /**
+     * Paths reachable without authentication, all {@code GET}. Contract operations listed here must
+     * declare {@code x-avenra-permission: public}; {@code ContractConformanceIT} checks both directions.
+     */
+    static final List<String> PUBLIC_GET_PATHS = List.of("/health/liveness", "/health/readiness", "/api/v1/meta");
 
     @Bean
     SecurityFilterChain apiSecurity(HttpSecurity http, ErrorResponseWriter errorWriter, AvenraProperties properties) {
@@ -47,7 +51,7 @@ class WebSecurityConfiguration {
                                 "Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")))
                 .authorizeHttpRequests(requests -> requests.dispatcherTypeMatchers(DispatcherType.ERROR)
                         .permitAll()
-                        .requestMatchers(HttpMethod.GET, PUBLIC_HEALTH_PATHS.toArray(String[]::new))
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS.toArray(String[]::new))
                         .permitAll()
                         .anyRequest()
                         .denyAll())
