@@ -40,3 +40,21 @@ infra-reset: ## Stop local infrastructure and DELETE its data volumes
 .PHONY: infra-status
 infra-status: ## Show local infrastructure status
 	$(COMPOSE) ps
+
+# --- Backend (apps/api) -----------------------------------------------------
+
+MVNW := cd apps/api && ./mvnw -B
+# Loads .env into the environment for commands that run the application.
+WITH_ENV := set -a && . ./.env && set +a &&
+
+.PHONY: api-verify
+api-verify: ## Backend: format check, compile, unit + integration tests
+	$(MVNW) verify
+
+.PHONY: api-format
+api-format: ## Backend: apply code formatting
+	$(MVNW) spotless:apply
+
+.PHONY: api-run
+api-run: .env ## Backend: run the API locally against local infrastructure
+	$(WITH_ENV) $(MVNW) spring-boot:run

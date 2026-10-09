@@ -35,10 +35,10 @@ later phase builds on it rather than retrofitting it.
 | 1.1 | ADR-001…010 accepted | `docs/adr/` | ☑ |
 | 1.2 | `make setup` from a clean clone installs everything; `make dev` starts all apps and infrastructure | Clean-clone run log | ☐ |
 | 1.3 | No secrets in the repo; `.env.example` with placeholders only; secret scanning in CI | CI job, `.gitignore` | ☐ |
-| 1.4 | Backend builds on Java 25; Maven Enforcer pins Java and Maven versions | CI log | ☐ |
-| 1.5 | Module boundary rules enforced by tests that fail the build on violation | Failing-then-passing test | ☐ |
-| 1.6 | Flyway migrations run on startup in local and in tests; app connects with a non-owner role | Integration test | ☐ |
-| 1.7 | Integration tests run against real PostgreSQL via Testcontainers | CI log | ☐ |
+| 1.4 | Backend builds on Java 25; Maven Enforcer pins Java and Maven versions | Local: JDK 21 and system Maven 3.9.12 both rejected by Enforcer. CI log pending (step 12) | ◐ |
+| 1.5 | Module boundary rules enforced by tests that fail the build on violation | `ModularityTest`, `ArchitectureTest`; `ArchitectureRulesSelfTest` proves each rule fails on broken fixtures | ☑ |
+| 1.6 | Flyway migrations run on startup in local and in tests; app connects with a non-owner role | `DatabaseRolesIT` (7 tests: non-privileged role, schema changes denied with SQLSTATE 42501, history table hidden, UTC); `make api-run` applied V1 to local DB | ☑ |
+| 1.7 | Integration tests run against real PostgreSQL via Testcontainers | Local: 8 ITs pass on postgres:18.6 with the real role script. CI log pending (step 12) | ◐ |
 | 1.8 | Typed, environment-specific configuration (local/development/staging/production profiles); app fails fast on missing required config | Unit + startup test | ☐ |
 | 1.9 | Structured JSON logs with request id, trace id; sensitive fields never logged | Test asserting log output and redaction | ☐ |
 | 1.10 | Every response carries a request id; errors use the structured format; no stack traces leak | API tests | ☐ |
@@ -52,6 +52,8 @@ later phase builds on it rather than retrofitting it.
 | 1.18 | CI runs on every PR: lint, type checks, unit, integration, dependency scan, secret scan, static analysis, build | Green CI run | ☐ |
 | 1.19 | Docs: README, CONTRIBUTING, SECURITY, ARCHITECTURE overview, CLAUDE.md | Files | ☐ |
 | 1.20 | Hardening pass done against all Phase 1 Guidelines sections; result recorded below | This file | ☐ |
+
+Legend: ☑ proven · ◐ proven locally, CI evidence pending · ☐ not started
 
 ## Declared deferrals
 

@@ -1,0 +1,42 @@
+# Configuration is supplied by the environment; nothing environment-specific
+# is hard-coded here (Guidelines §91). A missing required value stops startup.
+spring:
+  application:
+    name: avenra-api
+  main:
+    banner-mode: off
+
+  # Runtime connection: the application role, which is not the schema owner and
+  # cannot bypass row-level security (ADR-005).
+  datasource:
+    url: ${AVENRA_DB_URL}
+    username: ${AVENRA_DB_APP_USER}
+    password: ${AVENRA_DB_APP_PASSWORD}
+    hikari:
+      pool-name: avenra-app
+      connection-timeout: 5000 # milliseconds
+      # Sessions use UTC regardless of the JVM or host time zone (Guidelines §38).
+      connection-init-sql: SET TIME ZONE 'UTC'
+
+  # Migrations run as the owner role over a separate connection.
+  flyway:
+    url: ${AVENRA_DB_URL}
+    user: ${AVENRA_DB_OWNER_USER}
+    password: ${AVENRA_DB_OWNER_PASSWORD}
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true
+    placeholders:
+      app_role: ${AVENRA_DB_APP_USER}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+server:
+  port: 8080
