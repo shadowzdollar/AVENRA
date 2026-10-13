@@ -1,6 +1,6 @@
 # Phase 2: Identity
 
-**Status:** Planned
+**Status:** In progress
 **Guidelines:** §16–§18, §35–§37, §59, §63–§67, §71–§72, §137, §143
 
 ## Goal
@@ -43,7 +43,7 @@ database (row-level security), cache and log layers.
 
 | # | Criterion | Evidence | Done |
 |---|---|---|---|
-| 2.1 | ADRs for session model/CSRF, password hashing, email, rate limiting, MFA | `docs/adr/` | ☐ |
+| 2.1 | ADRs for session model/CSRF, password hashing, email, rate limiting, MFA | ADR-013 (with product owner), ADR-014, ADR-015, ADR-016, ADR-017 (with product owner) | ☑ |
 | 2.2 | All identity and organization operations defined in the contract first; lint and conformance pass | CI | ☐ |
 | 2.3 | Passwords hashed with a modern adaptive algorithm; never logged or returned | Unit + log tests | ☐ |
 | 2.4 | Email verification and password reset use single-use, expiring, hashed tokens | Integration tests | ☐ |
