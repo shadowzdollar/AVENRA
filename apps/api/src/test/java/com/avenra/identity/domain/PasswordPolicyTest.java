@@ -18,13 +18,26 @@ class PasswordPolicyTest {
     @Test
     void enforcesLengthInCharactersNotBytes() {
         assertThat(policy.problem("short-pass1", email)).hasValue("must be at least 12 characters");
-        assertThat(policy.problem("é".repeat(12), email)).isEmpty();
+        assertThat(policy.problem("éèêëàâäôöûüç", email)).isEmpty(); // 12 characters, 24 bytes
         assertThat(policy.problem("x".repeat(129), email)).hasValue("must be at most 128 characters");
     }
 
     @Test
     void rejectsCommonPasswordsCaseInsensitively() {
         assertThat(policy.problem("CorrectHorseBatteryStaple", email)).isPresent();
+    }
+
+    @Test
+    void rejectsACommonWordWithDigitsOrSymbolsAppended() {
+        var withPassword = new PasswordPolicy(Set.of("password", "dragon"));
+        assertThat(withPassword.problem("Password1234", email)).isPresent();
+        assertThat(withPassword.problem("dragon2026!!!", email)).isPresent();
+        assertThat(withPassword.problem("dragonfly-lantern-9", email)).isEmpty();
+    }
+
+    @Test
+    void rejectsASingleRepeatedCharacter() {
+        assertThat(policy.problem("aaaaaaaaaaaaaa", email)).hasValue("must not repeat a single character");
     }
 
     @Test
