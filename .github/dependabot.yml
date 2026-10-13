@@ -1,0 +1,39 @@
+# Keeps pinned versions current (Guidelines §99). Every update arrives as a
+# pull request and passes CI like any other change. `cooldown` applies the
+# same rule as pnpm and uv: a release must be at least 7 days old.
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
+    groups:
+      actions: { patterns: ["*"] }
+
+  - package-ecosystem: maven
+    directory: /apps/api
+    schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: npm # pnpm workspace (root lockfile)
+    directory: /
+    schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: uv
+    directory: /apps/ai
+    schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
+
+  - package-ecosystem: docker
+    directories: [/apps/api, /apps/web, /apps/ai]
+    schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
+
+  - package-ecosystem: docker-compose
+    directory: /infrastructure/docker
+    schedule: { interval: weekly }
+    cooldown: { default-days: 7 }

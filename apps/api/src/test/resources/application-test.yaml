@@ -1,0 +1,7 @@
+# Integration tests use production-like settings (JSON logs) against
+# Testcontainers. Database values are supplied by PostgresTestDatabase.
+avenra:
+  environment: LOCAL
+  web:
+    allowed-origins: https://app.avenra.test
+    max-request-body-size: 4KB

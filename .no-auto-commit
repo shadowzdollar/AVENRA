@@ -1,0 +1,2 @@
+# Opts this repository out of ~/scripts/auto_commit.sh: changes reach main only
+# through branches, pull requests and CI (ADR-010).

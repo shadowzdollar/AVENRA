@@ -1,0 +1,21 @@
+avenra:
+  environment: LOCAL
+  web:
+    allowed-origins: http://localhost:3000
+
+# Traces go to the local Jaeger started by `make infra-up` (UI: http://127.0.0.1:16686).
+management:
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://127.0.0.1:4318/v1/traces
+
+# Human-readable logs for local development only; still shows the request id
+# and structured key-value fields.
+logging:
+  structured:
+    format:
+      console: ""
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{requestId:-}] %logger{36} - %msg %kvp%n%wEx"

@@ -1,0 +1,14 @@
+# Reviewed vulnerability exceptions for OSV-Scanner (CI `dependencies` job).
+# Every entry needs a reason and an expiry date; on expiry the finding fails
+# CI again and must be re-reviewed. Never add an entry for production code
+# paths that a fix exists for.
+
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+ignoreUntil = 2026-11-13
+reason = """braces 3.0.3 (stack-exhaustion DoS on attacker-supplied brace patterns).
+Reached only via eslint-config-next -> @next/eslint-plugin-next -> fast-glob ->
+micromatch, a development-time lint dependency that expands the repository's
+own fixed glob patterns, never user input. Not present in the production web
+image (Next.js standalone output contains no ESLint). No fixed version exists
+as of 2026-10-13. Reviewed 2026-10-13."""

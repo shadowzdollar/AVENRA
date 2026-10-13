@@ -1,0 +1,8 @@
+# Reviewed gitleaks findings that are not secrets. Each entry is one exact
+# finding (commit:file:rule:line); anything new is still reported.
+#
+# Test-only password of the disposable Testcontainers database, made
+# distinctive so StructuredLoggingIT can prove it never appears in logs.
+282993ef76cb23cecd98fef478b6335c77ed62bb:apps/api/src/test/java/com/avenra/PostgresTestDatabase.java:generic-api-key:19
+# Marker planted in a test exception to prove error bodies never leak it.
+282993ef76cb23cecd98fef478b6335c77ed62bb:apps/api/src/test/java/com/avenra/platform/web/PlatformTestEndpoints.java:generic-api-key:26
