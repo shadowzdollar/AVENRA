@@ -26,6 +26,8 @@ RUN pnpm --filter @avenra/contracts run generate \
 
 # --- Runtime ----------------------------------------------------------------
 FROM node:24.21.0-alpine3.24
+# Operating-system security updates published since the base image was built.
+RUN apk upgrade --no-cache
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     HOSTNAME=0.0.0.0 \

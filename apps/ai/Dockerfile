@@ -5,7 +5,7 @@
 FROM ghcr.io/astral-sh/uv:0.12.13 AS uv
 
 # --- Build ------------------------------------------------------------------
-FROM python:3.14.7-slim-trixie AS build
+FROM python:3.14.7-alpine3.24 AS build
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -20,9 +20,13 @@ COPY apps/ai/src src
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-editable
 
 # --- Runtime ----------------------------------------------------------------
-FROM python:3.14.7-slim-trixie
-RUN groupadd --system --gid 10001 avenra \
-    && useradd --system --uid 10001 --gid avenra --no-create-home --shell /usr/sbin/nologin avenra
+# Alpine rather than Debian slim: far fewer operating-system packages, so far
+# fewer inherited vulnerabilities (Guidelines §93: minimal base images).
+FROM python:3.14.7-alpine3.24
+# Operating-system security updates published since the base image was built.
+RUN apk upgrade --no-cache \
+    && addgroup -S -g 10001 avenra \
+    && adduser -S -D -H -u 10001 -G avenra -s /sbin/nologin avenra
 WORKDIR /app
 COPY --from=build --chown=avenra:avenra /app/.venv /app/.venv
 
@@ -32,7 +36,7 @@ ENV PATH="/app/.venv/bin:${PATH}" \
 USER 10001:10001
 
 EXPOSE 8090
-# No curl or wget in the slim image; the standard library is enough.
+# The standard library is enough for the health check; no extra tools needed.
 HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
     CMD ["python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8090/health/liveness', timeout=2).status == 200 else 1)"]
 

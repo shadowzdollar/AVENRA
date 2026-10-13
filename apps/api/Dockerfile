@@ -19,7 +19,9 @@ RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -ntp package -DskipTests \
 # --- Runtime ----------------------------------------------------------------
 FROM eclipse-temurin:25.0.4_7-jre-alpine
 
-RUN addgroup -S -g 10001 avenra && adduser -S -D -H -u 10001 -G avenra avenra
+# Operating-system security updates published since the base image was built.
+RUN apk upgrade --no-cache \
+    && addgroup -S -g 10001 avenra && adduser -S -D -H -u 10001 -G avenra avenra
 WORKDIR /app
 
 # Layers ordered from least to most frequently changing, for cache reuse.
