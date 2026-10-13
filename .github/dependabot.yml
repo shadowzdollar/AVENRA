@@ -22,6 +22,16 @@ updates:
     schedule: { interval: weekly }
     cooldown: { default-days: 7 }
     open-pull-requests-limit: 10
+    ignore:
+      # ADR-012: TypeScript 7 lacks the compiler API the contract generator uses.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      # ESLint 10 breaks eslint-plugin-react bundled with eslint-config-next.
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      # Node type definitions follow the Node runtime (24 LTS).
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: uv
     directory: /apps/ai
@@ -32,6 +42,16 @@ updates:
     directories: [/apps/api, /apps/web, /apps/ai]
     schedule: { interval: weekly }
     cooldown: { default-days: 7 }
+    ignore:
+      # ADR-006: Java 25 LTS; non-LTS releases (26, 27, ...) are not adopted.
+      - dependency-name: eclipse-temurin
+        versions: [">=26"]
+      # Node 24 LTS until a deliberate upgrade.
+      - dependency-name: node
+        update-types: [version-update:semver-major]
+      # Python 3.14 until a deliberate upgrade; also keeps release candidates out.
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]
 
   - package-ecosystem: docker-compose
     directory: /infrastructure/docker
