@@ -25,8 +25,8 @@ rules:
       property: x-avenra-permission
     assertions:
       defined: true
-      pattern: /^(public|[a-z]+(\.[a-z]+)+)$/
-    message: Every operation must declare x-avenra-permission (`public` or a permission such as `work.read`).
+      pattern: /^(public|authenticated|[a-z]+(\.[a-z]+)+)$/
+    message: Every operation must declare x-avenra-permission (`public`, `authenticated`, or a permission such as `work.read`).
 
   rule/operation-declares-audit:
     subject:

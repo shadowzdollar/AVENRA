@@ -1,115 +1,796 @@
 openapi: 3.1.1
-
 info:
   title: Avenra API
   version: 1.0.0
-  description: |
-    Public API of the Avenra business work execution platform.
-
-    This file is the source of truth for the API (ADR-008). Java server
-    interfaces and the TypeScript client are generated from it.
-
-    Every operation declares, through `x-avenra-*` extensions, the rules
-    from Guidelines §32 that OpenAPI cannot express directly:
-
-    - `x-avenra-permission`: the permission required (`public` if none)
-    - `x-avenra-audit`: `required` or `none`
-    - `x-avenra-idempotency`: `safe` (no side effects), `idempotent`, or
-      `key-required` (an `Idempotency-Key` header must be sent)
-    - `x-avenra-rate-limit`: `default` or a named policy
-
-    Every error response uses the `ErrorResponse` schema and carries the
-    `X-Request-Id` header.
+  description: "Public API of the Avenra business work execution platform.\n\nThis file is the source\
+    \ of truth for the API (ADR-008). Java server\ninterfaces and the TypeScript client are generated\
+    \ from it.\n\nEvery operation declares, through `x-avenra-*` extensions, the rules\nfrom Guidelines\
+    \ §32 that OpenAPI cannot express directly:\n\n- `x-avenra-permission`: `public`, `authenticated`\
+    \ (any signed-in user),\n  or the permission required, checked in the organization named by the path\n\
+    - `x-avenra-audit`: `required` or `none`\n- `x-avenra-idempotency`: `safe` (no side effects), `idempotent`,\
+    \ or\n  `key-required` (an `Idempotency-Key` header must be sent)\n- `x-avenra-rate-limit`: `default`\
+    \ or a named policy\n\nEvery error response uses the `ErrorResponse` schema and carries the\n`X-Request-Id`\
+    \ header.\n\nAuthentication uses a server-side session cookie on the same origin as the\nweb application\
+    \ (ADR-013). State-changing requests must also send the CSRF\ntoken from the `XSRF-TOKEN` cookie in\
+    \ the `X-XSRF-TOKEN` header.\n"
   license:
     name: Proprietary
     identifier: LicenseRef-Avenra-Proprietary
-
 servers:
-  - url: /
-
+- url: /
 tags:
-  - name: platform
-    description: Technical information about the API itself.
-
+- name: platform
+  description: Technical information about the API itself.
+- name: authentication
+  description: Accounts, sessions, passwords and multi-factor authentication.
+- name: organizations
+  description: Organizations, members, roles and invitations.
 paths:
   /api/v1/meta:
     get:
       operationId: getApiMeta
       summary: Describe this API
       description: Returns the service name and API version. Safe to call without authentication.
-      tags: [platform]
+      tags:
+      - platform
       security: []
       x-avenra-permission: public
       x-avenra-audit: none
       x-avenra-idempotency: safe
       x-avenra-rate-limit: default
       responses:
-        "200":
+        '200':
           description: The API description.
           headers:
-            X-Request-Id:
-              $ref: "#/components/headers/RequestId"
+            X-Request-Id: &id001
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiMeta"
-        "4XX":
-          $ref: "#/components/responses/ClientError"
-        "5XX":
-          $ref: "#/components/responses/ServerError"
-
+                $ref: '#/components/schemas/ApiMeta'
+        4XX: &id002
+          $ref: '#/components/responses/ClientError'
+        5XX: &id003
+          $ref: '#/components/responses/ServerError'
+  /api/v1/auth/csrf:
+    get:
+      operationId: getCsrfToken
+      summary: Issue a CSRF token
+      description: Call once before the first state-changing request (ADR-013).
+      tags:
+      - authentication
+      security: []
+      x-avenra-permission: public
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      responses:
+        '204':
+          description: The token is set in the readable `XSRF-TOKEN` cookie; send it back in `X-XSRF-TOKEN`
+            on state-changing requests.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/sign-up:
+    post:
+      operationId: signUp
+      summary: Create an account
+      tags:
+      - authentication
+      security: []
+      x-avenra-permission: public
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: sign-up
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpRequest'
+      responses:
+        '202':
+          description: Accepted. A verification email is sent. The response is the same whether or not
+            the email is already registered, so it does not reveal accounts.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/email-verification:
+    post:
+      operationId: verifyEmail
+      summary: Verify an email address
+      tags:
+      - authentication
+      security: []
+      x-avenra-permission: public
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: token-check
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+      responses:
+        '204':
+          description: The email address is verified.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/email-verification/resend:
+    post:
+      operationId: resendVerificationEmail
+      summary: Send a new verification email
+      tags:
+      - authentication
+      security: []
+      x-avenra-permission: public
+      x-avenra-audit: none
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: email-send
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+      responses:
+        '202':
+          description: Accepted. The response does not reveal whether the address exists.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/sign-in:
+    post:
+      operationId: signIn
+      summary: Sign in with email and password
+      description: Failure is always `INVALID_CREDENTIALS`, whether the email is unknown, unverified or
+        the password is wrong.
+      tags:
+      - authentication
+      security: []
+      x-avenra-permission: public
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: sign-in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
+      responses:
+        '200':
+          description: Signed in, or a second factor is required.
+          headers:
+            X-Request-Id: *id001
+            Set-Cookie: &id004
+              description: The `__Host-avenra_session` cookie (HttpOnly, Secure, SameSite=Lax).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignInResult'
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/sign-in/mfa:
+    post:
+      operationId: completeMfaSignIn
+      summary: Complete sign-in with a second factor
+      tags:
+      - authentication
+      security: []
+      x-avenra-permission: public
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: mfa
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaSignInRequest'
+      responses:
+        '200':
+          description: Signed in.
+          headers:
+            X-Request-Id: *id001
+            Set-Cookie: *id004
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignInResult'
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/sign-out:
+    post:
+      operationId: signOut
+      summary: Sign out of this session
+      tags:
+      - authentication
+      x-avenra-permission: authenticated
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      responses:
+        '204':
+          description: Signed out; the session cookie is cleared.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/session:
+    get:
+      operationId: getCurrentSession
+      summary: Describe the signed-in user and their organizations
+      tags:
+      - authentication
+      x-avenra-permission: authenticated
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      responses:
+        '200':
+          description: The current user.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUser'
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/sessions:
+    get:
+      operationId: listSessions
+      summary: List the signed-in user's active sessions
+      tags:
+      - authentication
+      x-avenra-permission: authenticated
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      responses:
+        '200':
+          description: Active sessions.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SessionSummary'
+        4XX: *id002
+        5XX: *id003
+    delete:
+      operationId: revokeOtherSessions
+      summary: Sign out everywhere else
+      tags:
+      - authentication
+      x-avenra-permission: authenticated
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      responses:
+        '204':
+          description: All other sessions are revoked.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/sessions/{sessionId}:
+    delete:
+      operationId: revokeSession
+      summary: Revoke one session
+      tags:
+      - authentication
+      x-avenra-permission: authenticated
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      responses:
+        '204':
+          description: The session is revoked.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/password:
+    put:
+      operationId: changePassword
+      summary: Change the password
+      tags:
+      - authentication
+      x-avenra-permission: authenticated
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: sign-in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '204':
+          description: Changed. All other sessions are revoked.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/password-reset:
+    post:
+      operationId: requestPasswordReset
+      summary: Request a password reset email
+      tags:
+      - authentication
+      security: []
+      x-avenra-permission: public
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: password-reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+      responses:
+        '202':
+          description: Accepted. The response does not reveal whether the address exists.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/password-reset/confirm:
+    post:
+      operationId: confirmPasswordReset
+      summary: Set a new password with a reset token
+      tags:
+      - authentication
+      security: []
+      x-avenra-permission: public
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: token-check
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmation'
+      responses:
+        '204':
+          description: The password is changed and all sessions are revoked.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/mfa/totp:
+    post:
+      operationId: startTotpEnrollment
+      summary: Start setting up an authenticator app
+      tags:
+      - authentication
+      x-avenra-permission: authenticated
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: mfa
+      responses:
+        '200':
+          description: The secret to add to an authenticator app. MFA is not active until confirmed.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotpEnrollment'
+        4XX: *id002
+        5XX: *id003
+    delete:
+      operationId: disableTotp
+      summary: Turn off authenticator-app MFA
+      tags:
+      - authentication
+      x-avenra-permission: authenticated
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: mfa
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TotpCodeRequest'
+      responses:
+        '204':
+          description: MFA is off.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/auth/mfa/totp/activation:
+    post:
+      operationId: activateTotp
+      summary: Confirm the authenticator app and turn MFA on
+      tags:
+      - authentication
+      x-avenra-permission: authenticated
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: mfa
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TotpCodeRequest'
+      responses:
+        '200':
+          description: MFA is on. The recovery codes are shown only once.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryCodes'
+        4XX: *id002
+        5XX: *id003
+  /api/v1/organizations:
+    get:
+      operationId: listOrganizations
+      summary: List the organizations the user belongs to
+      tags:
+      - organizations
+      x-avenra-permission: authenticated
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      responses:
+        '200':
+          description: Organizations with the user's role in each.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrganizationMembership'
+        4XX: *id002
+        5XX: *id003
+    post:
+      operationId: createOrganization
+      summary: Create an organization
+      tags:
+      - organizations
+      x-avenra-permission: authenticated
+      x-avenra-audit: required
+      x-avenra-idempotency: key-required
+      x-avenra-rate-limit: default
+      parameters:
+      - &id007
+        $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganizationRequest'
+      responses:
+        '201':
+          description: Created; the creator is its owner.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        4XX: *id002
+        5XX: *id003
+  /api/v1/organizations/{organizationId}:
+    get:
+      operationId: getOrganization
+      summary: Get an organization
+      tags:
+      - organizations
+      x-avenra-permission: organization.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - &id005
+        $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: The organization.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        4XX: *id002
+        5XX: *id003
+    patch:
+      operationId: updateOrganization
+      summary: Rename an organization
+      tags:
+      - organizations
+      x-avenra-permission: organization.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - *id005
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrganizationRequest'
+      responses:
+        '200':
+          description: Updated.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        4XX: *id002
+        5XX: *id003
+  /api/v1/organizations/{organizationId}/members:
+    get:
+      operationId: listMembers
+      summary: List members
+      tags:
+      - organizations
+      x-avenra-permission: members.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - *id005
+      responses:
+        '200':
+          description: Members and their roles.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Member'
+        4XX: *id002
+        5XX: *id003
+  /api/v1/organizations/{organizationId}/members/{membershipId}:
+    patch:
+      operationId: changeMemberRole
+      summary: Change a member's role
+      description: An organization always keeps at least one owner (`LAST_OWNER`).
+      tags:
+      - organizations
+      x-avenra-permission: members.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - *id005
+      - &id006
+        $ref: '#/components/parameters/MembershipId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeRoleRequest'
+      responses:
+        '200':
+          description: Updated.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        4XX: *id002
+        5XX: *id003
+    delete:
+      operationId: removeMember
+      summary: Remove a member
+      description: An organization always keeps at least one owner (`LAST_OWNER`).
+      tags:
+      - organizations
+      x-avenra-permission: members.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - *id005
+      - *id006
+      responses:
+        '204':
+          description: Removed; the person's sessions lose access immediately.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/organizations/{organizationId}/invitations:
+    get:
+      operationId: listInvitations
+      summary: List pending invitations
+      tags:
+      - organizations
+      x-avenra-permission: members.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - *id005
+      responses:
+        '200':
+          description: Pending invitations.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invitation'
+        4XX: *id002
+        5XX: *id003
+    post:
+      operationId: inviteMember
+      summary: Invite someone by email
+      tags:
+      - organizations
+      x-avenra-permission: members.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: key-required
+      x-avenra-rate-limit: invitations
+      parameters:
+      - *id005
+      - *id007
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteRequest'
+      responses:
+        '201':
+          description: Invited; an email is sent.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+        4XX: *id002
+        5XX: *id003
+  /api/v1/organizations/{organizationId}/invitations/{invitationId}:
+    delete:
+      operationId: revokeInvitation
+      summary: Revoke an invitation
+      tags:
+      - organizations
+      x-avenra-permission: members.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - *id005
+      - $ref: '#/components/parameters/InvitationId'
+      responses:
+        '204':
+          description: Revoked.
+          headers:
+            X-Request-Id: *id001
+        4XX: *id002
+        5XX: *id003
+  /api/v1/invitations/acceptance:
+    post:
+      operationId: acceptInvitation
+      summary: Accept an invitation
+      description: The signed-in user's verified email must match the invitation.
+      tags:
+      - organizations
+      x-avenra-permission: authenticated
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: token-check
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+      responses:
+        '200':
+          description: Joined.
+          headers:
+            X-Request-Id: *id001
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationMembership'
+        4XX: *id002
+        5XX: *id003
 components:
   headers:
     RequestId:
       description: Correlation id of the request, also present in error bodies and server logs.
       schema:
         type: string
-
+    RetryAfter:
+      description: Seconds to wait before retrying (on `429`).
+      schema:
+        type: integer
   responses:
     ClientError:
       description: The request was rejected. See `code` for the reason.
       headers:
         X-Request-Id:
-          $ref: "#/components/headers/RequestId"
+          $ref: '#/components/headers/RequestId'
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: '#/components/schemas/ErrorResponse'
     ServerError:
       description: The server failed to handle the request.
       headers:
         X-Request-Id:
-          $ref: "#/components/headers/RequestId"
+          $ref: '#/components/headers/RequestId'
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
-
+            $ref: '#/components/schemas/ErrorResponse'
   schemas:
     ApiMeta:
       type: object
       additionalProperties: false
-      required: [service, apiVersion]
+      required:
+      - service
+      - apiVersion
       properties:
         service:
           type: string
           description: Name of the service answering the request.
-          examples: [avenra-api]
+          examples:
+          - avenra-api
         apiVersion:
           type: string
           description: Major version of the API contract.
-          examples: [v1]
-
+          examples:
+          - v1
     ErrorResponse:
       type: object
       additionalProperties: false
       description: The single error format of the API (Guidelines §34).
-      required: [code, message, requestId]
+      required:
+      - code
+      - message
+      - requestId
       properties:
         code:
           type: string
           description: Stable, machine-readable error code.
-          examples: [VALIDATION_FAILED]
+          examples:
+          - VALIDATION_FAILED
         message:
           type: string
           description: Human-readable explanation, safe to show to users.
@@ -120,12 +801,13 @@ components:
           type: array
           description: Per-field problems, present for validation errors only.
           items:
-            $ref: "#/components/schemas/FieldProblem"
-
+            $ref: '#/components/schemas/FieldProblem'
     FieldProblem:
       type: object
       additionalProperties: false
-      required: [field, problem]
+      required:
+      - field
+      - problem
       properties:
         field:
           type: string
@@ -133,3 +815,330 @@ components:
         problem:
           type: string
           description: What is wrong with the field.
+    SignUpRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - email
+      - password
+      - displayName
+      properties:
+        email: &id008
+          type: string
+          format: email
+          maxLength: 254
+        password: &id009
+          type: string
+          minLength: 12
+          maxLength: 128
+          description: 12 to 128 characters (ADR-014).
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 100
+    EmailRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - email
+      properties:
+        email: *id008
+    TokenRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - token
+      properties:
+        token: &id010
+          type: string
+          minLength: 20
+          maxLength: 200
+          description: Single-use token from an email link.
+    SignInRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - email
+      - password
+      properties:
+        email: *id008
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+    SignInResult:
+      type: object
+      additionalProperties: false
+      required:
+      - status
+      properties:
+        status:
+          type: string
+          enum:
+          - SIGNED_IN
+          - MFA_REQUIRED
+        mfaChallengeId:
+          type: string
+          format: uuid
+          description: Present when `status` is `MFA_REQUIRED`; valid for 5 minutes.
+    MfaSignInRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - mfaChallengeId
+      - code
+      properties:
+        mfaChallengeId: &id012
+          type: string
+          format: uuid
+        code: &id011
+          type: string
+          pattern: ^[0-9]{6}$|^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$
+          description: A 6-digit authenticator code or a recovery code.
+    ChangePasswordRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - currentPassword
+      - newPassword
+      properties:
+        currentPassword:
+          type: string
+          minLength: 1
+          maxLength: 128
+        newPassword: *id009
+    PasswordResetConfirmation:
+      type: object
+      additionalProperties: false
+      required:
+      - token
+      - newPassword
+      properties:
+        token: *id010
+        newPassword: *id009
+    TotpEnrollment:
+      type: object
+      additionalProperties: false
+      required:
+      - secret
+      - otpauthUri
+      properties:
+        secret:
+          type: string
+          description: Base32 secret for manual entry.
+        otpauthUri:
+          type: string
+          description: '`otpauth://` URI for a QR code.'
+    TotpCodeRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      properties:
+        code: *id011
+    RecoveryCodes:
+      type: object
+      additionalProperties: false
+      required:
+      - codes
+      properties:
+        codes:
+          type: array
+          minItems: 10
+          maxItems: 10
+          items:
+            type: string
+    CurrentUser:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - email
+      - displayName
+      - mfaEnabled
+      - organizations
+      properties:
+        id: *id012
+        email: *id008
+        displayName:
+          type: string
+        mfaEnabled:
+          type: boolean
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationMembership'
+    SessionSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - current
+      - createdAt
+      - lastSeenAt
+      properties:
+        id: *id012
+        current:
+          type: boolean
+        createdAt: &id013
+          type: string
+          format: date-time
+        lastSeenAt: *id013
+        userAgent:
+          type: string
+          maxLength: 300
+    Organization:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - createdAt
+      properties:
+        id: *id012
+        name:
+          type: string
+        createdAt: *id013
+    OrganizationMembership:
+      type: object
+      additionalProperties: false
+      required:
+      - organization
+      - membershipId
+      - role
+      - permissions
+      properties:
+        organization:
+          $ref: '#/components/schemas/Organization'
+        membershipId: *id012
+        role:
+          $ref: '#/components/schemas/Role'
+        permissions:
+          type: array
+          items:
+            type: string
+          description: Permissions granted by the role, for the interface to adapt; the server checks
+            them independently.
+    CreateOrganizationRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+    UpdateOrganizationRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+    Member:
+      type: object
+      additionalProperties: false
+      required:
+      - membershipId
+      - userId
+      - email
+      - displayName
+      - role
+      - joinedAt
+      properties:
+        membershipId: *id012
+        userId: *id012
+        email: *id008
+        displayName:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        joinedAt: *id013
+    ChangeRoleRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - role
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+    InviteRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - email
+      - role
+      properties:
+        email: *id008
+        role:
+          $ref: '#/components/schemas/Role'
+    Invitation:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - email
+      - role
+      - invitedAt
+      - expiresAt
+      properties:
+        id: *id012
+        email: *id008
+        role:
+          $ref: '#/components/schemas/Role'
+        invitedAt: *id013
+        expiresAt: *id013
+    Role:
+      type: string
+      enum:
+      - OWNER
+      - ADMIN
+      - MANAGER
+      - MEMBER
+      - VIEWER
+      description: Role within an organization (Guidelines §18).
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-avenra_session
+      description: Server-side session (ADR-013).
+  parameters:
+    OrganizationId:
+      name: organizationId
+      in: path
+      required: true
+      schema: *id012
+      description: The organization. The server checks the caller's membership; the id alone grants nothing
+        (ADR-005).
+    MembershipId:
+      name: membershipId
+      in: path
+      required: true
+      schema: *id012
+    InvitationId:
+      name: invitationId
+      in: path
+      required: true
+      schema: *id012
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema: *id012
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+      description: Client-chosen key; repeating a request with the same key returns the first result (Guidelines
+        §30).
+security:
+- sessionCookie: []
