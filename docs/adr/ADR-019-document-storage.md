@@ -31,6 +31,28 @@ business document types up to 25 MB.
 - **Quarantine:** a version is not downloadable until the malware scan marks it
   clean (ADR-021).
 
+- **Upload path:** the API spools the upload to a private temporary file
+  (enforcing the size limit and computing the checksum as it reads), detects
+  the type, scans it (ADR-021), then writes it to storage with a known length
+  and deletes the temporary file.
+
+## Dependency: AWS SDK for Java v2, S3 module (Guidelines §99)
+
+1. **Need:** an S3 client with request signing (SigV4); writing our own
+   signing code is security-sensitive and not our business.
+2. **Alternatives:** MinIO client (smaller, single vendor), in-house SigV4
+   (rejected above).
+3. **Maintenance:** maintained by AWS, frequent releases, Apache-2.0.
+4. **Security:** wide use and a public advisory process; only the `s3` and
+   `url-connection-client` artifacts, with the Netty and Apache HTTP clients
+   excluded to keep the surface small.
+5. **Size:** a few MB of jars; acceptable for the API.
+6. **Exit:** used only behind the `DocumentStorage` interface; swapping it
+   touches one class.
+
+Version 2.55.10 (the 7-day release-age rule applies, ADR-006), managed
+through the SDK's BOM.
+
 ## Alternatives
 
 - **Presigned URLs** — deferred: efficient for large files, but adds a second
