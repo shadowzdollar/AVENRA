@@ -35,8 +35,9 @@ USER 10001:10001
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError -Duser.timezone=UTC"
 
 EXPOSE 8080
+# Follows SERVER_PORT when the port is overridden at runtime.
 HEALTHCHECK --interval=15s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget -q -O /dev/null http://127.0.0.1:8080/health/liveness || exit 1
+    CMD wget -q -O /dev/null "http://127.0.0.1:${SERVER_PORT:-8080}/health/liveness" || exit 1
 
 # SPRING_PROFILES_ACTIVE and the AVENRA_* settings must be provided at runtime;
 # the application refuses to start without them.
