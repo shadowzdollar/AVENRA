@@ -57,8 +57,8 @@ database (row-level security), cache and log layers.
 | 2.12 | Rate limits on sign-in, sign-up, password reset and invitations; tenant-aware where relevant | Contract policies enforced per caller; per-account sign-in limit (`RateLimitIT`: 429 + Retry-After, other accounts unaffected); credential policies fail closed (`RateLimiterFailureModeTest`) | ☑ |
 | 2.13 | Account enumeration resistant: sign-in, sign-up and reset responses do not reveal whether an email exists | Identical status and body for registered vs unknown emails in sign-up, reset, resend; identical sign-in failures with equal hashing effort (`IdentityFlowIT.EnumerationResistance`) | ☑ |
 | 2.14 | Audit events for sign-in success/failure, password and MFA changes, membership and role changes | Append-only `audit_events` (update/delete denied, `RowLevelSecurityIT`); sign-in success/failure, sign-up, verification, password, MFA, session, membership, invitation events (`IdentityFlowIT.Auditing`) | ☑ |
-| 2.15 | Web flows work end to end in a browser | End-to-end test | ☐ |
-| 2.16 | Security review of the phase recorded (threat model for identity) | `docs/security/` | ☐ |
+| 2.15 | Web flows work end to end in a browser | Playwright in Chrome (`apps/web/e2e/identity.spec.ts`): sign-up, confirmation from the real email in Mailpit, sign-in, organization, invitation accepted by a colleague with member permissions, sign-out; zero CSP violations or script errors; run against the API with no CORS origins (production-like). Also runs in CI against the production images | ☑ |
+| 2.16 | Security review of the phase recorded (threat model for identity) | `docs/security/threat-model-identity.md`: 17 STRIDE threats, each with its control and proving test; accepted and open risks with revisit points | ☑ |
 | 2.17 | CI green; hardening pass recorded | CI, this file | ☐ |
 
 ## Declared deferrals
