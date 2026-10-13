@@ -41,8 +41,8 @@ naming the phase that will close it. A deferral is never silent.
 
 | # | Phase | Status |
 |---|---|---|
-| 1 | [Foundation](phase-01-foundation.md) | In progress |
-| 2 | Identity | Not started |
+| 1 | [Foundation](phase-01-foundation.md) | Complete (2026-10-13) |
+| 2 | [Identity](phase-02-identity.md) | In progress |
 | 3 | Core business objects | Not started |
 | 4 | Work execution | Not started |
 | 5 | Verification | Not started |
