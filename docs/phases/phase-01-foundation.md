@@ -66,8 +66,44 @@ Legend: ☑ proven · ◐ proven locally, CI evidence pending · ☐ not started
 | Service-to-service authentication between API and AI service | No AI endpoints exist yet; the service binds to 127.0.0.1 only | Phase 6 (with the first AI capability) |
 | Metrics backend and dashboards; OTLP log export | Metrics are collected but need a backend to be useful; logs go to stdout for the platform's log collector | Phase 13 (monitoring and alerting) |
 | Tracing in the AI service | No AI calls exist yet; the API → AI hop is traced when the first call is added | Phase 6 |
+| Rate limiting (§67, §71) | The contract declares `x-avenra-rate-limit` per operation, but nothing enforces it yet. The first endpoints that need limits (sign-in, password reset, invitations) arrive with authentication | Phase 2 |
 | GitHub branch protection on `main` | Must be enabled by the repository owner in GitHub settings | Owner action during Phase 1 |
 
 ## Hardening record
 
-_To be completed at phase close._
+Each Phase 1 section of the Guidelines was re-read and checked against the
+code on 2026-10-13. Findings and their resolution:
+
+| Section | Rule | Result |
+|---|---|---|
+| §3, §12, §14 | Modular monolith, explicit module boundaries | Met. Enforced by `ModularityTest` and ArchUnit rules; self-tests prove the rules fail on violations. Worker processes (ADR-001) arrive with the job engine in Phase 4 |
+| §4–§6 | Stack: Next.js/TS, Spring Boot, Python AI service owning no data | Met (ADR-006, ADR-012) |
+| §7, §38–§40 | PostgreSQL, Flyway only, immutable migrations, UTC | Met. Owner/runtime role split proven by `DatabaseRolesIT`; sessions pinned to UTC |
+| §8–§10 | Redis not a source of truth; S3-compatible storage | Met for Phase 1 (infrastructure running; first use in later phases) |
+| §11 | Layered modules, domain independent | Met (ArchUnit layering rules) |
+| §13 | Repository structure | Partly, by intent: `packages/ui`, `packages/config`, `packages/shared-types`, `tests/*` and `infrastructure/terraform` are created when their first real content exists (§99: nothing speculative). `packages/contracts` provides the shared API types |
+| §31–§34 | REST under `/api/v1`, DTOs, structured errors with request id | Met. Contract-first (ADR-008); conformance tested |
+| §60–§62, §101 | OpenTelemetry, structured logs, no secrets, naming | Met. `TracingIT`, `StructuredLoggingIT`; client-library URL logging suppressed in the AI service |
+| §64 | Validation at every trust boundary | Met for existing boundaries (config, HTTP bodies, inbound request ids) |
+| §67, §71 | Rate limiting | **Gap.** Declared in the contract, not enforced. Deferred to Phase 2 (see deferrals) |
+| §68, §91 | Secrets and configuration | Met. `.env` ignored and excluded from images; validated config fails fast; production secret manager deferred to Phase 13 |
+| §71–§72 | API and frontend security | Met: deny by default, headers, CORS, CSRF stance recorded (ADR-011), size limits, nonce CSP |
+| §81–§84 | Coding standards | Met and enforced: javac warnings as errors, palantir format, ESLint zero warnings, no `any`, ruff + mypy --strict |
+| §86–§88 | Git and PR rules | Met after one correction: an automatic commit with a non-conforming message (`Update: apps,...`) was rewritten as a Conventional Commit before the first push (tree verified identical) |
+| §89 | ADRs | Met (ADR-001 to ADR-012) |
+| §90 | Environments | Profiles for all four; shared environments deferred to Phase 13 |
+| §92 | CI | Pipeline written, actionlint clean; evidence = first green run (1.18) |
+| §93–§94 | Containers, health checks | AI image built and smoke-tested; API and web images verified in CI (1.17) |
+| §99 | Justified dependencies | Met. Every non-Boot dependency has a stated reason; 7-day release age enforced in pnpm, uv, Docker tags, actions and Dependabot |
+| §100 | Documentation | Met: root docs, per-app READMEs, ADRs, this file |
+
+Process findings:
+
+- The network on the development machine was often slow (down to 1 KB/s)
+  and IPv6 is broken. Maven timeouts and retries are configured in
+  `apps/api/.mvn/maven.config`, which also protects CI.
+- Several defects were caught by the checks before commit rather than after:
+  an empty OTLP endpoint crashing startup, a statically rendered page that
+  could not carry the CSP nonce, a request log written outside the trace,
+  HTTP client libraries logging full URLs, and a self-test that passed
+  vacuously.
