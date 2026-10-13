@@ -28,6 +28,21 @@ class ContractConformanceIT extends IntegrationTestBase {
     @Autowired
     private JsonMapper json;
 
+    @Autowired
+    private com.avenra.platform.web.ContractOperations operations;
+
+    @Autowired
+    private com.avenra.platform.ratelimit.RateLimiter rateLimiter;
+
+    @Test
+    void everyRateLimitPolicyNamedInTheContractIsConfigured() {
+        assertThat(operations.all()).isNotEmpty();
+        assertThat(operations.all())
+                .allSatisfy(operation -> assertThat(rateLimiter.hasPolicy(operation.rateLimit()))
+                        .as("policy '%s' of %s", operation.rateLimit(), operation.operationId())
+                        .isTrue());
+    }
+
     @Test
     void everyGeneratedApiInterfaceIsImplemented() {
         var interfaces = new ClassFileImporter()

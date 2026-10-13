@@ -163,8 +163,9 @@ paths:
     post:
       operationId: signIn
       summary: Sign in with email and password
-      description: Failure is always `INVALID_CREDENTIALS`, whether the email is unknown, unverified or
-        the password is wrong.
+      description: An unknown email and a wrong password both answer `INVALID_CREDENTIALS` after the same
+        hashing effort. Only a correct password for an unverified account answers `EMAIL_NOT_VERIFIED`.
+        Repeated attempts per account answer `RATE_LIMITED`.
       tags:
       - authentication
       security: []
