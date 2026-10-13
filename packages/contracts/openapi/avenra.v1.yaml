@@ -18,6 +18,8 @@ info:
     identifier: LicenseRef-Avenra-Proprietary
 servers:
 - url: /
+security:
+- sessionCookie: []
 tags:
 - name: platform
   description: Technical information about the API itself.
@@ -42,15 +44,15 @@ paths:
         '200':
           description: The API description.
           headers:
-            X-Request-Id: &id001
+            X-Request-Id:
               $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiMeta'
-        4XX: &id002
+        4XX:
           $ref: '#/components/responses/ClientError'
-        5XX: &id003
+        5XX:
           $ref: '#/components/responses/ServerError'
   /api/v1/auth/csrf:
     get:
@@ -69,9 +71,12 @@ paths:
           description: The token is set in the readable `XSRF-TOKEN` cookie; send it back in `X-XSRF-TOKEN`
             on state-changing requests.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/sign-up:
     post:
       operationId: signUp
@@ -94,9 +99,12 @@ paths:
           description: Accepted. A verification email is sent. The response is the same whether or not
             the email is already registered, so it does not reveal accounts.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/email-verification:
     post:
       operationId: verifyEmail
@@ -118,9 +126,12 @@ paths:
         '204':
           description: The email address is verified.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/email-verification/resend:
     post:
       operationId: resendVerificationEmail
@@ -142,9 +153,12 @@ paths:
         '202':
           description: Accepted. The response does not reveal whether the address exists.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/sign-in:
     post:
       operationId: signIn
@@ -168,8 +182,9 @@ paths:
         '200':
           description: Signed in, or a second factor is required.
           headers:
-            X-Request-Id: *id001
-            Set-Cookie: &id004
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Set-Cookie:
               description: The `__Host-avenra_session` cookie (HttpOnly, Secure, SameSite=Lax).
               schema:
                 type: string
@@ -177,8 +192,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SignInResult'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/sign-in/mfa:
     post:
       operationId: completeMfaSignIn
@@ -200,14 +217,20 @@ paths:
         '200':
           description: Signed in.
           headers:
-            X-Request-Id: *id001
-            Set-Cookie: *id004
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Set-Cookie:
+              description: The `__Host-avenra_session` cookie (HttpOnly, Secure, SameSite=Lax).
+              schema:
+                type: string
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SignInResult'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/sign-out:
     post:
       operationId: signOut
@@ -222,9 +245,12 @@ paths:
         '204':
           description: Signed out; the session cookie is cleared.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/session:
     get:
       operationId: getCurrentSession
@@ -239,13 +265,16 @@ paths:
         '200':
           description: The current user.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CurrentUser'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/sessions:
     get:
       operationId: listSessions
@@ -260,15 +289,18 @@ paths:
         '200':
           description: Active sessions.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/SessionSummary'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
     delete:
       operationId: revokeOtherSessions
       summary: Sign out everywhere else
@@ -282,9 +314,12 @@ paths:
         '204':
           description: All other sessions are revoked.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/sessions/{sessionId}:
     delete:
       operationId: revokeSession
@@ -301,9 +336,12 @@ paths:
         '204':
           description: The session is revoked.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/password:
     put:
       operationId: changePassword
@@ -324,9 +362,12 @@ paths:
         '204':
           description: Changed. All other sessions are revoked.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/password-reset:
     post:
       operationId: requestPasswordReset
@@ -348,9 +389,12 @@ paths:
         '202':
           description: Accepted. The response does not reveal whether the address exists.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/password-reset/confirm:
     post:
       operationId: confirmPasswordReset
@@ -372,9 +416,12 @@ paths:
         '204':
           description: The password is changed and all sessions are revoked.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/mfa/totp:
     post:
       operationId: startTotpEnrollment
@@ -389,13 +436,16 @@ paths:
         '200':
           description: The secret to add to an authenticator app. MFA is not active until confirmed.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TotpEnrollment'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
     delete:
       operationId: disableTotp
       summary: Turn off authenticator-app MFA
@@ -415,9 +465,12 @@ paths:
         '204':
           description: MFA is off.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/auth/mfa/totp/activation:
     post:
       operationId: activateTotp
@@ -438,13 +491,16 @@ paths:
         '200':
           description: MFA is on. The recovery codes are shown only once.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecoveryCodes'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/organizations:
     get:
       operationId: listOrganizations
@@ -459,15 +515,18 @@ paths:
         '200':
           description: Organizations with the user's role in each.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/OrganizationMembership'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
     post:
       operationId: createOrganization
       summary: Create an organization
@@ -478,8 +537,7 @@ paths:
       x-avenra-idempotency: key-required
       x-avenra-rate-limit: default
       parameters:
-      - &id007
-        $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -490,13 +548,16 @@ paths:
         '201':
           description: Created; the creator is its owner.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Organization'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/organizations/{organizationId}:
     get:
       operationId: getOrganization
@@ -508,19 +569,21 @@ paths:
       x-avenra-idempotency: safe
       x-avenra-rate-limit: default
       parameters:
-      - &id005
-        $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/OrganizationId'
       responses:
         '200':
           description: The organization.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Organization'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
     patch:
       operationId: updateOrganization
       summary: Rename an organization
@@ -531,7 +594,7 @@ paths:
       x-avenra-idempotency: idempotent
       x-avenra-rate-limit: default
       parameters:
-      - *id005
+      - $ref: '#/components/parameters/OrganizationId'
       requestBody:
         required: true
         content:
@@ -542,13 +605,16 @@ paths:
         '200':
           description: Updated.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Organization'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/organizations/{organizationId}/members:
     get:
       operationId: listMembers
@@ -560,20 +626,23 @@ paths:
       x-avenra-idempotency: safe
       x-avenra-rate-limit: default
       parameters:
-      - *id005
+      - $ref: '#/components/parameters/OrganizationId'
       responses:
         '200':
           description: Members and their roles.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Member'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/organizations/{organizationId}/members/{membershipId}:
     patch:
       operationId: changeMemberRole
@@ -586,9 +655,8 @@ paths:
       x-avenra-idempotency: idempotent
       x-avenra-rate-limit: default
       parameters:
-      - *id005
-      - &id006
-        $ref: '#/components/parameters/MembershipId'
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/MembershipId'
       requestBody:
         required: true
         content:
@@ -599,13 +667,16 @@ paths:
         '200':
           description: Updated.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Member'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
     delete:
       operationId: removeMember
       summary: Remove a member
@@ -617,15 +688,18 @@ paths:
       x-avenra-idempotency: idempotent
       x-avenra-rate-limit: default
       parameters:
-      - *id005
-      - *id006
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/MembershipId'
       responses:
         '204':
           description: Removed; the person's sessions lose access immediately.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/organizations/{organizationId}/invitations:
     get:
       operationId: listInvitations
@@ -637,20 +711,23 @@ paths:
       x-avenra-idempotency: safe
       x-avenra-rate-limit: default
       parameters:
-      - *id005
+      - $ref: '#/components/parameters/OrganizationId'
       responses:
         '200':
           description: Pending invitations.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Invitation'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
     post:
       operationId: inviteMember
       summary: Invite someone by email
@@ -661,8 +738,8 @@ paths:
       x-avenra-idempotency: key-required
       x-avenra-rate-limit: invitations
       parameters:
-      - *id005
-      - *id007
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
@@ -673,13 +750,16 @@ paths:
         '201':
           description: Invited; an email is sent.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Invitation'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/organizations/{organizationId}/invitations/{invitationId}:
     delete:
       operationId: revokeInvitation
@@ -691,15 +771,18 @@ paths:
       x-avenra-idempotency: idempotent
       x-avenra-rate-limit: default
       parameters:
-      - *id005
+      - $ref: '#/components/parameters/OrganizationId'
       - $ref: '#/components/parameters/InvitationId'
       responses:
         '204':
           description: Revoked.
           headers:
-            X-Request-Id: *id001
-        4XX: *id002
-        5XX: *id003
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
   /api/v1/invitations/acceptance:
     post:
       operationId: acceptInvitation
@@ -721,13 +804,16 @@ paths:
         '200':
           description: Joined.
           headers:
-            X-Request-Id: *id001
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrganizationMembership'
-        4XX: *id002
-        5XX: *id003
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
 components:
   headers:
     RequestId:
@@ -823,11 +909,11 @@ components:
       - password
       - displayName
       properties:
-        email: &id008
+        email:
           type: string
           format: email
           maxLength: 254
-        password: &id009
+        password:
           type: string
           minLength: 12
           maxLength: 128
@@ -842,14 +928,17 @@ components:
       required:
       - email
       properties:
-        email: *id008
+        email:
+          type: string
+          format: email
+          maxLength: 254
     TokenRequest:
       type: object
       additionalProperties: false
       required:
       - token
       properties:
-        token: &id010
+        token:
           type: string
           minLength: 20
           maxLength: 200
@@ -861,7 +950,10 @@ components:
       - email
       - password
       properties:
-        email: *id008
+        email:
+          type: string
+          format: email
+          maxLength: 254
         password:
           type: string
           minLength: 1
@@ -888,10 +980,10 @@ components:
       - mfaChallengeId
       - code
       properties:
-        mfaChallengeId: &id012
+        mfaChallengeId:
           type: string
           format: uuid
-        code: &id011
+        code:
           type: string
           pattern: ^[0-9]{6}$|^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$
           description: A 6-digit authenticator code or a recovery code.
@@ -906,7 +998,11 @@ components:
           type: string
           minLength: 1
           maxLength: 128
-        newPassword: *id009
+        newPassword:
+          type: string
+          minLength: 12
+          maxLength: 128
+          description: 12 to 128 characters (ADR-014).
     PasswordResetConfirmation:
       type: object
       additionalProperties: false
@@ -914,8 +1010,16 @@ components:
       - token
       - newPassword
       properties:
-        token: *id010
-        newPassword: *id009
+        token:
+          type: string
+          minLength: 20
+          maxLength: 200
+          description: Single-use token from an email link.
+        newPassword:
+          type: string
+          minLength: 12
+          maxLength: 128
+          description: 12 to 128 characters (ADR-014).
     TotpEnrollment:
       type: object
       additionalProperties: false
@@ -935,7 +1039,10 @@ components:
       required:
       - code
       properties:
-        code: *id011
+        code:
+          type: string
+          pattern: ^[0-9]{6}$|^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$
+          description: A 6-digit authenticator code or a recovery code.
     RecoveryCodes:
       type: object
       additionalProperties: false
@@ -958,8 +1065,13 @@ components:
       - mfaEnabled
       - organizations
       properties:
-        id: *id012
-        email: *id008
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+          maxLength: 254
         displayName:
           type: string
         mfaEnabled:
@@ -977,13 +1089,17 @@ components:
       - createdAt
       - lastSeenAt
       properties:
-        id: *id012
+        id:
+          type: string
+          format: uuid
         current:
           type: boolean
-        createdAt: &id013
+        createdAt:
           type: string
           format: date-time
-        lastSeenAt: *id013
+        lastSeenAt:
+          type: string
+          format: date-time
         userAgent:
           type: string
           maxLength: 300
@@ -995,10 +1111,14 @@ components:
       - name
       - createdAt
       properties:
-        id: *id012
+        id:
+          type: string
+          format: uuid
         name:
           type: string
-        createdAt: *id013
+        createdAt:
+          type: string
+          format: date-time
     OrganizationMembership:
       type: object
       additionalProperties: false
@@ -1010,7 +1130,9 @@ components:
       properties:
         organization:
           $ref: '#/components/schemas/Organization'
-        membershipId: *id012
+        membershipId:
+          type: string
+          format: uuid
         role:
           $ref: '#/components/schemas/Role'
         permissions:
@@ -1050,14 +1172,23 @@ components:
       - role
       - joinedAt
       properties:
-        membershipId: *id012
-        userId: *id012
-        email: *id008
+        membershipId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+          maxLength: 254
         displayName:
           type: string
         role:
           $ref: '#/components/schemas/Role'
-        joinedAt: *id013
+        joinedAt:
+          type: string
+          format: date-time
     ChangeRoleRequest:
       type: object
       additionalProperties: false
@@ -1073,7 +1204,10 @@ components:
       - email
       - role
       properties:
-        email: *id008
+        email:
+          type: string
+          format: email
+          maxLength: 254
         role:
           $ref: '#/components/schemas/Role'
     Invitation:
@@ -1086,12 +1220,21 @@ components:
       - invitedAt
       - expiresAt
       properties:
-        id: *id012
-        email: *id008
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+          maxLength: 254
         role:
           $ref: '#/components/schemas/Role'
-        invitedAt: *id013
-        expiresAt: *id013
+        invitedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
     Role:
       type: string
       enum:
@@ -1112,24 +1255,32 @@ components:
       name: organizationId
       in: path
       required: true
-      schema: *id012
+      schema:
+        type: string
+        format: uuid
       description: The organization. The server checks the caller's membership; the id alone grants nothing
         (ADR-005).
     MembershipId:
       name: membershipId
       in: path
       required: true
-      schema: *id012
+      schema:
+        type: string
+        format: uuid
     InvitationId:
       name: invitationId
       in: path
       required: true
-      schema: *id012
+      schema:
+        type: string
+        format: uuid
     SessionId:
       name: sessionId
       in: path
       required: true
-      schema: *id012
+      schema:
+        type: string
+        format: uuid
     IdempotencyKey:
       name: Idempotency-Key
       in: header
@@ -1140,5 +1291,3 @@ components:
         maxLength: 128
       description: Client-chosen key; repeating a request with the same key returns the first result (Guidelines
         §30).
-security:
-- sessionCookie: []
