@@ -32,3 +32,7 @@ Statuses: `Proposed` → `Accepted` → (`Superseded by ADR-NNN` | `Deprecated`)
 | [015](ADR-015-transactional-email.md) | Transactional email in Phase 2 | Accepted |
 | [016](ADR-016-rate-limiting.md) | Rate limiting | Accepted |
 | [017](ADR-017-totp-mfa.md) | Optional TOTP multi-factor authentication | Accepted |
+| [018](ADR-018-work-model.md) | Work model and lifecycle | Accepted |
+| [019](ADR-019-document-storage.md) | Document storage and access | Accepted |
+| [020](ADR-020-client-request-links.md) | Client request links | Accepted |
+| [021](ADR-021-malware-scanning.md) | Malware scanning of uploads | Accepted |
