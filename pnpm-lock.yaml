@@ -243,8 +243,8 @@ importers:
         version: 0.17.0
     devDependencies:
       '@redocly/cli':
-        specifier: 2.57.0
-        version: 2.57.0
+        specifier: 2.58.2
+        version: 2.58.2
       openapi-typescript:
         specifier: 7.13.0
         version: 7.13.0(typescript@5.9.3)
@@ -733,8 +733,8 @@ packages:
   '@redocly/ajv@8.11.2':
     resolution: {integrity: sha512-io1JpnwtIcvojV7QKDUSIuMN/ikdOUd1ReEnUnMKGfDVridQZ31J0MmIuqwuRjWDZfmvr+Q0MqCcfHM2gTivOg==}
 
-  '@redocly/cli@2.57.0':
-    resolution: {integrity: sha512-1d5fVyUaYlMNgCHUoyE2vUyxBhs/jmOHgsX/kFmfWzESw4f/G/OV/SU9E55rU7aUNmw9rHj1vXmL6yUdIn+KKQ==}
+  '@redocly/cli@2.58.2':
+    resolution: {integrity: sha512-xiWcCDzLz6/owx3jWJONvUp1A32p0PRQdxbwa/Ai/zwH5lk5EHxRVVmXfemyE23bTpU0ttKWbAzOWN1RkgSz5g==}
     engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
     hasBin: true
 
@@ -3325,7 +3325,7 @@ snapshots:
       require-from-string: 2.0.2
       uri-js-replace: 1.0.1
 
-  '@redocly/cli@2.57.0': {}
+  '@redocly/cli@2.58.2': {}
 
   '@redocly/config@0.22.0': {}
 
