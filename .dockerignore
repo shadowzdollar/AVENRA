@@ -1,0 +1,32 @@
+# Build context hygiene for all images (built from the repository root).
+# Secrets must never enter a build context or an image layer.
+.env
+.env.*
+!.env.example
+**/*.key
+**/*.pem
+
+# Version control and editor state
+.git
+.gitignore
+.idea
+.vscode
+
+# Dependencies and build output: rebuilt inside the image
+**/node_modules
+**/.next
+**/target
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+packages/contracts/src/generated
+**/*.tsbuildinfo
+
+# Not needed by any image
+docs
+infrastructure
+*.md
+!apps/*/README.md
+favicon.png

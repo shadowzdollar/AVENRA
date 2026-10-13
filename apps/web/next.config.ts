@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
 
 /**
@@ -17,6 +18,8 @@ const config: NextConfig = {
   poweredByHeader: false,
   // Self-contained server bundle for the container image (Phase 1 step 11).
   output: "standalone",
+  // Trace files from the monorepo root so workspace packages are included.
+  outputFileTracingRoot: fileURLToPath(new URL("../../", import.meta.url)),
   // The workspace package is TypeScript source; Next compiles it.
   transpilePackages: ["@avenra/contracts"],
   async headers() {
