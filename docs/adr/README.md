@@ -27,3 +27,8 @@ Statuses: `Proposed` → `Accepted` → (`Superseded by ADR-NNN` | `Deprecated`)
 | [010](ADR-010-trunk-based-branching.md) | Trunk-based branching | Accepted |
 | [011](ADR-011-web-security-baseline.md) | Web security baseline before authentication | Accepted |
 | [012](ADR-012-typescript-5.md) | TypeScript 5.9 for the JavaScript workspace | Accepted |
+| [013](ADR-013-same-origin-server-sessions.md) | Same-origin access and server-side sessions | Accepted |
+| [014](ADR-014-password-storage.md) | Password storage and password rules | Accepted |
+| [015](ADR-015-transactional-email.md) | Transactional email in Phase 2 | Accepted |
+| [016](ADR-016-rate-limiting.md) | Rate limiting | Accepted |
+| [017](ADR-017-totp-mfa.md) | Optional TOTP multi-factor authentication | Accepted |

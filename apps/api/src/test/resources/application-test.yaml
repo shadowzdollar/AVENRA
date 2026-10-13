@@ -1,7 +1,27 @@
 # Integration tests use production-like settings (JSON logs) against
-# Testcontainers. Database values are supplied by PostgresTestDatabase.
+# Testcontainers. Database, Redis and encryption keys are supplied by
+# PostgresTestDatabase and TestServices.
 avenra:
   environment: LOCAL
   web:
     allowed-origins: https://app.avenra.test
     max-request-body-size: 4KB
+  # All tests share one client address; generous limits keep unrelated tests
+  # independent. RateLimitIT runs with strict limits of its own.
+  rate-limits:
+    policies:
+      default: { capacity: 100000, refill: 1m }
+      sign-up: { capacity: 100000, refill: 1m }
+      sign-in: { capacity: 100000, refill: 1m }
+      sign-in-account: { capacity: 100000, refill: 1m }
+      mfa: { capacity: 100000, refill: 1m }
+      password-reset: { capacity: 100000, refill: 1m }
+      email-send: { capacity: 100000, refill: 1m }
+      token-check: { capacity: 100000, refill: 1m }
+      invitations: { capacity: 100000, refill: 1m }
+
+# Tests capture email with TestOutbox; this SMTP host is never contacted.
+spring:
+  mail:
+    host: localhost
+    port: 1

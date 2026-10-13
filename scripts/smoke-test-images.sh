@@ -16,9 +16,15 @@ set -a
 . "$ROOT/.env"
 set +a
 
+# KEEP_RUNNING=1 leaves the healthy containers up (for browser tests); the
+# containers that are expected to refuse to start are always removed.
+KEEP_RUNNING="${KEEP_RUNNING:-0}"
 CONTAINERS=()
 cleanup() {
-  for c in "${CONTAINERS[@]}"; do docker rm -f "$c" >/dev/null 2>&1 || true; done
+  for c in "${CONTAINERS[@]}"; do
+    if [[ "$KEEP_RUNNING" == "1" && "$c" != *-noconfig ]]; then continue; fi
+    docker rm -f "$c" >/dev/null 2>&1 || true
+  done
 }
 trap cleanup EXIT
 
@@ -85,7 +91,9 @@ docker run -d --name avenra-api-smoke --network host \
   -e SERVER_PORT=18080 \
   -e AVENRA_DB_URL -e AVENRA_DB_APP_USER -e AVENRA_DB_APP_PASSWORD \
   -e AVENRA_DB_OWNER_USER -e AVENRA_DB_OWNER_PASSWORD \
-  -e AVENRA_WEB_ALLOWED_ORIGINS=http://localhost:13000 \
+  -e AVENRA_REDIS_URL -e AVENRA_CRYPTO_ACTIVE_KEY_ID -e AVENRA_CRYPTO_KEYS_LOCAL1 \
+  -e SPRING_MAIL_HOST=127.0.0.1 -e SPRING_MAIL_PORT=11025 \
+  -e AVENRA_WEB_PUBLIC_BASE_URL=http://127.0.0.1:13000 \
   "avenra-api:$TAG" >/dev/null
 wait_healthy avenra-api-smoke
 expect_uid avenra-api-smoke 10001
@@ -107,11 +115,13 @@ expect_http http://127.0.0.1:18090/docs 404
 echo "Web (avenra-web:$TAG)"
 expect_non_root_image "avenra-web:$TAG"
 CONTAINERS+=(avenra-web-smoke)
-docker run -d --name avenra-web-smoke -p 127.0.0.1:13000:3000 "avenra-web:$TAG" >/dev/null
+docker run -d --name avenra-web-smoke --network host -e PORT=13000 \
+  -e AVENRA_API_INTERNAL_URL=http://127.0.0.1:18080 "avenra-web:$TAG" >/dev/null
 wait_healthy avenra-web-smoke
 expect_uid avenra-web-smoke 1000
 expect_http http://127.0.0.1:13000/healthz 200
 expect_http http://127.0.0.1:13000/ 200
+expect_http http://127.0.0.1:13000/api/v1/meta 200
 csp=$(curl -s -D - -o /dev/null http://127.0.0.1:13000/ | grep -i '^content-security-policy:' || true)
 if [[ "$csp" == *"nonce-"* ]]; then pass "web sends a nonce-based Content-Security-Policy"; else fail "web CSP missing or without nonce"; fi
 powered=$(curl -s -D - -o /dev/null http://127.0.0.1:13000/ | grep -ic '^x-powered-by:' || true)

@@ -12,7 +12,8 @@
     "generate": "openapi-typescript --redocly redocly.yaml",
     "typecheck": "tsc --noEmit",
     "test:lint-rules": "node test/lint-rules.selftest.mjs",
-    "check": "pnpm run lint && pnpm run test:lint-rules && pnpm run generate && pnpm run typecheck"
+    "test:no-aliases": "node test/no-yaml-aliases.mjs",
+    "check": "pnpm run lint && pnpm run test:no-aliases && pnpm run test:lint-rules && pnpm run generate && pnpm run typecheck"
   },
   "dependencies": {
     "openapi-fetch": "0.17.0"

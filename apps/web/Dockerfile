@@ -1,10 +1,8 @@
 # syntax=docker/dockerfile:1
 # Avenra web image (Guidelines §93). Build from the repository root:
-#   docker build -f apps/web/Dockerfile \
-#     --build-arg NEXT_PUBLIC_AVENRA_API_URL=https://api.example \
-#     -t avenra-web .
-# NEXT_PUBLIC_* values are compiled into the browser bundle, so the image is
-# built per environment. They are public by definition; never pass secrets.
+#   docker build -f apps/web/Dockerfile -t avenra-web .
+# One image for every environment: AVENRA_API_INTERNAL_URL (where /api/* is
+# forwarded, ADR-013) is read at runtime.
 
 # --- Build ------------------------------------------------------------------
 FROM node:24.21.0-alpine3.24 AS build
@@ -18,9 +16,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --froze
 
 COPY packages/contracts packages/contracts
 COPY apps/web apps/web
-ARG NEXT_PUBLIC_AVENRA_API_URL
-ENV NEXT_PUBLIC_AVENRA_API_URL=${NEXT_PUBLIC_AVENRA_API_URL} \
-    NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @avenra/contracts run generate \
     && pnpm --filter @avenra/web run build
 

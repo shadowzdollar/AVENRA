@@ -32,6 +32,21 @@ spring:
     placeholders:
       app_role: ${AVENRA_DB_APP_USER}
 
+  # Rate-limit counters only (ADR-016); never business data.
+  data:
+    redis:
+      url: ${AVENRA_REDIS_URL}
+      timeout: 2s
+      connect-timeout: 2s
+
+  # Transactional email over SMTP (ADR-015). Host and credentials per environment
+  # (SPRING_MAIL_HOST, SPRING_MAIL_PORT, SPRING_MAIL_USERNAME, SPRING_MAIL_PASSWORD).
+  mail:
+    properties:
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
+
   jpa:
     open-in-view: false
     hibernate:
@@ -43,12 +58,36 @@ spring:
 
 avenra:
   web:
+    # Where people reach Avenra; used in links sent by email (AVENRA_WEB_PUBLIC_BASE_URL).
+    public-base-url: ${AVENRA_WEB_PUBLIC_BASE_URL:http://localhost:3000}
     # Comma-separated list in environment variables: AVENRA_WEB_ALLOWED_ORIGINS.
     allowed-origins: []
     max-request-body-size: 1MB
+  # Application-level encryption (Guidelines §69, ADR-017). Keys come from the
+  # environment as AVENRA_CRYPTO_KEYS_<ID>=<32 random bytes, base64>.
+  crypto:
+    active-key-id: ${AVENRA_CRYPTO_ACTIVE_KEY_ID}
+  email:
+    from: ${AVENRA_EMAIL_FROM:Avenra <no-reply@avenra.localhost>}
+  # Rate-limit policies named by x-avenra-rate-limit in the contract (ADR-016).
+  rate-limits:
+    policies:
+      default: { capacity: 120, refill: 1m }
+      sign-up: { capacity: 5, refill: 1h }
+      sign-in: { capacity: 20, refill: 15m }
+      sign-in-account: { capacity: 10, refill: 15m }
+      mfa: { capacity: 10, refill: 15m }
+      password-reset: { capacity: 5, refill: 1h }
+      email-send: { capacity: 5, refill: 1h }
+      token-check: { capacity: 20, refill: 15m }
+      invitations: { capacity: 50, refill: 1h }
+    fail-closed: [sign-up, sign-in, sign-in-account, mfa, password-reset, email-send, token-check]
 
 server:
   port: ${PORT:8080}
+  # The web server forwards browser requests (ADR-013); trust X-Forwarded-For
+  # only from internal proxy addresses, so rate limits see the real client.
+  forward-headers-strategy: native
   max-http-request-header-size: 16KB
   tomcat:
     connection-timeout: 20s
@@ -102,7 +141,12 @@ management:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState,db
+          include: readinessState,db,redis
+  # Email is sent after commit with retries; an SMTP outage must not take the
+  # API out of service, so mail is not part of health.
+  health:
+    mail:
+      enabled: false
 
 # Structured JSON logs (Guidelines §62). The local profile switches to plain text.
 logging:

@@ -89,8 +89,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: make web-check
       - run: pnpm --filter @avenra/web run build
-        env:
-          NEXT_PUBLIC_AVENRA_API_URL: http://localhost:8080
 
   ai:
     name: AI service (lint, format, strict types, tests)
@@ -166,7 +164,7 @@ jobs:
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Local configuration and infrastructure for the smoke tests
         run: |
-          cp .env.example .env
+          make .env
           make infra-up
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -188,12 +186,22 @@ jobs:
         with:
           context: .
           file: apps/web/Dockerfile
-          build-args: NEXT_PUBLIC_AVENRA_API_URL=http://localhost:8080
           tags: avenra-web:ci
           load: true
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max
-      - run: TAG=ci scripts/smoke-test-images.sh
+      - run: TAG=ci KEEP_RUNNING=1 scripts/smoke-test-images.sh
+      # The Phase 2 journey in Chrome against the production images (criterion 2.15).
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Browser end-to-end tests
+        run: pnpm --filter @avenra/web exec playwright test
+        env:
+          E2E_BASE_URL: http://127.0.0.1:13000
       # Images are exported to the workspace and scanned with the OSV-Scanner
       # CLI (the OSV GitHub Action only supports source scans).
       - name: Scan images for vulnerabilities

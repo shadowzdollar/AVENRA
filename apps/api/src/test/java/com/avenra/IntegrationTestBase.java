@@ -24,6 +24,7 @@ public abstract class IntegrationTestBase {
     @DynamicPropertySource
     static void databaseProperties(DynamicPropertyRegistry registry) {
         PostgresTestDatabase.register(registry);
+        TestServices.register(registry);
     }
 
     protected HttpRequest.Builder request(String path) {

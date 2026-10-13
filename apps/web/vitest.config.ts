@@ -10,8 +10,8 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    // Public config is validated at import time; tests get a valid value.
-    env: { NEXT_PUBLIC_AVENRA_API_URL: "http://localhost:8080" },
+    // Server config for code under test; never reaches a browser.
+    env: { AVENRA_API_INTERNAL_URL: "http://localhost:8080" },
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],

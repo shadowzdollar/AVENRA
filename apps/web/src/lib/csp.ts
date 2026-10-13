@@ -1,14 +1,10 @@
 /**
  * Content-Security-Policy for the web app (Guidelines §72). Scripts and
  * styles run only from our origin or with the per-request nonce; the browser
- * may talk only to our origin and the Avenra API.
+ * may talk only to our own origin, which forwards `/api/*` (ADR-013).
  */
-export function buildContentSecurityPolicy(options: {
-  nonce: string;
-  apiOrigin: string;
-  development: boolean;
-}): string {
-  const { nonce, apiOrigin, development } = options;
+export function buildContentSecurityPolicy(options: { nonce: string; development: boolean }): string {
+  const { nonce, development } = options;
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     // React's development tooling needs eval; production never allows it.
@@ -16,7 +12,7 @@ export function buildContentSecurityPolicy(options: {
     "style-src": ["'self'", `'nonce-${nonce}'`],
     "img-src": ["'self'", "data:", "blob:"],
     "font-src": ["'self'"],
-    "connect-src": ["'self'", apiOrigin],
+    "connect-src": ["'self'"],
     "object-src": ["'none'"],
     "base-uri": ["'self'"],
     "form-action": ["'self'"],

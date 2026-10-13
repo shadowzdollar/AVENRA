@@ -11,7 +11,7 @@ function directives(policy: string): Map<string, string> {
 
 describe("buildContentSecurityPolicy", () => {
   const production = directives(
-    buildContentSecurityPolicy({ nonce: "abc123", apiOrigin: "https://api.avenra.test", development: false }),
+    buildContentSecurityPolicy({ nonce: "abc123", development: false }),
   );
 
   it("allows scripts only from our origin or with the nonce, never eval or inline", () => {
@@ -21,8 +21,8 @@ describe("buildContentSecurityPolicy", () => {
     expect(scripts).not.toContain("unsafe-inline");
   });
 
-  it("lets the browser talk only to our origin and the API", () => {
-    expect(production.get("connect-src")).toBe("'self' https://api.avenra.test");
+  it("lets the browser talk only to our own origin", () => {
+    expect(production.get("connect-src")).toBe("'self'");
   });
 
   it("forbids framing, plugins and foreign form targets", () => {
@@ -34,7 +34,7 @@ describe("buildContentSecurityPolicy", () => {
 
   it("allows eval only in development", () => {
     const development = directives(
-      buildContentSecurityPolicy({ nonce: "n", apiOrigin: "http://localhost:8080", development: true }),
+      buildContentSecurityPolicy({ nonce: "n", development: true }),
     );
     expect(development.get("script-src")).toContain("'unsafe-eval'");
     expect(development.has("upgrade-insecure-requests")).toBe(false);
