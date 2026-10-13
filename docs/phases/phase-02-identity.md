@@ -44,19 +44,19 @@ database (row-level security), cache and log layers.
 | # | Criterion | Evidence | Done |
 |---|---|---|---|
 | 2.1 | ADRs for session model/CSRF, password hashing, email, rate limiting, MFA | ADR-013 (with product owner), ADR-014, ADR-015, ADR-016, ADR-017 (with product owner) | ☑ |
-| 2.2 | All identity and organization operations defined in the contract first; lint and conformance pass | CI | ☐ |
-| 2.3 | Passwords hashed with a modern adaptive algorithm; never logged or returned | Unit + log tests | ☐ |
-| 2.4 | Email verification and password reset use single-use, expiring, hashed tokens | Integration tests | ☐ |
-| 2.5 | Sessions: secure cookie flags, rotation on sign-in, revocation, idle and absolute expiry | Integration tests | ☐ |
-| 2.6 | CSRF protection matches the session model | Integration tests | ☐ |
-| 2.7 | Optional TOTP MFA: enrol, verify, recovery codes, required at sign-in when enabled | Integration tests | ☐ |
-| 2.8 | Roles map to explicit permissions; every protected endpoint declares and checks one | Contract `x-avenra-permission` + conformance test + allowed/denied tests | ☐ |
-| 2.9 | Tenant context set server-side only; client-supplied tenant ids are validated against membership | Integration tests | ☐ |
-| 2.10 | Row-level security on every tenant-owned table, proven with the runtime role | Integration tests that bypass the application layer | ☐ |
-| 2.11 | Tenant isolation tests (§137): A cannot read, modify or list B's data, through the API and directly in the database | Integration tests | ☐ |
-| 2.12 | Rate limits on sign-in, sign-up, password reset and invitations; tenant-aware where relevant | Integration tests | ☐ |
-| 2.13 | Account enumeration resistant: sign-in, sign-up and reset responses do not reveal whether an email exists | Integration tests | ☐ |
-| 2.14 | Audit events for sign-in success/failure, password and MFA changes, membership and role changes | Integration tests | ☐ |
+| 2.2 | All identity and organization operations defined in the contract first; lint and conformance pass | Contract defines 29 operations first (ADR-008); lint, alias guard and rule self-test pass; `ContractConformanceIT` checks implementation, public endpoints in both directions, CSRF and Origin rejection, response schemas and rate-limit policies | ☑ |
+| 2.3 | Passwords hashed with a modern adaptive algorithm; never logged or returned | Argon2id (`{argon2id}` prefix asserted in the database, plaintext absent); NIST policy incl. common-word-plus-digits; passwords absent from responses and audit details (`IdentityFlowIT`, `PasswordPolicyTest`) | ☑ |
+| 2.4 | Email verification and password reset use single-use, expiring, hashed tokens | 256-bit tokens stored as SHA-256; atomic single use; latest-only; expiry (`IdentityFlowIT`: verification and reset tokens) | ☑ |
+| 2.5 | Sessions: secure cookie flags, rotation on sign-in, revocation, idle and absolute expiry | `__Host-` HttpOnly Secure SameSite=Lax cookie asserted; new session per sign-in; sign-out, revoke one, sign out everywhere else, revoke on password change/reset; idle expiry (`IdentityFlowIT.Sessions`) | ☑ |
+| 2.6 | CSRF protection matches the session model | Double-submit CSRF token plus Origin check; requests without token answer `CSRF_TOKEN_INVALID`, foreign origins `ORIGIN_NOT_ALLOWED` (`ContractConformanceIT`) | ☑ |
+| 2.7 | Optional TOTP MFA: enrol, verify, recovery codes, required at sign-in when enabled | RFC 6238 vectors (`TotpTest`); enrol, activate, two-step sign-in, no code replay, single-use recovery codes, secret AES-GCM encrypted and bound to the user (`IdentityFlowIT.MultiFactor`) | ☑ |
+| 2.8 | Roles map to explicit permissions; every protected endpoint declares and checks one | Roles map to permissions (`Role`, §18); every contract operation declares `x-avenra-permission`; allowed and denied cases per role (`OrganizationAccessIT`) | ☑ |
+| 2.9 | Tenant context set server-side only; client-supplied tenant ids are validated against membership | Tenant scope set only after the membership check (`OrganizationAccess`); organization ids in paths grant nothing (`OrganizationAccessIT`: 404 for non-members) | ☑ |
+| 2.10 | Row-level security on every tenant-owned table, proven with the runtime role | `RowLevelSecurityIT` as the runtime role without the application; mutation check (weakened policies) failed 4 of 7 tests | ☑ |
+| 2.11 | Tenant isolation tests (§137): A cannot read, modify or list B's data, through the API and directly in the database | API level (`OrganizationAccessIT.tenantACannotSeeOrTouchTenantB`) and database level (`RowLevelSecurityIT`) | ☑ |
+| 2.12 | Rate limits on sign-in, sign-up, password reset and invitations; tenant-aware where relevant | Contract policies enforced per caller; per-account sign-in limit (`RateLimitIT`: 429 + Retry-After, other accounts unaffected); credential policies fail closed (`RateLimiterFailureModeTest`) | ☑ |
+| 2.13 | Account enumeration resistant: sign-in, sign-up and reset responses do not reveal whether an email exists | Identical status and body for registered vs unknown emails in sign-up, reset, resend; identical sign-in failures with equal hashing effort (`IdentityFlowIT.EnumerationResistance`) | ☑ |
+| 2.14 | Audit events for sign-in success/failure, password and MFA changes, membership and role changes | Append-only `audit_events` (update/delete denied, `RowLevelSecurityIT`); sign-in success/failure, sign-up, verification, password, MFA, session, membership, invitation events (`IdentityFlowIT.Auditing`) | ☑ |
 | 2.15 | Web flows work end to end in a browser | End-to-end test | ☐ |
 | 2.16 | Security review of the phase recorded (threat model for identity) | `docs/security/` | ☐ |
 | 2.17 | CI green; hardening pass recorded | CI, this file | ☐ |
