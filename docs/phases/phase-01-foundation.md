@@ -33,8 +33,8 @@ later phase builds on it rather than retrofitting it.
 | # | Criterion | Evidence | Done |
 |---|---|---|---|
 | 1.1 | ADR-001…010 accepted | `docs/adr/` | ☑ |
-| 1.2 | `make setup` from a clean clone installs everything; `make dev` starts all apps and infrastructure | Clean-clone run log | ☐ |
-| 1.3 | No secrets in the repo; `.env.example` with placeholders only; secret scanning in CI | CI job, `.gitignore` | ☐ |
+| 1.2 | `make setup` from a clean clone installs everything; `make dev` starts all apps and infrastructure | Copy of exactly the 148 committed files (no `.env`, no `node_modules`): `make setup && make check` exit 0 (contract, API 11 unit + 37 IT, web, AI). `make dev`: API, web and AI all answering after 23 s; one SIGINT stopped all three and freed every port | ☑ |
+| 1.3 | No secrets in the repo; `.env.example` with placeholders only; secret scanning in CI | gitleaks 8.30.1 over all commits: no leaks after two reviewed test values were suppressed by exact fingerprint (`.gitleaksignore`); `.env` ignored, `.env.example` placeholders only; `.dockerignore` keeps `.env` out of images; CI `secrets` job scans full history. CI run pending | ◐ |
 | 1.4 | Backend builds on Java 25; Maven Enforcer pins Java and Maven versions | Local: JDK 21 and system Maven 3.9.12 both rejected by Enforcer. CI log pending (step 12) | ◐ |
 | 1.5 | Module boundary rules enforced by tests that fail the build on violation | `ModularityTest`, `ArchitectureTest`; `ArchitectureRulesSelfTest` proves each rule fails on broken fixtures | ☑ |
 | 1.6 | Flyway migrations run on startup in local and in tests; app connects with a non-owner role | `DatabaseRolesIT` (7 tests: non-privileged role, schema changes denied with SQLSTATE 42501, history table hidden, UTC); `make api-run` applied V1 to local DB | ☑ |
@@ -50,7 +50,7 @@ later phase builds on it rather than retrofitting it.
 | 1.16 | Traces visible end to end (HTTP → app → DB) locally; telemetry names follow §101 | `TracingIT`: one trace from HTTP span to SQL span, `avenra.request_id` on the span, inbound `traceparent` continued; real requests to the local API appear in Jaeger (`make infra-up`, http://127.0.0.1:16686) with request ids, DB connection spans and service/version/environment attributes; naming documented in `apps/api/README.md` | ☑ |
 | 1.17 | Dockerfiles: non-root, minimal base, pinned, health checks; images build in CI | CI log | ☐ |
 | 1.18 | CI runs on every PR: lint, type checks, unit, integration, dependency scan, secret scan, static analysis, build | Green CI run | ☐ |
-| 1.19 | Docs: README, CONTRIBUTING, SECURITY, ARCHITECTURE overview, CLAUDE.md | Files | ☐ |
+| 1.19 | Docs: README, CONTRIBUTING, SECURITY, ARCHITECTURE overview, CLAUDE.md | All five present and current (`make dev`/`make check`, CI, supply-chain rules); per-app READMEs for api, web, ai and contracts | ☑ |
 | 1.20 | Hardening pass done against all Phase 1 Guidelines sections; result recorded below | This file | ☐ |
 
 Legend: ☑ proven · ◐ proven locally, CI evidence pending · ☐ not started
