@@ -22,6 +22,13 @@ help: ## List available commands
 .PHONY: setup
 setup: .env js-install ## Prepare a fresh clone for local development
 
+.PHONY: dev
+dev: .env ## Start infrastructure, API, web and AI service together (Ctrl-C stops the apps)
+	scripts/dev.sh
+
+.PHONY: check
+check: contract-check api-verify web-check ai-check ## Run every check CI runs on the code (not images)
+
 # --- Local infrastructure ---------------------------------------------------
 
 .PHONY: infra-up
@@ -105,3 +112,18 @@ ai-format: ## AI service: apply formatting and safe lint fixes
 .PHONY: ai-run
 ai-run: .env ## AI service: run locally on 127.0.0.1:8090
 	$(WITH_ENV) $(UV) run uvicorn avenra_ai.main:create_app --factory --host 127.0.0.1 --port 8090 --no-access-log
+
+# --- Container images ---------------------------------------------------------
+
+TAG ?= local
+
+.PHONY: images-build
+images-build: .env ## Build the api, web and ai images (needs docker buildx)
+	docker buildx build --load -f apps/api/Dockerfile -t avenra-api:$(TAG) .
+	docker buildx build --load -f apps/ai/Dockerfile -t avenra-ai:$(TAG) .
+	$(WITH_ENV) docker buildx build --load -f apps/web/Dockerfile \
+		--build-arg NEXT_PUBLIC_AVENRA_API_URL=$$NEXT_PUBLIC_AVENRA_API_URL -t avenra-web:$(TAG) .
+
+.PHONY: images-test
+images-test: .env ## Smoke-test the images (needs `make infra-up`)
+	TAG=$(TAG) scripts/smoke-test-images.sh
