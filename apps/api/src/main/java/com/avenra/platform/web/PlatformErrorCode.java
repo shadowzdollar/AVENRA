@@ -8,6 +8,7 @@ public enum PlatformErrorCode {
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "The request contains invalid values."),
     AUTHENTICATION_REQUIRED(HttpStatus.UNAUTHORIZED, "Authentication is required."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "You do not have permission to perform this action."),
+    CSRF_TOKEN_INVALID(HttpStatus.FORBIDDEN, "The request could not be verified. Reload the page and try again."),
     NOT_FOUND(HttpStatus.NOT_FOUND, "The requested resource does not exist."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "This method is not supported for this resource."),
     NOT_ACCEPTABLE(HttpStatus.NOT_ACCEPTABLE, "The requested response format is not supported."),

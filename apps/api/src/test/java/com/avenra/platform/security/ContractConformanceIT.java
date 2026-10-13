@@ -44,10 +44,26 @@ class ContractConformanceIT extends IntegrationTestBase {
                         .isNotEmpty());
     }
 
+    /** A real browser obtains the CSRF token first (ADR-013); this test does the same. */
+    private String[] csrfHeaders() {
+        var response = get("/api/v1/auth/csrf");
+        String token = response.headers().allValues("Set-Cookie").stream()
+                .filter(cookie -> cookie.startsWith("XSRF-TOKEN="))
+                .map(cookie -> cookie.substring("XSRF-TOKEN=".length(), cookie.indexOf(';')))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("no XSRF-TOKEN cookie"));
+        return new String[] {"Cookie", "XSRF-TOKEN=" + token, "X-XSRF-TOKEN", token};
+    }
+
     @Test
     void anonymousAccessMatchesTheDeclaredPermissions() {
+        String[] csrf = csrfHeaders();
         for (ApiContract.Operation operation : CONTRACT.operations()) {
-            int status = send(request(operation.path())
+            String path = operation
+                    .path()
+                    .replaceAll("\\{[^}]+}", java.util.UUID.randomUUID().toString());
+            int status = send(request(path)
+                            .headers(csrf)
                             .method(operation.method(), HttpRequest.BodyPublishers.noBody())
                             .build())
                     .statusCode();
@@ -63,16 +79,41 @@ class ContractConformanceIT extends IntegrationTestBase {
     }
 
     @Test
-    void everyPublicApiPathIsDeclaredPublicInTheContract() {
+    void publicEndpointsInSecurityConfigurationAndContractMatchExactly() {
         var publicInContract = CONTRACT.operations().stream()
                 .filter(ApiContract.Operation::isPublic)
-                .filter(operation -> operation.method().equals("GET"))
-                .map(ApiContract.Operation::path)
-                .toList();
+                .map(operation -> operation.method() + " " + operation.path())
+                .collect(java.util.stream.Collectors.toSet());
+        var publicInSecurity = WebSecurityConfiguration.PUBLIC_ENDPOINTS.stream()
+                .filter(endpoint -> endpoint.path().startsWith("/api/"))
+                .map(endpoint -> endpoint.method().name() + " " + endpoint.path())
+                .collect(java.util.stream.Collectors.toSet());
 
-        assertThat(WebSecurityConfiguration.PUBLIC_GET_PATHS.stream().filter(path -> path.startsWith("/api/")))
-                .as("public API paths in the security configuration")
-                .allMatch(publicInContract::contains);
+        assertThat(publicInSecurity).as("public API endpoints").isEqualTo(publicInContract);
+    }
+
+    @Test
+    void stateChangingRequestsWithoutCsrfTokenAreRejected() {
+        var response = send(request("/api/v1/auth/sign-in")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString("{\"email\":\"a@b.test\",\"password\":\"x\"}"))
+                .build());
+
+        assertThat(response.statusCode()).isEqualTo(403);
+        assertThat(json.readTree(response.body()).get("code").asString()).isEqualTo("CSRF_TOKEN_INVALID");
+    }
+
+    @Test
+    void stateChangingRequestsFromAForeignOriginAreRejected() {
+        var response = send(request("/api/v1/auth/sign-in")
+                .headers(csrfHeaders())
+                .header("Origin", "https://evil.example")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString("{\"email\":\"a@b.test\",\"password\":\"x\"}"))
+                .build());
+
+        assertThat(response.statusCode()).isEqualTo(403);
+        assertThat(json.readTree(response.body()).get("code").asString()).isEqualTo("CSRF_TOKEN_INVALID");
     }
 
     @Test

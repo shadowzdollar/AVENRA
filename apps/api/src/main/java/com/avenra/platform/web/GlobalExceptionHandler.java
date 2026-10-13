@@ -52,6 +52,17 @@ class GlobalExceptionHandler {
         return respond(request, PlatformErrorCode.VALIDATION_FAILED, details);
     }
 
+    /** Business errors raised by modules; rate limiting adds {@code Retry-After}. */
+    @ExceptionHandler(ApiException.class)
+    ResponseEntity<ErrorResponse> business(ApiException exception, HttpServletRequest request) {
+        var builder = ResponseEntity.status(exception.status()).header(HttpHeaders.CACHE_CONTROL, "no-store");
+        if (exception instanceof com.avenra.platform.ratelimit.RateLimiter.RateLimitedException limited) {
+            builder.header(HttpHeaders.RETRY_AFTER, Long.toString(limited.retryAfterSeconds()));
+        }
+        return builder.body(new ErrorResponse(
+                exception.code(), exception.getMessage(), RequestIds.current(request), exception.details()));
+    }
+
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     ResponseEntity<ErrorResponse> unreadable(Exception exception, HttpServletRequest request) {
         if (causedByOversizedBody(exception)) {
