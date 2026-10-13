@@ -5,7 +5,7 @@
 FROM ghcr.io/astral-sh/uv:0.12.13 AS uv
 
 # --- Build ------------------------------------------------------------------
-FROM python:3.14.7-alpine3.24 AS build
+FROM python:3.15.0rc3-alpine3.24 AS build
 COPY --from=uv /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -22,7 +22,7 @@ RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-edi
 # --- Runtime ----------------------------------------------------------------
 # Alpine rather than Debian slim: far fewer operating-system packages, so far
 # fewer inherited vulnerabilities (Guidelines §93: minimal base images).
-FROM python:3.14.7-alpine3.24
+FROM python:3.15.0rc3-alpine3.24
 # Operating-system security updates published since the base image was built.
 RUN apk upgrade --no-cache \
     && addgroup -S -g 10001 avenra \
