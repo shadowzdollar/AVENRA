@@ -39,5 +39,14 @@ Read before working in this repository.
 
 ## Commands
 
-Use the root `Makefile` (`make help`). Local ports: PostgreSQL 15432,
-Redis 16379, S3 18333. Maven needs `JAVA_HOME` pointing at JDK 25.
+Use the root `Makefile` (`make help`). `make check` runs every code check CI
+runs; run it before proposing a commit. `make dev` starts the whole stack.
+Local ports: PostgreSQL 15432, Redis 16379, S3 18333, Jaeger UI 16686.
+Maven needs `JAVA_HOME` pointing at JDK 25.
+
+## Supply chain
+
+New dependencies, base images and CI actions must be at least 7 days old
+(pnpm `minimumReleaseAge`, uv `exclude-newer`, Dependabot `cooldown`). CI
+actions are pinned to full commit SHAs. Dependency install scripts are denied
+unless listed in `pnpm-workspace.yaml` `allowBuilds`.

@@ -8,7 +8,8 @@
 3. Follow the development sequence (Guidelines §118): domain behavior →
    API contract → data changes → backend → tests → frontend → integrate →
    observe → review.
-4. Open a pull request. It merges only when CI is green.
+4. Run `make check` locally; it runs the same code checks as CI.
+5. Open a pull request. It merges only when CI is green.
 
 ## Commits
 

@@ -43,11 +43,26 @@ Applications are added during Phase 1; see the
 
 ```bash
 make setup      # creates .env from .env.example and installs JS dependencies
-make infra-up   # starts PostgreSQL, Redis, S3-compatible storage and Jaeger
-make api-run    # backend on :8080
-make web-dev    # web app on :3000
-make ai-run     # AI service on 127.0.0.1:8090
+make dev        # infrastructure + API (:8080) + web (:3000) + AI service (:8090); Ctrl-C stops the apps
+make check      # every code check CI runs: contract, API, web, AI service
 make help       # lists every command
+```
+
+Individual pieces: `make infra-up`, `make api-run`, `make web-dev`,
+`make ai-run`. Container images: `make images-build` then `make images-test`
+(needs Docker buildx).
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request and on `main`:
+contract lint and breaking-change check, API (unit + integration tests on
+real PostgreSQL), web (lint, type check, tests, build), AI service, secret
+scanning over the full history, dependency vulnerabilities, static analysis
+(Semgrep), shell scripts, and container images (build, smoke tests,
+vulnerability scan). Actions are pinned to commit SHAs; Dependabot keeps
+every pinned version current with a 7-day cooldown.
+
+```bash
 ```
 
 Local services bind to `127.0.0.1` only, on non-default ports (PostgreSQL
