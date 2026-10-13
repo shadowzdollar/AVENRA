@@ -194,31 +194,17 @@ jobs:
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max
       - run: TAG=ci scripts/smoke-test-images.sh
-      # The scanner runs in its own container and cannot see the runner's
-      # Docker images, so each image is exported to the workspace first.
-      - name: Export images for scanning
+      # Images are exported to the workspace and scanned with the OSV-Scanner
+      # CLI (the OSV GitHub Action only supports source scans).
+      - name: Scan images for vulnerabilities
         run: |
-          docker save avenra-api:ci -o image-api.tar
-          docker save avenra-ai:ci -o image-ai.tar
-          docker save avenra-web:ci -o image-web.tar
-      - name: Scan API image for vulnerabilities
-        uses: google/osv-scanner-action/osv-scanner-action@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
-        with:
-          scan-args: |-
-            image
-            --archive
-            image-api.tar
-      - name: Scan AI service image for vulnerabilities
-        uses: google/osv-scanner-action/osv-scanner-action@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
-        with:
-          scan-args: |-
-            image
-            --archive
-            image-ai.tar
-      - name: Scan web image for vulnerabilities
-        uses: google/osv-scanner-action/osv-scanner-action@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
-        with:
-          scan-args: |-
-            image
-            --archive
-            image-web.tar
+          status=0
+          for image in api ai web; do
+            docker save "avenra-$image:ci" -o "image-$image.tar"
+            echo "::group::avenra-$image:ci"
+            docker run --rm -v "$PWD:/scan:ro" -w /scan \
+              ghcr.io/google/osv-scanner:v2.6.0@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa \
+              scan image --archive "image-$image.tar" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
