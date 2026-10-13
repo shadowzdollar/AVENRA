@@ -5,7 +5,7 @@
 # forwarded, ADR-013) is read at runtime.
 
 # --- Build ------------------------------------------------------------------
-FROM node:24.21.0-alpine3.24 AS build
+FROM node:26.10.0-alpine3.24 AS build
 RUN npm install --global pnpm@12.4.1
 WORKDIR /workspace
 
@@ -21,7 +21,7 @@ RUN pnpm --filter @avenra/contracts run generate \
     && pnpm --filter @avenra/web run build
 
 # --- Runtime ----------------------------------------------------------------
-FROM node:24.21.0-alpine3.24
+FROM node:26.10.0-alpine3.24
 # Operating-system security updates published since the base image was built.
 RUN apk upgrade --no-cache
 ENV NODE_ENV=production \
