@@ -1,6 +1,6 @@
 # Phase 2: Identity
 
-**Status:** In progress
+**Status:** Complete (2026-10-13)
 **Guidelines:** §16–§18, §35–§37, §59, §63–§67, §71–§72, §137, §143
 
 ## Goal
@@ -59,7 +59,7 @@ database (row-level security), cache and log layers.
 | 2.14 | Audit events for sign-in success/failure, password and MFA changes, membership and role changes | Append-only `audit_events` (update/delete denied, `RowLevelSecurityIT`); sign-in success/failure, sign-up, verification, password, MFA, session, membership, invitation events (`IdentityFlowIT.Auditing`) | ☑ |
 | 2.15 | Web flows work end to end in a browser | Playwright in Chrome (`apps/web/e2e/identity.spec.ts`): sign-up, confirmation from the real email in Mailpit, sign-in, organization, invitation accepted by a colleague with member permissions, sign-out; zero CSP violations or script errors; run against the API with no CORS origins (production-like). Also runs in CI against the production images | ☑ |
 | 2.16 | Security review of the phase recorded (threat model for identity) | `docs/security/threat-model-identity.md`: 17 STRIDE threats, each with its control and proving test; accepted and open risks with revisit points | ☑ |
-| 2.17 | CI green; hardening pass recorded | CI, this file | ☐ |
+| 2.17 | CI green; hardening pass recorded | CI run [38404751925](https://github.com/shadowzdollar/AVENRA/actions/runs/38404751925): all 10 jobs green on the first run, including the browser e2e against the production images; hardening record below | ☑ |
 
 ## Declared deferrals
 
@@ -69,4 +69,37 @@ database (row-level security), cache and log layers.
 
 ## Hardening record
 
-_To be completed at phase close._
+Phase 2 Guidelines sections re-read and checked against the code on
+2026-10-13.
+
+| Section | Rule | Result |
+|---|---|---|
+| §16 | Tenant id never trusted from the client; context set server-side | Met. Organization ids in paths only select; membership is checked first (`OrganizationAccess`) |
+| §17 | Users belong to organizations through memberships | Met. Users are global; a user can hold several memberships |
+| §18 | Five roles, capability-based permissions, no role checks in business code | Met. `Role` → `Permission`; services ask for permissions only |
+| §35 | Email/password, hashing, verification, reset, sessions, optional MFA | Met (ADR-013/014/017). OAuth/OIDC and SSO deferred as the Guidelines allow |
+| §36 | identity → membership → permission → resource → policy | Met. Resource checks inside services (e.g. target membership in the same organization); policies (role assignment, last owner) |
+| §37 | Isolation at application, database, cache, logging layers | Met for existing layers: API, RLS, rate-limit keys hashed and namespaced, `userId` in logs. Storage and integration isolation arrive with those features |
+| §59 | Audit for important actions, append-only | Met. Database role cannot update or delete audit rows |
+| §64–§67 | Validation at boundaries; rate limiting | Met. Contract validation, password policy, invitation email binding; rate limits per contract operation plus per account |
+| §71–§72 | API and frontend security | Met. CSRF, Origin check, error-format CORS rejection, nonce CSP, open-redirect guard |
+| §137 | Mandatory tenant isolation tests | Met at API and database level (mutation-checked) |
+
+Findings fixed during the phase, before merge:
+
+- RLS read policies initially applied to all commands, so a user could have
+  modified their own membership row in another organization at database level;
+  restricted to `SELECT` with separate write policies (self-review, then proven
+  by `RowLevelSecurityIT` and a mutation check).
+- The generated contract contained YAML aliases that the Java generator's
+  parser rejects; contract rewritten and an alias guard added.
+- `password1234` passed the password policy (exact-match common list only);
+  common words with digits/symbols appended and repeated characters are now
+  rejected.
+- CORS rejections answered in plain text; now the platform error format.
+- A configuration edit had nested the health groups under the mail setting;
+  caught by reading the parsed YAML.
+- The contract's sign-in description contradicted the agreed behaviour; fixed.
+- Dependabot proposed updates that conflict with ADRs (TypeScript 7, ESLint 10,
+  Java 27, Node 26, a Python release candidate); ignore rules follow in a
+  separate change.
