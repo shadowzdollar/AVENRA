@@ -39,6 +39,14 @@ public class TenantTransactions {
         });
     }
 
+    /**
+     * Narrows the current transaction to an organization. Only call after verifying the caller's
+     * membership in it (organization module's access check); must run inside {@link #run}.
+     */
+    public void enterOrganization(UUID organizationId) {
+        set("app.organization_id", organizationId);
+    }
+
     private void set(String name, @Nullable Object value) {
         jdbc.sql("select set_config(:name, :value, true)")
                 .param("name", name)

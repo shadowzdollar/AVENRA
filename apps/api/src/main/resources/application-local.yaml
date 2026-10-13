@@ -3,6 +3,11 @@ avenra:
   web:
     allowed-origins: http://localhost:3000
 
+spring:
+  mail:
+    host: 127.0.0.1
+    port: 11025
+
 # Traces go to the local Jaeger started by `make infra-up` (UI: http://127.0.0.1:16686).
 management:
   opentelemetry:

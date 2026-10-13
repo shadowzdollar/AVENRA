@@ -15,14 +15,16 @@ public final class StandaloneApplication {
 
     /** Properties pointing at the shared test database, on a random port, with the test profile. */
     public static Map<String, Object> testProperties() {
-        return Map.of(
+        var properties = new java.util.HashMap<String, Object>(TestServices.properties());
+        properties.putAll(Map.of(
                 "spring.profiles.active", "test",
                 "server.port", "0",
                 "AVENRA_DB_URL", PostgresTestDatabase.jdbcUrl(),
                 "AVENRA_DB_APP_USER", PostgresTestDatabase.APP_USER,
                 "AVENRA_DB_APP_PASSWORD", PostgresTestDatabase.APP_PASSWORD,
                 "AVENRA_DB_OWNER_USER", PostgresTestDatabase.OWNER_USER,
-                "AVENRA_DB_OWNER_PASSWORD", PostgresTestDatabase.OWNER_PASSWORD);
+                "AVENRA_DB_OWNER_PASSWORD", PostgresTestDatabase.OWNER_PASSWORD));
+        return Map.copyOf(properties);
     }
 
     /**

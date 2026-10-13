@@ -37,7 +37,7 @@ class OriginCheckFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String origin = request.getHeader("Origin");
         if (origin != null && !SAFE_METHODS.contains(request.getMethod()) && !allowedOrigins.contains(origin)) {
-            errorWriter.write(request, response, PlatformErrorCode.CSRF_TOKEN_INVALID);
+            errorWriter.write(request, response, PlatformErrorCode.ORIGIN_NOT_ALLOWED);
             return;
         }
         chain.doFilter(request, response);

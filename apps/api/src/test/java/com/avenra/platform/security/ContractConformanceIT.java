@@ -113,7 +113,7 @@ class ContractConformanceIT extends IntegrationTestBase {
                 .build());
 
         assertThat(response.statusCode()).isEqualTo(403);
-        assertThat(json.readTree(response.body()).get("code").asString()).isEqualTo("CSRF_TOKEN_INVALID");
+        assertThat(json.readTree(response.body()).get("code").asString()).isEqualTo("ORIGIN_NOT_ALLOWED");
     }
 
     @Test

@@ -17,7 +17,8 @@ help: ## List available commands
 
 .env:
 	cp .env.example .env
-	@echo "Created .env from .env.example (local-only values)."
+	sed -i "s|^AVENRA_CRYPTO_KEYS_LOCAL1=.*|AVENRA_CRYPTO_KEYS_LOCAL1=$$(openssl rand -base64 32)|" .env
+	@echo "Created .env from .env.example with a new local encryption key (local-only values)."
 
 .PHONY: setup
 setup: .env js-install ## Prepare a fresh clone for local development
@@ -32,8 +33,8 @@ check: contract-check api-verify web-check ai-check ## Run every check CI runs o
 # --- Local infrastructure ---------------------------------------------------
 
 .PHONY: infra-up
-infra-up: .env ## Start PostgreSQL, Redis, S3 storage and Jaeger, wait until healthy
-	$(COMPOSE) up -d --wait postgres redis seaweedfs jaeger
+infra-up: .env ## Start PostgreSQL, Redis, S3 storage, Jaeger and Mailpit, wait until healthy
+	$(COMPOSE) up -d --wait postgres redis seaweedfs jaeger mailpit
 	$(COMPOSE) run --rm seaweedfs-init
 
 .PHONY: infra-down

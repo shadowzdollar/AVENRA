@@ -17,12 +17,15 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfException;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * HTTP security (ADR-011, ADR-013): deny by default; server-side session authentication through
@@ -62,14 +65,19 @@ class WebSecurityConfiguration {
             HttpSecurity http,
             ErrorResponseWriter errorWriter,
             AvenraProperties properties,
-            RequestAuthenticator authenticator) {
+            RequestAuthenticator authenticator,
+            JsonMapper json) {
         var csrfTokens = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrfTokens.setCookieName(CSRF_COOKIE);
         csrfTokens.setHeaderName(CSRF_HEADER);
         csrfTokens.setCookieCustomizer(
                 cookie -> cookie.secure(true).sameSite("Strict").path("/"));
 
-        http.cors(config -> config.configurationSource(corsConfigurationSource(properties)))
+        var cors = new CorsFilter(corsConfigurationSource(properties));
+        cors.setCorsProcessor(new ErrorFormatCorsProcessor(json));
+
+        http.cors(AbstractHttpConfigurer::disable)
+                .addFilterBefore(cors, CsrfFilter.class)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)

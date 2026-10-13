@@ -5,3 +5,9 @@ avenra:
   web:
     allowed-origins: https://app.avenra.test
     max-request-body-size: 4KB
+
+# Tests capture email with TestOutbox; this SMTP host is never contacted.
+spring:
+  mail:
+    host: localhost
+    port: 1
