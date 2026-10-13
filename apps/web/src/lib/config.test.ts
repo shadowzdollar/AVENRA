@@ -1,20 +1,20 @@
-import { parsePublicConfig } from "./config";
+import { parseServerConfig } from "./config";
 
-describe("parsePublicConfig", () => {
+describe("parseServerConfig", () => {
   it("accepts an absolute http(s) URL and removes trailing slashes", () => {
-    expect(parsePublicConfig({ NEXT_PUBLIC_AVENRA_API_URL: "https://api.avenra.test/" })).toEqual({
-      apiUrl: "https://api.avenra.test",
+    expect(parseServerConfig({ AVENRA_API_INTERNAL_URL: "http://api.internal:8080/" })).toEqual({
+      apiInternalUrl: "http://api.internal:8080",
     });
   });
 
   it.each([
     ["missing", undefined],
     ["relative", "/api"],
-    ["not a URL", "api.avenra.test"],
+    ["not a URL", "api.internal"],
     ["unsafe scheme", "javascript:alert(1)"],
   ])("rejects a %s API URL", (_case, value) => {
-    expect(() => parsePublicConfig({ NEXT_PUBLIC_AVENRA_API_URL: value })).toThrow(
-      /Invalid web configuration: NEXT_PUBLIC_AVENRA_API_URL/,
+    expect(() => parseServerConfig({ AVENRA_API_INTERNAL_URL: value })).toThrow(
+      /Invalid web configuration: AVENRA_API_INTERNAL_URL/,
     );
   });
 });

@@ -69,8 +69,12 @@ web-check: ## Web: lint (zero warnings), strict type check, unit tests
 	pnpm --filter @avenra/web run check
 
 .PHONY: web-build
-web-build: .env ## Web: production build (needs NEXT_PUBLIC_AVENRA_API_URL)
+web-build: .env ## Web: production build
 	$(WITH_ENV) pnpm --filter @avenra/web run build
+
+.PHONY: e2e
+e2e: ## Browser end-to-end tests (needs the stack running: infra, API, web on :3000)
+	pnpm --filter @avenra/web exec playwright test
 
 .PHONY: web-dev
 web-dev: .env ## Web: run the development server on :3000
@@ -122,8 +126,7 @@ TAG ?= local
 images-build: .env ## Build the api, web and ai images (needs docker buildx)
 	docker buildx build --load -f apps/api/Dockerfile -t avenra-api:$(TAG) .
 	docker buildx build --load -f apps/ai/Dockerfile -t avenra-ai:$(TAG) .
-	$(WITH_ENV) docker buildx build --load -f apps/web/Dockerfile \
-		--build-arg NEXT_PUBLIC_AVENRA_API_URL=$$NEXT_PUBLIC_AVENRA_API_URL -t avenra-web:$(TAG) .
+	docker buildx build --load -f apps/web/Dockerfile -t avenra-web:$(TAG) .
 
 .PHONY: images-test
 images-test: .env ## Smoke-test the images (needs `make infra-up`)

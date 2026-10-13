@@ -9,7 +9,7 @@ Next.js (App Router), React 19, strict TypeScript 5.9 (ADR-012), Tailwind CSS
 From the repository root:
 
 ```bash
-make web-dev     # development server on :3000 (needs `make api-run` for live data)
+make web-dev     # development server on :3000 (needs `make api-run`; /api/* is forwarded to it)
 make web-check   # lint (zero warnings), type check, unit tests
 make web-build   # production build
 ```
@@ -18,10 +18,11 @@ make web-build   # production build
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_AVENRA_API_URL` | Absolute URL of the Avenra API. Validated at build and start; missing or invalid stops the build. |
+| `AVENRA_API_INTERNAL_URL` | Where the web server forwards `/api/*` (ADR-013). Server-side only, read at runtime, validated on first use. |
 
-`NEXT_PUBLIC_*` values are compiled into the browser bundle and must never
-contain secrets.
+The browser talks only to the web application's own origin. Session cookies
+are first-party, CORS is not involved, and the API can stay on a private
+network. One image works in every environment.
 
 ## Rules
 

@@ -1,18 +1,23 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { publicConfig } from "@/lib/config";
+import { serverConfig } from "@/lib/config";
 import { buildContentSecurityPolicy } from "@/lib/csp";
 
 /**
- * Sets a per-request Content-Security-Policy with a fresh nonce. Next.js reads
- * the nonce from the request header and applies it to its own scripts.
+ * Two jobs, both per request:
+ *
+ * - `/api/*` is forwarded to the API on its internal address (ADR-013), so the
+ *   browser only ever talks to this origin and session cookies stay
+ *   first-party. Forwarding headers tell the API the public host and client.
+ * - Every page gets a Content-Security-Policy with a fresh nonce, which
+ *   Next.js applies to its own scripts.
  */
 export function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    return forwardToApi(request);
+  }
+
   const nonce = btoa(crypto.randomUUID());
-  const csp = buildContentSecurityPolicy({
-    nonce,
-    apiOrigin: new URL(publicConfig.apiUrl).origin,
-    development: process.env.NODE_ENV === "development",
-  });
+  const csp = buildContentSecurityPolicy({ nonce, development: process.env.NODE_ENV === "development" });
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
@@ -23,8 +28,16 @@ export function proxy(request: NextRequest) {
   return response;
 }
 
+function forwardToApi(request: NextRequest) {
+  const target = new URL(request.nextUrl.pathname + request.nextUrl.search, serverConfig().apiInternalUrl);
+  const headers = new Headers(request.headers);
+  headers.set("x-forwarded-host", request.headers.get("host") ?? request.nextUrl.host);
+  headers.set("x-forwarded-proto", request.nextUrl.protocol.replace(":", ""));
+  return NextResponse.rewrite(target, { request: { headers } });
+}
+
 export const config = {
-  // Static assets and Next.js internals do not need the per-request policy.
+  // Static assets and Next.js internals need neither forwarding nor the policy.
   matcher: [
     {
       source: "/((?!_next/static|_next/image|icon.png|apple-icon.png|avenra-symbol.png).*)",
