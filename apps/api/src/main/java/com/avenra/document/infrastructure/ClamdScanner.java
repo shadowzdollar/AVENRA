@@ -78,7 +78,12 @@ class ClamdScanner implements MalwareScanner {
         throw new ScannerUnavailableException();
     }
 
+    /**
+     * clamd speaks plain TCP only; ADR-021 requires it on a private network next to the API (the
+     * same host, pod or private subnet), never across an untrusted network.
+     */
     private Socket connect() throws IOException {
+        // nosemgrep: java.lang.security.audit.crypto.unencrypted-socket.unencrypted-socket
         var socket = new Socket();
         socket.connect(new InetSocketAddress(settings.host(), settings.port()), (int)
                 settings.connectTimeout().toMillis());

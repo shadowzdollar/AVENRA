@@ -59,4 +59,5 @@ that proves it. Reviewed 2026-10-14.
 | A request link is a bearer credential: anyone holding it can answer | Accepted (ADR-020): review decides what is accepted; expiry, revocation, audit and masking limit the damage | After customer evidence (client accounts for repeat clients) |
 | ClamAV detection is signature-based and misses novel malware | Accepted; files are never rendered inline and only allow-listed types are accepted | Phase 13 (consider a second engine) |
 | Quarantined files stay in the bucket indefinitely | Accepted until retention rules exist | Phase 10 (Guidelines §113) |
+| File contents travel to clamd unencrypted (clamd has no TLS) | Accepted: clamd must run next to the API on a private network (ADR-021); the one Semgrep suppression points here | Phase 13 (deployment topology) |
 | Server-side encryption depends on the storage provider (requested on AWS; configured by the operator elsewhere) | Configured in deployment | Phase 13 |
