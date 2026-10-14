@@ -1,4 +1,4 @@
-4# Deliberately broken contract. `pnpm test:lint-rules` requires linting it to
+# Deliberately broken contract. `pnpm test:lint-rules` requires linting it to
 # FAIL with each Avenra rule, proving the rules detect violations.
 openapi: 3.1.1
 info:

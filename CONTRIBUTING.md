@@ -31,8 +31,7 @@ security impact, tests, migration requirements, deployment requirements
 
 A change is done when it meets Guidelines §123: clear requirements, defined
 API, authorization, verified tenant isolation, validation, business rules,
-tests, error handling, audit, observRead before working in this repository.
-ability, reviewed security, updated docs,
+tests, error handling, audit, observability, reviewed security, updated docs,
 and working deployment.
 
 ## Dependencies
