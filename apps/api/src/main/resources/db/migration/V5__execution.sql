@@ -312,6 +312,30 @@ ALTER TABLE document_versions ALTER COLUMN last_scanned_at SET NOT NULL;
 GRANT UPDATE (scan_status, scan_signature, storage_key, last_scanned_at) ON document_versions TO ${app_role};
 ALTER TABLE document_versions ADD CONSTRAINT document_versions_infected_quarantined
     CHECK (scan_status = 'CLEAN' OR storage_key LIKE 'quarantine/%');
+-- The only changes a version allows: a newer scan time, and moving a clean file
+-- to quarantine (its own key under quarantine/, marked INFECTED). Never back.
+CREATE FUNCTION document_versions_guard() RETURNS trigger
+    LANGUAGE plpgsql SET search_path = public, pg_temp
+    AS $$
+    BEGIN
+        IF NEW.storage_key IS DISTINCT FROM OLD.storage_key
+           AND NOT (OLD.scan_status = 'CLEAN' AND NEW.scan_status = 'INFECTED'
+                    AND NEW.storage_key = 'quarantine/' || OLD.storage_key) THEN
+            RAISE EXCEPTION 'a document version can only move to its own quarantine key'
+                USING ERRCODE = 'insufficient_privilege';
+        END IF;
+        IF OLD.scan_status = 'INFECTED' AND NEW.scan_status <> 'INFECTED' THEN
+            RAISE EXCEPTION 'an infected document version cannot be released'
+                USING ERRCODE = 'insufficient_privilege';
+        END IF;
+        IF NEW.last_scanned_at < OLD.last_scanned_at THEN
+            RAISE EXCEPTION 'a scan time cannot move back' USING ERRCODE = 'insufficient_privilege';
+        END IF;
+        RETURN NEW;
+    END
+    $$;
+CREATE TRIGGER document_versions_guard BEFORE UPDATE ON document_versions
+    FOR EACH ROW EXECUTE FUNCTION document_versions_guard();
 
 -- Sweeps: find work across tenants and enqueue one tenant job per item --------
 -- Each returns the number of jobs enqueued; idempotency keys make repeats harmless.

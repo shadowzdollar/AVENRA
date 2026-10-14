@@ -40,7 +40,8 @@ import org.springframework.test.context.TestPropertySource;
  * each test drives claiming and running itself.
  */
 @IntegrationTest
-@TestPropertySource(properties = {"avenra.jobs.worker-enabled=false", "avenra.jobs.retry-base=1s", "avenra.jobs.retry-cap=1h"})
+@TestPropertySource(
+        properties = {"avenra.jobs.worker-enabled=false", "avenra.jobs.retry-base=1s", "avenra.jobs.retry-cap=1h"})
 @Import(JobEngineIT.TestHandlers.class)
 class JobEngineIT extends IntegrationTestBase {
 

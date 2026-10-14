@@ -57,12 +57,19 @@ class Submissions {
 
     private final RequirementRepository requirements;
     private final Documents documents;
+    private final WorkAutomation automation;
     private final AuditLog audit;
     private final Clock clock;
 
-    Submissions(RequirementRepository requirements, Documents documents, AuditLog audit, Clock clock) {
+    Submissions(
+            RequirementRepository requirements,
+            Documents documents,
+            WorkAutomation automation,
+            AuditLog audit,
+            Clock clock) {
         this.requirements = requirements;
         this.documents = documents;
+        this.automation = automation;
         this.audit = audit;
         this.clock = clock;
     }
@@ -189,6 +196,8 @@ class Submissions {
     private void record(RequirementRow requirement, ItemRow item, Source source, String action) {
         requirements.insertItem(item);
         requirements.setCurrentItem(requirement.id(), item.id(), item.receivedAt());
+        // Follow-up (review task, resuming the work) runs as a job in the organization's scope.
+        automation.answerReceived(requirement.organizationId(), requirement.workId(), requirement.id(), item.id());
         var event = AuditLog.Event.of(action, requirement.organizationId(), source.userId())
                 .resource("information_item", item.id())
                 .detail("requirementId", requirement.id().toString())

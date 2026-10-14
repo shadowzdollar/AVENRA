@@ -79,6 +79,27 @@ class S3DocumentStorage implements DocumentStorage, DisposableBean {
     }
 
     @Override
+    public void copy(String fromKey, String toKey) {
+        try {
+            s3.copyObject(request -> request.sourceBucket(bucket)
+                    .sourceKey(fromKey)
+                    .destinationBucket(bucket)
+                    .destinationKey(toKey));
+        } catch (SdkException failure) {
+            throw new StorageUnavailableException(failure);
+        }
+    }
+
+    @Override
+    public void delete(String key) {
+        try {
+            s3.deleteObject(request -> request.bucket(bucket).key(key));
+        } catch (SdkException failure) {
+            throw new StorageUnavailableException(failure);
+        }
+    }
+
+    @Override
     public void destroy() {
         s3.close();
     }

@@ -7,6 +7,7 @@ import com.avenra.identity.UserDirectory;
 import com.avenra.organization.OrganizationAccess;
 import com.avenra.organization.domain.Permission;
 import com.avenra.platform.AvenraProperties;
+import com.avenra.platform.crypto.SecretBox;
 import com.avenra.platform.crypto.SecureTokens;
 import com.avenra.platform.email.EmailMessage;
 import com.avenra.platform.email.OutgoingEmail;
@@ -45,6 +46,8 @@ public class RequestLinkService {
     private final Idempotency idempotency;
     private final UserDirectory users;
     private final OutgoingEmail outgoing;
+    private final SecretBox box;
+    private final WorkAutomation automation;
     private final AuditLog audit;
     private final URI publicBaseUrl;
     private final Clock clock;
@@ -58,6 +61,8 @@ public class RequestLinkService {
             Idempotency idempotency,
             UserDirectory users,
             OutgoingEmail outgoing,
+            SecretBox box,
+            WorkAutomation automation,
             AuditLog audit,
             AvenraProperties properties,
             Clock clock) {
@@ -69,6 +74,8 @@ public class RequestLinkService {
         this.idempotency = idempotency;
         this.users = users;
         this.outgoing = outgoing;
+        this.box = box;
+        this.automation = automation;
         this.audit = audit;
         this.publicBaseUrl = properties.web().publicBaseUrl();
         this.clock = clock;
@@ -125,8 +132,18 @@ public class RequestLinkService {
                                     now,
                                     now.plus(Duration.ofDays(days)),
                                     null,
+                                    null,
+                                    0,
+                                    null,
                                     null);
-                            links.insert(row, SecureTokens.hash(token), requested);
+                            var sealed = box.seal(
+                                    token.getBytes(java.nio.charset.StandardCharsets.UTF_8), tokenContext(row.id()));
+                            links.insert(
+                                    row,
+                                    SecureTokens.hash(token),
+                                    new RequestLinkRepository.SealedToken(sealed.keyId(), sealed.ciphertext()),
+                                    requested);
+                            automation.informationRequested(organizationId, workId, row.id());
                             String sender = users.find(userId)
                                     .map(UserDirectory.UserSummary::displayName)
                                     .orElse("Someone");
@@ -161,6 +178,41 @@ public class RequestLinkService {
         });
     }
 
+    /** A reminder for an unanswered request (ADR-025): the same link, and what is still outstanding. */
+    EmailMessage reminderEmail(
+            String to,
+            @Nullable String recipientName,
+            String organization,
+            String workTitle,
+            String token,
+            java.util.List<String> outstanding,
+            OffsetDateTime expiresAt) {
+        String greeting = recipientName == null ? "Hello," : "Hello " + recipientName + ",";
+        String items =
+                outstanding.stream().map(title -> "- " + title).collect(java.util.stream.Collectors.joining("\n"));
+        return new EmailMessage(
+                to,
+                "Reminder: " + organization + " is still waiting for information",
+                greeting + "\n\n" + organization + " is still waiting for the following for \"" + workTitle + "\":\n\n"
+                        + items + "\n\nOpen your secure link to answer (no account needed):\n\n" + linkUrl(token)
+                        + "\n\nThe link works until " + expiresAt.toLocalDate() + ". If you have already sent"
+                        + " everything, you can ignore this email.\n",
+                "request-reminder");
+    }
+
+    /** Binds an encrypted token to its link, so ciphertexts cannot be moved between links. */
+    static String tokenContext(UUID linkId) {
+        return "request-link:" + linkId;
+    }
+
+    /** The link a client opens: the token travels in the fragment, never to a server or in a referrer. */
+    String linkUrl(String token) {
+        return UriComponentsBuilder.fromUri(publicBaseUrl)
+                        .path("/request")
+                        .build()
+                        .toUriString() + "#" + token;
+    }
+
     private EmailMessage requestEmail(
             String to,
             @Nullable String recipientName,
@@ -170,11 +222,7 @@ public class RequestLinkService {
             String token,
             int days) {
         // The token travels in the fragment: browsers never send it to a server or in a referrer.
-        String link = UriComponentsBuilder.fromUri(publicBaseUrl)
-                        .path("/request")
-                        .build()
-                        .toUriString()
-                + "#" + token;
+        String link = linkUrl(token);
         String greeting = recipientName == null ? "Hello," : "Hello " + recipientName + ",";
         return new EmailMessage(
                 to,

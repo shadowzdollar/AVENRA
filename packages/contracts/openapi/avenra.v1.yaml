@@ -1737,6 +1737,176 @@ paths:
           $ref: '#/components/responses/ClientError'
         5XX:
           $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/exceptions:
+    get:
+      operationId: listExceptions
+      summary: List exceptions
+      tags:
+      - work
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/ExceptionStatus'
+      - name: workId
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: Only this work.
+      - name: open
+        in: query
+        required: false
+        schema:
+          type: boolean
+        description: Only exceptions that are not resolved or dismissed.
+      responses:
+        '200':
+          description: Exceptions, newest first (at most 200).
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkException'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/exceptions/{exceptionId}:
+    get:
+      operationId: getException
+      summary: Get an exception
+      tags:
+      - work
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ExceptionId'
+      responses:
+        '200':
+          description: The exception.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkException'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    patch:
+      operationId: assignException
+      summary: Assign an exception
+      tags:
+      - work
+      x-avenra-permission: work.update
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ExceptionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignExceptionRequest'
+      responses:
+        '200':
+          description: Assigned.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkException'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/exceptions/{exceptionId}/transitions:
+    post:
+      operationId: transitionException
+      summary: Change the status of an exception
+      description: Only transitions of the exception lifecycle (ADR-024) succeed (`INVALID_TRANSITION`).
+        Resolving or dismissing needs a resolution. Repeating the current status returns the exception
+        unchanged.
+      tags:
+      - work
+      x-avenra-permission: work.update
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ExceptionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExceptionTransitionRequest'
+      responses:
+        '200':
+          description: Updated.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkException'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/executions:
+    get:
+      operationId: listExecutions
+      summary: Automated and manual actions on work
+      tags:
+      - work
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      responses:
+        '200':
+          description: Executions, newest first (at most 200).
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Execution'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
 components:
   headers:
     RequestId:
@@ -2410,6 +2580,9 @@ components:
         updatedAt:
           type: string
           format: date-time
+        openExceptions:
+          type: integer
+          minimum: 0
     WorkDetail:
       type: object
       additionalProperties: false
@@ -2425,6 +2598,7 @@ components:
       - requirements
       - tasks
       - allowedTransitions
+      - progress
       properties:
         id:
           type: string
@@ -2483,6 +2657,8 @@ components:
           items:
             $ref: '#/components/schemas/WorkStatus'
           description: Statuses reachable from the current one.
+        progress:
+          $ref: '#/components/schemas/Progress'
     TransitionRequest:
       type: object
       additionalProperties: false
@@ -2522,6 +2698,9 @@ components:
         at:
           type: string
           format: date-time
+        actorRule:
+          type: string
+          description: Set when the platform moved the work (ADR-023).
     TaskStatus:
       type: string
       enum:
@@ -2575,6 +2754,7 @@ components:
       - completionCondition
       - status
       - createdAt
+      - origin
       properties:
         id:
           type: string
@@ -2603,6 +2783,22 @@ components:
         createdAt:
           type: string
           format: date-time
+        origin:
+          type: string
+          enum:
+          - MANUAL
+          - SYSTEM
+          description: System tasks are created and closed by the platform (ADR-024).
+        requiredAction:
+          type: string
+        reason:
+          type: string
+        choices:
+          type: array
+          items:
+            type: string
+        about:
+          $ref: '#/components/schemas/Reference'
     RequirementKind:
       type: string
       enum:
@@ -2870,6 +3066,7 @@ components:
       - status
       - createdAt
       - expiresAt
+      - remindersSent
       properties:
         id:
           type: string
@@ -2905,6 +3102,12 @@ components:
           type: string
           format: date-time
         revokedAt:
+          type: string
+          format: date-time
+        remindersSent:
+          type: integer
+          minimum: 0
+        lastRemindedAt:
           type: string
           format: date-time
     ClientRequest:
@@ -2966,6 +3169,224 @@ components:
           items:
             type: string
           description: 'For documents: accepted file extensions.'
+    ExceptionStatus:
+      type: string
+      enum:
+      - OPEN
+      - IN_PROGRESS
+      - WAITING
+      - RESOLVED
+      - DISMISSED
+    WorkException:
+      type: object
+      additionalProperties: false
+      description: 'A business exception: a normal state that needs a person (Guidelines §26, ADR-024).'
+      required:
+      - id
+      - type
+      - severity
+      - description
+      - source
+      - status
+      - createdAt
+      - allowedTransitions
+      properties:
+        id:
+          type: string
+          format: uuid
+        workId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+          - JOB_FAILED
+          - DELIVERY_FAILED
+          - REQUEST_EXPIRED_INCOMPLETE
+          - WORK_OVERDUE
+          - MALWARE_FOUND
+          - HUMAN_REQUIRED
+        severity:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+        description:
+          type: string
+          description: What happened and what is needed.
+        source:
+          type: object
+          additionalProperties: false
+          description: What raised the exception.
+          required:
+          - type
+          - id
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+        status:
+          $ref: '#/components/schemas/ExceptionStatus'
+        assigneeMembershipId:
+          type: string
+          format: uuid
+        resolution:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+        resolvedByUserId:
+          type: string
+          format: uuid
+        allowedTransitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExceptionStatus'
+    ExceptionTransitionRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - to
+      - expectedStatus
+      properties:
+        to:
+          $ref: '#/components/schemas/ExceptionStatus'
+        expectedStatus:
+          $ref: '#/components/schemas/ExceptionStatus'
+        resolution:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Required for `RESOLVED` and `DISMISSED`.
+    AssignExceptionRequest:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        assigneeMembershipId:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: The member responsible; null to unassign.
+    Execution:
+      type: object
+      additionalProperties: false
+      description: One attempt to perform an action (Guidelines §28, ADR-023).
+      required:
+      - id
+      - actor
+      - action
+      - status
+      - retryCount
+      - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        step:
+          $ref: '#/components/schemas/Reference'
+        actor:
+          type: object
+          additionalProperties: false
+          required:
+          - type
+          properties:
+            type:
+              type: string
+              enum:
+              - USER
+              - SYSTEM
+            userId:
+              type: string
+              format: uuid
+            rule:
+              type: string
+              description: 'For system actions: the rule that acted.'
+        action:
+          type: string
+          examples:
+          - request_link.remind
+        target:
+          type: string
+        status:
+          type: string
+          enum:
+          - PLANNED
+          - AUTHORIZED
+          - READY
+          - RUNNING
+          - WAITING
+          - REQUIRES_APPROVAL
+          - FAILED
+          - SUCCEEDED
+          - VERIFIED
+          - COMPLETED
+          - CANCELLED
+        result:
+          type: object
+          additionalProperties:
+            type: string
+          description: What the action produced, as named values.
+        error:
+          type: string
+        retryCount:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+    Progress:
+      type: object
+      additionalProperties: false
+      description: What a person needs to know without reading logs (Guidelines §107).
+      required:
+      - currentStep
+      - nextAction
+      properties:
+        currentStep:
+          type: string
+          description: Where the work stands, in words.
+        nextAction:
+          type: string
+          description: What happens next and who does it.
+        blockedReason:
+          type: string
+        openExceptions:
+          type: integer
+          minimum: 0
+        openTasks:
+          type: integer
+          minimum: 0
+    Reference:
+      type: object
+      additionalProperties: false
+      description: 'Points at another resource: its kind and id.'
+      required:
+      - type
+      - id
+      properties:
+        type:
+          type: string
+          examples:
+          - requirement
+        id:
+          type: string
+          format: uuid
   securitySchemes:
     sessionCookie:
       type: apiKey
@@ -3080,3 +3501,10 @@ components:
         maxLength: 200
       description: The token from the request link. Sent in a header, never in the URL, so it does not
         reach access logs or referrers.
+    ExceptionId:
+      name: exceptionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid

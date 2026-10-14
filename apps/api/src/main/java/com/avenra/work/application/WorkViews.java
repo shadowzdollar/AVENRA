@@ -18,6 +18,7 @@ import com.avenra.contract.v1.model.WorkSummary;
 import com.avenra.contract.v1.model.WorkTransition;
 import com.avenra.document.Documents;
 import com.avenra.work.domain.Completeness;
+import com.avenra.work.domain.Progress;
 import com.avenra.work.domain.WorkStatus;
 import com.avenra.work.infrastructure.ClientRepository.ClientRow;
 import com.avenra.work.infrastructure.ClientRepository.ProjectRow;
@@ -102,8 +103,16 @@ class WorkViews {
         return versions;
     }
 
-    WorkDetail detail(WorkRow work, List<RequirementRow> requirementRows, List<TaskRow> tasks) {
+    WorkDetail detail(
+            WorkRow work,
+            List<RequirementRow> requirementRows,
+            List<TaskRow> tasks,
+            long openExceptions,
+            @Nullable String lastReason) {
         var loaded = load(requirementRows);
+        long openTasks =
+                tasks.stream().filter(task -> task.status().equals("OPEN")).count();
+        var progress = Progress.of(work.status(), loaded.completeness(), openTasks, openExceptions, lastReason);
         var detail = new WorkDetail(
                 work.id(),
                 work.title(),
@@ -118,7 +127,11 @@ class WorkViews {
                 work.status().next().stream()
                         .sorted(Comparator.naturalOrder())
                         .map(WorkViews::status)
-                        .toList());
+                        .toList(),
+                new com.avenra.contract.v1.model.Progress(progress.currentStep(), progress.nextAction())
+                        .blockedReason(progress.blockedReason())
+                        .openExceptions((int) openExceptions)
+                        .openTasks((int) openTasks));
         detail.type(work.type())
                 .description(work.description())
                 .clientId(work.clientId())
@@ -131,7 +144,7 @@ class WorkViews {
         return detail;
     }
 
-    static WorkSummary summary(WorkRow work, Completeness completeness) {
+    static WorkSummary summary(WorkRow work, Completeness completeness, long openExceptions) {
         return new WorkSummary(
                         work.id(),
                         work.title(),
@@ -144,7 +157,8 @@ class WorkViews {
                 .clientId(work.clientId())
                 .projectId(work.projectId())
                 .ownerMembershipId(work.ownerMembershipId())
-                .dueAt(utcOrNull(work.dueAt()));
+                .dueAt(utcOrNull(work.dueAt()))
+                .openExceptions((int) openExceptions);
     }
 
     Requirement requirement(RequirementRow row, LoadedRequirements loaded) {
@@ -204,24 +218,58 @@ class WorkViews {
     }
 
     static Task task(TaskRow row) {
-        return new Task(
+        var task = new Task(
                         row.id(),
                         row.title(),
                         Task.KindEnum.fromValue(row.kind()),
                         row.completionCondition(),
                         TaskStatus.fromValue(row.status()),
-                        utc(row.createdAt()))
+                        utc(row.createdAt()),
+                        Task.OriginEnum.fromValue(row.origin()))
+                .requiredAction(row.requiredAction())
+                .reason(row.reason())
+                .choices(new ArrayList<>(row.choiceList()))
                 .assigneeMembershipId(row.assigneeMembershipId())
                 .dueAt(utcOrNull(row.dueAt()))
                 .note(row.note())
                 .completedAt(utcOrNull(row.completedAt()));
+        if (row.sourceType() != null && row.sourceId() != null) {
+            task.about(new com.avenra.contract.v1.model.Reference(row.sourceType(), row.sourceId()));
+        }
+        return task;
     }
 
     static WorkTransition transition(TransitionRow row) {
         return new WorkTransition(row.id(), status(row.toStatus()), utc(row.occurredAt()))
                 .from(row.fromStatus() == null ? null : status(row.fromStatus()))
                 .actorUserId(row.actorUserId())
+                .actorRule(row.actorRule())
                 .reason(row.reason());
+    }
+
+    static com.avenra.contract.v1.model.Execution execution(
+            com.avenra.work.infrastructure.ExecutionRepository.ExecutionRow row) {
+        var actor = new com.avenra.contract.v1.model.ExecutionActor(
+                        com.avenra.contract.v1.model.ExecutionActor.TypeEnum.fromValue(row.actorType()))
+                .userId(row.actorUserId())
+                .rule(row.actorRule());
+        var execution = new com.avenra.contract.v1.model.Execution(
+                        row.id(),
+                        actor,
+                        row.action(),
+                        com.avenra.contract.v1.model.Execution.StatusEnum.fromValue(
+                                row.status().name()),
+                        row.retryCount(),
+                        utc(row.createdAt()))
+                .target(row.target())
+                .result(new java.util.HashMap<>(row.result()))
+                .error(row.error())
+                .startedAt(utcOrNull(row.startedAt()))
+                .completedAt(utcOrNull(row.completedAt()));
+        if (row.stepType() != null && row.stepId() != null) {
+            execution.step(new com.avenra.contract.v1.model.Reference(row.stepType(), row.stepId()));
+        }
+        return execution;
     }
 
     static Client client(ClientRow row) {
@@ -246,7 +294,9 @@ class WorkViews {
                         new ArrayList<>(requirementIds),
                         status,
                         utc(row.createdAt()),
-                        utc(row.expiresAt()))
+                        utc(row.expiresAt()),
+                        row.remindersSent())
+                .lastRemindedAt(utcOrNull(row.lastRemindedAt()))
                 .recipientName(row.recipientName())
                 .message(row.message())
                 .createdByUserId(row.createdBy())

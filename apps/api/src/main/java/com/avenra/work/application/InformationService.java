@@ -33,6 +33,8 @@ public class InformationService {
     private final Submissions submissions;
     private final Documents documents;
     private final WorkViews views;
+    private final HumanTasks tasks;
+    private final WorkAutomation automation;
     private final OrganizationAccess access;
     private final AuditLog audit;
     private final Clock clock;
@@ -44,6 +46,8 @@ public class InformationService {
             Submissions submissions,
             Documents documents,
             WorkViews views,
+            HumanTasks tasks,
+            WorkAutomation automation,
             OrganizationAccess access,
             AuditLog audit,
             Clock clock) {
@@ -53,6 +57,8 @@ public class InformationService {
         this.submissions = submissions;
         this.documents = documents;
         this.views = views;
+        this.tasks = tasks;
+        this.automation = automation;
         this.access = access;
         this.audit = audit;
         this.clock = clock;
@@ -136,6 +142,10 @@ public class InformationService {
             }
             OffsetDateTime now = OffsetDateTime.now(clock);
             requirements.review(item.id(), decision, userId, reason, now);
+            tasks.reviewed(organizationId, requirementId, accept, reason, userId);
+            if (!accept) {
+                automation.answerRejected(organizationId, workId, requirementId, item.id());
+            }
             work.touch(organizationId, workId, now);
             audit.record(AuditLog.Event.of(
                             accept ? "work.information.accepted" : "work.information.rejected", organizationId, userId)

@@ -91,6 +91,13 @@ public class RequirementRepository {
                 .list();
     }
 
+    public Optional<RequirementRow> find(UUID requirementId) {
+        return jdbc.sql("select " + REQUIREMENT + " from requirements where id = :id")
+                .param("id", requirementId)
+                .query(RequirementRow.class)
+                .optional();
+    }
+
     /** Requirements visible through the request link the transaction holds. */
     public List<RequirementRow> byIds(Collection<UUID> ids) {
         if (ids.isEmpty()) {
