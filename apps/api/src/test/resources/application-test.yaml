@@ -6,6 +6,8 @@ avenra:
   web:
     allowed-origins: https://app.avenra.test
     max-request-body-size: 4KB
+    # Small, so size limits are cheap to test.
+    max-upload-size: 256KB
   # All tests share one client address; generous limits keep unrelated tests
   # independent. RateLimitIT runs with strict limits of its own.
   rate-limits:
@@ -19,6 +21,10 @@ avenra:
       email-send: { capacity: 100000, refill: 1m }
       token-check: { capacity: 100000, refill: 1m }
       invitations: { capacity: 100000, refill: 1m }
+      request-links: { capacity: 100000, refill: 1m }
+      client-requests: { capacity: 100000, refill: 1m }
+      uploads: { capacity: 100000, refill: 1m }
+      client-uploads: { capacity: 100000, refill: 1m }
 
 # Tests capture email with TestOutbox; this SMTP host is never contacted.
 spring:

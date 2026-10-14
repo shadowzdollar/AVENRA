@@ -27,6 +27,16 @@ tags:
   description: Accounts, sessions, passwords and multi-factor authentication.
 - name: organizations
   description: Organizations, members, roles and invitations.
+- name: clients
+  description: The organization's clients.
+- name: projects
+  description: Projects that group work.
+- name: work
+  description: Work, its lifecycle, tasks, requirements, information and documents.
+- name: requests
+  description: Request links that ask clients for information.
+- name: client-requests
+  description: Public operations used by clients holding a request link.
 paths:
   /api/v1/meta:
     get:
@@ -815,6 +825,918 @@ paths:
           $ref: '#/components/responses/ClientError'
         5XX:
           $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/clients:
+    get:
+      operationId: listClients
+      summary: List clients
+      tags:
+      - clients
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: Clients, by name.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    post:
+      operationId: createClient
+      summary: Create a client
+      tags:
+      - clients
+      x-avenra-permission: work.create
+      x-avenra-audit: required
+      x-avenra-idempotency: key-required
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientInput'
+      responses:
+        '201':
+          description: Created.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/clients/{clientId}:
+    get:
+      operationId: getClient
+      summary: Get a client
+      tags:
+      - clients
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ClientId'
+      responses:
+        '200':
+          description: The client.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    put:
+      operationId: updateClient
+      summary: Update a client
+      tags:
+      - clients
+      x-avenra-permission: work.update
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ClientId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientInput'
+      responses:
+        '200':
+          description: Updated.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/projects:
+    get:
+      operationId: listProjects
+      summary: List projects
+      tags:
+      - projects
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: clientId
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: Only the projects of this client.
+      responses:
+        '200':
+          description: Projects, newest first.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    post:
+      operationId: createProject
+      summary: Create a project
+      tags:
+      - projects
+      x-avenra-permission: work.create
+      x-avenra-audit: required
+      x-avenra-idempotency: key-required
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectInput'
+      responses:
+        '201':
+          description: Created.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/projects/{projectId}:
+    get:
+      operationId: getProject
+      summary: Get a project
+      tags:
+      - projects
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: The project.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    put:
+      operationId: updateProject
+      summary: Update a project
+      tags:
+      - projects
+      x-avenra-permission: work.update
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectInput'
+      responses:
+        '200':
+          description: Updated.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work:
+    get:
+      operationId: listWork
+      summary: List work
+      tags:
+      - work
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: projectId
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: Only the work of this project.
+      - name: clientId
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: Only the work of this client.
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/WorkStatus'
+      responses:
+        '200':
+          description: Work with its completeness, most recently updated first (at most 200).
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkSummary'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    post:
+      operationId: createWork
+      summary: Create work
+      tags:
+      - work
+      x-avenra-permission: work.create
+      x-avenra-audit: required
+      x-avenra-idempotency: key-required
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkRequest'
+      responses:
+        '201':
+          description: Created in `DRAFT`.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkDetail'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}:
+    get:
+      operationId: getWork
+      summary: Get work with its requirements, tasks and completeness
+      tags:
+      - work
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      responses:
+        '200':
+          description: The work.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkDetail'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    patch:
+      operationId: updateWork
+      summary: Update the details of work
+      description: Changes descriptive fields only; the status changes through transitions. Work in a
+        final status cannot be changed (`WORK_CLOSED`).
+      tags:
+      - work
+      x-avenra-permission: work.update
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkRequest'
+      responses:
+        '200':
+          description: Updated.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkDetail'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/transitions:
+    get:
+      operationId: listWorkTransitions
+      summary: Status history of work
+      tags:
+      - work
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      responses:
+        '200':
+          description: Transitions, oldest first.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkTransition'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    post:
+      operationId: transitionWork
+      summary: Change the status of work
+      description: Only transitions allowed by the work lifecycle (ADR-018) succeed; others answer `INVALID_TRANSITION`.
+        `expectedStatus` guards against concurrent changes (`STATUS_CHANGED`). Repeating a transition
+        that already happened returns the work unchanged.
+      tags:
+      - work
+      x-avenra-permission: work.update
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionRequest'
+      responses:
+        '200':
+          description: The work in its new status.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkDetail'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/tasks:
+    post:
+      operationId: createTask
+      summary: Add a task to work
+      tags:
+      - work
+      x-avenra-permission: work.update
+      x-avenra-audit: required
+      x-avenra-idempotency: key-required
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Created.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/tasks/{taskId}/status:
+    put:
+      operationId: setTaskStatus
+      summary: Complete or cancel a task
+      description: A task moves from `OPEN` to `DONE` or `CANCELLED` once.
+      tags:
+      - work
+      x-avenra-permission: work.execute
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskStatusRequest'
+      responses:
+        '200':
+          description: Updated.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/requirements:
+    post:
+      operationId: createRequirement
+      summary: Add a requirement to work
+      tags:
+      - work
+      x-avenra-permission: work.update
+      x-avenra-audit: required
+      x-avenra-idempotency: key-required
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRequirementRequest'
+      responses:
+        '201':
+          description: Created.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Requirement'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/requirements/{requirementId}/items:
+    get:
+      operationId: listInformationItems
+      summary: Everything submitted for a requirement
+      tags:
+      - work
+      x-avenra-permission: information.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/RequirementId'
+      responses:
+        '200':
+          description: Information items, newest first.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InformationItem'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/requirements/{requirementId}/value:
+    post:
+      operationId: submitValue
+      summary: Record a value for a requirement
+      description: Creates a new information item; earlier items are kept. Submitting the same value again
+        while it awaits review returns the existing item.
+      tags:
+      - work
+      x-avenra-permission: information.collect
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/RequirementId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValueSubmission'
+      responses:
+        '201':
+          description: Recorded, pending review.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InformationItem'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/requirements/{requirementId}/file:
+    post:
+      operationId: uploadFile
+      summary: Upload a file for a requirement
+      description: 'The file type is detected from its content (ADR-019) and the file is scanned for malware
+        before it is stored (ADR-021). Errors: `FILE_TOO_LARGE`, `FILE_TYPE_NOT_ALLOWED`, `FILE_REJECTED`
+        (malware found), `SCANNER_UNAVAILABLE`.'
+      tags:
+      - work
+      x-avenra-permission: information.collect
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: uploads
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/RequirementId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUpload'
+      responses:
+        '201':
+          description: Stored, pending review.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InformationItem'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/requirements/{requirementId}/review:
+    post:
+      operationId: reviewInformation
+      summary: Accept or reject a submission
+      description: Reviews the current item of the requirement. Rejecting needs a reason, which the client
+        sees. Only an item awaiting review can be reviewed (`NOT_AWAITING_REVIEW`).
+      tags:
+      - work
+      x-avenra-permission: information.verify
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/RequirementId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+      responses:
+        '200':
+          description: The requirement after the review.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Requirement'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/documents/{documentId}/versions/{version}/content:
+    get:
+      operationId: downloadDocument
+      summary: Download a document version
+      description: Only versions scanned clean can be downloaded (`DOCUMENT_UNAVAILABLE`). Every download
+        is audited.
+      tags:
+      - work
+      x-avenra-permission: information.read
+      x-avenra-audit: required
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/DocumentId'
+      - $ref: '#/components/parameters/DocumentVersion'
+      responses:
+        '200':
+          description: The file, always as an attachment.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Disposition:
+              description: Always `attachment`, with the original file name.
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/request-links:
+    get:
+      operationId: listRequestLinks
+      summary: List request links of work
+      tags:
+      - requests
+      x-avenra-permission: information.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      responses:
+        '200':
+          description: Request links, newest first.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RequestLink'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    post:
+      operationId: createRequestLink
+      summary: Ask a client for information
+      description: The link gives access only to the listed requirements of this work (ADR-020). The token
+        is sent by email only and never returned by the API.
+      tags:
+      - requests
+      x-avenra-permission: information.collect
+      x-avenra-audit: required
+      x-avenra-idempotency: key-required
+      x-avenra-rate-limit: request-links
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRequestLinkRequest'
+      responses:
+        '201':
+          description: Created; the link is emailed to the recipient.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestLink'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/request-links/{requestLinkId}:
+    delete:
+      operationId: revokeRequestLink
+      summary: Revoke a request link
+      tags:
+      - requests
+      x-avenra-permission: information.collect
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/RequestLinkId'
+      responses:
+        '204':
+          description: Revoked; the link stops working immediately.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/client-requests/current:
+    get:
+      operationId: getClientRequest
+      summary: Open a request for information
+      description: 'Answers `REQUEST_LINK_INVALID` for unknown, expired or revoked links. Needs no account:
+        the request token is the only credential (ADR-020).'
+      tags:
+      - client-requests
+      x-avenra-permission: public
+      x-avenra-audit: required
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: client-requests
+      parameters:
+      - $ref: '#/components/parameters/RequestToken'
+      responses:
+        '200':
+          description: What is being asked and the state of each item.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientRequest'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/client-requests/current/requirements/{requirementId}/value:
+    post:
+      operationId: submitClientValue
+      summary: Answer a requested item
+      description: 'Only requirements of the link. Needs no account: the request token is the only credential
+        (ADR-020).'
+      tags:
+      - client-requests
+      x-avenra-permission: public
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: client-requests
+      parameters:
+      - $ref: '#/components/parameters/RequestToken'
+      - $ref: '#/components/parameters/RequirementId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValueSubmission'
+      responses:
+        '201':
+          description: Received.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientRequestItem'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/client-requests/current/requirements/{requirementId}/file:
+    post:
+      operationId: uploadClientFile
+      summary: Upload a requested file
+      description: 'Same checks as team uploads: type by content, size limit, malware scan. Needs no account:
+        the request token is the only credential (ADR-020).'
+      tags:
+      - client-requests
+      x-avenra-permission: public
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: client-uploads
+      parameters:
+      - $ref: '#/components/parameters/RequestToken'
+      - $ref: '#/components/parameters/RequirementId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUpload'
+      responses:
+        '201':
+          description: Received.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientRequestItem'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
 components:
   headers:
     RequestId:
@@ -1245,6 +2167,805 @@ components:
       - MEMBER
       - VIEWER
       description: Role within an organization (Guidelines §18).
+    ClientInput:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          description: Default contact address.
+        reference:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: The organization's own reference for the client.
+    Client:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - createdAt
+      - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        reference:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ProjectInput:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        clientId:
+          type: string
+          format: uuid
+        description:
+          type: string
+          minLength: 0
+          maxLength: 4000
+    Project:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - createdAt
+      - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        clientId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    WorkStatus:
+      type: string
+      enum:
+      - DRAFT
+      - READY
+      - RUNNING
+      - WAITING_FOR_INFORMATION
+      - WAITING_FOR_APPROVAL
+      - BLOCKED
+      - FAILED
+      - COMPLETED
+      - CANCELLED
+      description: Lifecycle of work (Guidelines §19, ADR-018).
+    Priority:
+      type: string
+      enum:
+      - LOW
+      - NORMAL
+      - HIGH
+      - URGENT
+    CreateWorkRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 0
+          maxLength: 10000
+        type:
+          type: string
+          minLength: 1
+          maxLength: 60
+          description: Kind of work, e.g. `onboarding`.
+        priority:
+          $ref: '#/components/schemas/Priority'
+        clientId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        dueAt:
+          type: string
+          format: date-time
+        ownerMembershipId:
+          type: string
+          format: uuid
+          description: The member responsible; defaults to the creator.
+    UpdateWorkRequest:
+      type: object
+      additionalProperties: false
+      description: Only the fields present are changed.
+      required: []
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 0
+          maxLength: 10000
+        type:
+          type: string
+          minLength: 1
+          maxLength: 60
+        priority:
+          $ref: '#/components/schemas/Priority'
+        dueAt:
+          type: string
+          format: date-time
+        ownerMembershipId:
+          type: string
+          format: uuid
+    Completeness:
+      type: object
+      additionalProperties: false
+      description: Computed by the server from the requirements (ADR-018).
+      required:
+      - required
+      - accepted
+      - awaitingReview
+      - missing
+      - rejected
+      - complete
+      properties:
+        required:
+          type: integer
+          minimum: 0
+          description: Required requirements.
+        accepted:
+          type: integer
+          minimum: 0
+          description: Required requirements accepted.
+        awaitingReview:
+          type: integer
+          minimum: 0
+        missing:
+          type: integer
+          minimum: 0
+        rejected:
+          type: integer
+          minimum: 0
+          description: Waiting for a correction.
+        complete:
+          type: boolean
+          description: Every required requirement is accepted.
+    WorkSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - title
+      - status
+      - priority
+      - completeness
+      - createdAt
+      - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        type:
+          type: string
+        status:
+          $ref: '#/components/schemas/WorkStatus'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        clientId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        ownerMembershipId:
+          type: string
+          format: uuid
+        dueAt:
+          type: string
+          format: date-time
+        completeness:
+          $ref: '#/components/schemas/Completeness'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    WorkDetail:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - title
+      - status
+      - priority
+      - completeness
+      - requestedByUserId
+      - createdAt
+      - updatedAt
+      - requirements
+      - tasks
+      - allowedTransitions
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        type:
+          type: string
+        status:
+          $ref: '#/components/schemas/WorkStatus'
+        priority:
+          $ref: '#/components/schemas/Priority'
+        clientId:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        ownerMembershipId:
+          type: string
+          format: uuid
+        dueAt:
+          type: string
+          format: date-time
+        completeness:
+          $ref: '#/components/schemas/Completeness'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        description:
+          type: string
+        requestedByUserId:
+          type: string
+          format: uuid
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        completionReason:
+          type: string
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Requirement'
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        allowedTransitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkStatus'
+          description: Statuses reachable from the current one.
+    TransitionRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - to
+      - expectedStatus
+      properties:
+        to:
+          $ref: '#/components/schemas/WorkStatus'
+        expectedStatus:
+          $ref: '#/components/schemas/WorkStatus'
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Why; required for `BLOCKED`, `FAILED` and `CANCELLED`.
+    WorkTransition:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - to
+      - at
+      properties:
+        id:
+          type: string
+          format: uuid
+        from:
+          $ref: '#/components/schemas/WorkStatus'
+        to:
+          $ref: '#/components/schemas/WorkStatus'
+        actorUserId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        at:
+          type: string
+          format: date-time
+    TaskStatus:
+      type: string
+      enum:
+      - OPEN
+      - DONE
+      - CANCELLED
+    CreateTaskRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - title
+      - completionCondition
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        completionCondition:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: What must be true for the task to be done (Guidelines §20).
+        assigneeMembershipId:
+          type: string
+          format: uuid
+        dueAt:
+          type: string
+          format: date-time
+    TaskStatusRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - status
+      properties:
+        status:
+          type: string
+          enum:
+          - DONE
+          - CANCELLED
+        note:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    Task:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - title
+      - kind
+      - completionCondition
+      - status
+      - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        kind:
+          type: string
+          enum:
+          - HUMAN
+        completionCondition:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        assigneeMembershipId:
+          type: string
+          format: uuid
+        dueAt:
+          type: string
+          format: date-time
+        note:
+          type: string
+        completedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    RequirementKind:
+      type: string
+      enum:
+      - DOCUMENT
+      - TEXT
+      - NUMBER
+      - DATE
+      - BOOLEAN
+      description: 'What satisfies the requirement: a file, or a value of a type.'
+    RequirementState:
+      type: string
+      enum:
+      - MISSING
+      - SUBMITTED
+      - ACCEPTED
+      - REJECTED
+      description: Derived from the current information item (ADR-018).
+    CreateRequirementRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - title
+      - kind
+      - required
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        instructions:
+          type: string
+          minLength: 0
+          maxLength: 2000
+          description: Shown to the client.
+        kind:
+          $ref: '#/components/schemas/RequirementKind'
+        required:
+          type: boolean
+    Requirement:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - title
+      - kind
+      - required
+      - state
+      - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        instructions:
+          type: string
+        kind:
+          $ref: '#/components/schemas/RequirementKind'
+        required:
+          type: boolean
+        state:
+          $ref: '#/components/schemas/RequirementState'
+        currentItem:
+          $ref: '#/components/schemas/InformationItem'
+        createdAt:
+          type: string
+          format: date-time
+    ValueSubmission:
+      type: object
+      additionalProperties: false
+      required:
+      - value
+      properties:
+        value:
+          type: string
+          minLength: 1
+          maxLength: 4000
+          description: Text; a decimal number (`NUMBER`); `YYYY-MM-DD` (`DATE`); `true` or `false` (`BOOLEAN`).
+    FileUpload:
+      type: object
+      additionalProperties: false
+      required:
+      - file
+      properties:
+        file:
+          type: string
+          format: binary
+          description: At most 25 MB; PDF, Word, Excel, PowerPoint, CSV, text, PNG or JPEG.
+    InformationSource:
+      type: object
+      additionalProperties: false
+      description: Where the information came from (Guidelines §136).
+      required:
+      - type
+      properties:
+        type:
+          type: string
+          enum:
+          - CLIENT_LINK
+          - TEAM_MEMBER
+        requestLinkId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+    VerificationState:
+      type: string
+      enum:
+      - PENDING
+      - ACCEPTED
+      - REJECTED
+    InformationItem:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - requirementId
+      - kind
+      - source
+      - receivedAt
+      - verification
+      properties:
+        id:
+          type: string
+          format: uuid
+        requirementId:
+          type: string
+          format: uuid
+        kind:
+          $ref: '#/components/schemas/RequirementKind'
+        value:
+          type: string
+          description: Present for value requirements.
+        document:
+          $ref: '#/components/schemas/DocumentVersion'
+        source:
+          $ref: '#/components/schemas/InformationSource'
+        receivedAt:
+          type: string
+          format: date-time
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Set by automated verification (Phase 5).
+        verification:
+          $ref: '#/components/schemas/Verification'
+    Verification:
+      type: object
+      additionalProperties: false
+      required:
+      - state
+      properties:
+        state:
+          $ref: '#/components/schemas/VerificationState'
+        reviewedByUserId:
+          type: string
+          format: uuid
+        reviewedAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+    DocumentVersion:
+      type: object
+      additionalProperties: false
+      required:
+      - documentId
+      - version
+      - fileName
+      - contentType
+      - sizeBytes
+      - sha256
+      - scanStatus
+      - uploadedAt
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 1
+        fileName:
+          type: string
+        contentType:
+          type: string
+          description: Detected from the content, not declared by the uploader.
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        sha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        scanStatus:
+          type: string
+          enum:
+          - CLEAN
+          - INFECTED
+        uploadedAt:
+          type: string
+          format: date-time
+    ReviewRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - itemId
+      - decision
+      properties:
+        itemId:
+          type: string
+          format: uuid
+          description: The item being reviewed; must be the current one.
+        decision:
+          type: string
+          enum:
+          - ACCEPT
+          - REJECT
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Required when rejecting; shown to the client.
+    CreateRequestLinkRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - recipientEmail
+      - requirementIds
+      properties:
+        recipientEmail:
+          type: string
+          format: email
+          maxLength: 254
+        recipientName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        message:
+          type: string
+          minLength: 0
+          maxLength: 2000
+          description: Shown to the client with the request.
+        requirementIds:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            format: uuid
+          description: Requirements of this work the link covers; duplicates are ignored.
+        expiresInDays:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 14
+    RequestLink:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - recipientEmail
+      - requirementIds
+      - status
+      - createdAt
+      - expiresAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        recipientEmail:
+          type: string
+          format: email
+        recipientName:
+          type: string
+        message:
+          type: string
+        requirementIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - EXPIRED
+          - REVOKED
+        createdByUserId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        lastOpenedAt:
+          type: string
+          format: date-time
+        revokedAt:
+          type: string
+          format: date-time
+    ClientRequest:
+      type: object
+      additionalProperties: false
+      description: 'What a request link shows: only its own requirements, never earlier files or other
+        work.'
+      required:
+      - organizationName
+      - workTitle
+      - recipient
+      - expiresAt
+      - items
+      properties:
+        organizationName:
+          type: string
+        workTitle:
+          type: string
+        recipient:
+          type: string
+          description: The recipient's email address, masked.
+        message:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientRequestItem'
+    ClientRequestItem:
+      type: object
+      additionalProperties: false
+      required:
+      - requirementId
+      - title
+      - kind
+      - required
+      - state
+      properties:
+        requirementId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        instructions:
+          type: string
+        kind:
+          $ref: '#/components/schemas/RequirementKind'
+        required:
+          type: boolean
+        state:
+          $ref: '#/components/schemas/RequirementState'
+        rejectionReason:
+          type: string
+          description: Why the last answer was not accepted.
+        acceptedFileTypes:
+          type: array
+          items:
+            type: string
+          description: 'For documents: accepted file extensions.'
   securitySchemes:
     sessionCookie:
       type: apiKey
@@ -1292,3 +3013,70 @@ components:
         maxLength: 128
       description: Client-chosen key; repeating a request with the same key returns the first result (Guidelines
         §30).
+    ClientId:
+      name: clientId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    WorkId:
+      name: workId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RequirementId:
+      name: requirementId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DocumentId:
+      name: documentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RequestLinkId:
+      name: requestLinkId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DocumentVersion:
+      name: version
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100000
+    RequestToken:
+      name: X-Avenra-Request-Token
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 20
+        maxLength: 200
+      description: The token from the request link. Sent in a header, never in the URL, so it does not
+        reach access logs or referrers.

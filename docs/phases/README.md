@@ -43,7 +43,7 @@ naming the phase that will close it. A deferral is never silent.
 |---|---|---|
 | 1 | [Foundation](phase-01-foundation.md) | Complete (2026-10-13) |
 | 2 | [Identity](phase-02-identity.md) | Complete (2026-10-13) |
-| 3 | Core business objects | Not started |
+| 3 | [Core business objects](phase-03-core-objects.md) | Complete (2026-10-14) |
 | 4 | Work execution | Not started |
 | 5 | Verification | Not started |
 | 6 | AI foundation | Not started |

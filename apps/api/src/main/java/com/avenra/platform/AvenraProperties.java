@@ -41,11 +41,14 @@ public record AvenraProperties(
      * @param publicBaseUrl the address people use to reach Avenra; used in links sent by email
      * @param allowedOrigins browser origins allowed to call the API (CORS); explicit origins only
      * @param maxRequestBodySize largest accepted request body
+     * @param maxUploadSize largest accepted file (ADR-019); file uploads may be this large plus a
+     *     small allowance for the multipart envelope
      */
     public record Web(
             @NotNull @DefaultValue("http://localhost:3000") URI publicBaseUrl,
             @DefaultValue List<@NotBlank String> allowedOrigins,
-            @NotNull @DefaultValue("1MB") DataSize maxRequestBodySize) {
+            @NotNull @DefaultValue("1MB") DataSize maxRequestBodySize,
+            @NotNull @DefaultValue("25MB") DataSize maxUploadSize) {
 
         public Web {
             allowedOrigins = List.copyOf(allowedOrigins);
@@ -59,6 +62,11 @@ public record AvenraProperties(
         @AssertTrue(message = "must be greater than zero")
         public boolean isMaxRequestBodySizePositive() {
             return maxRequestBodySize == null || maxRequestBodySize.toBytes() > 0;
+        }
+
+        @AssertTrue(message = "must be greater than zero")
+        public boolean isMaxUploadSizePositive() {
+            return maxUploadSize == null || maxUploadSize.toBytes() > 0;
         }
     }
 

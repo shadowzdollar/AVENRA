@@ -71,8 +71,22 @@ class GlobalExceptionHandler {
         return respond(request, PlatformErrorCode.MALFORMED_REQUEST, List.of());
     }
 
-    @ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
+    @ExceptionHandler({
+        MissingServletRequestParameterException.class,
+        MethodArgumentTypeMismatchException.class,
+        org.springframework.web.bind.MissingRequestHeaderException.class,
+        org.springframework.web.multipart.support.MissingServletRequestPartException.class
+    })
     ResponseEntity<ErrorResponse> badParameter(HttpServletRequest request) {
+        return respond(request, PlatformErrorCode.MALFORMED_REQUEST, List.of());
+    }
+
+    /** Multipart bodies that cannot be parsed, including ones cut off by the size limit. */
+    @ExceptionHandler(org.springframework.web.multipart.MultipartException.class)
+    ResponseEntity<ErrorResponse> badMultipart(Exception exception, HttpServletRequest request) {
+        if (causedByOversizedBody(exception)) {
+            return respond(request, PlatformErrorCode.PAYLOAD_TOO_LARGE, List.of());
+        }
         return respond(request, PlatformErrorCode.MALFORMED_REQUEST, List.of());
     }
 

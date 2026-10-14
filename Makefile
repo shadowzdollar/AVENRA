@@ -33,8 +33,8 @@ check: contract-check api-verify web-check ai-check ## Run every check CI runs o
 # --- Local infrastructure ---------------------------------------------------
 
 .PHONY: infra-up
-infra-up: .env ## Start PostgreSQL, Redis, S3 storage, Jaeger and Mailpit, wait until healthy
-	$(COMPOSE) up -d --wait postgres redis seaweedfs jaeger mailpit
+infra-up: .env ## Start PostgreSQL, Redis, S3 storage, ClamAV, Jaeger and Mailpit, wait until healthy
+	$(COMPOSE) up -d --wait postgres redis seaweedfs clamav jaeger mailpit
 	$(COMPOSE) run --rm seaweedfs-init
 
 .PHONY: infra-down

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import type { components } from "@avenra/contracts";
@@ -98,7 +99,17 @@ function Organization({ id }: { id: string }) {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-semibold tracking-tight">{organization.data?.name ?? "…"}</h1>
+      <div className="flex flex-wrap items-baseline justify-between gap-4">
+        <h1 className="text-2xl font-semibold tracking-tight">{organization.data?.name ?? "…"}</h1>
+        <nav className="flex gap-4 text-sm">
+          <Link href={`/organizations/${id}/work`} className="text-brand hover:underline">
+            Work
+          </Link>
+          <Link href={`/organizations/${id}/clients`} className="text-brand hover:underline">
+            Clients and projects
+          </Link>
+        </nav>
+      </div>
       {actionError ? <Alert tone="error">{actionError}</Alert> : null}
 
       <Card title="Members">

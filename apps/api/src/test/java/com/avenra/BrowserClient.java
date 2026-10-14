@@ -95,37 +95,93 @@ public final class BrowserClient {
         return cookies.get(name);
     }
 
+    public Response get(String path, Map<String, String> headers) {
+        return send("GET", path, null, headers);
+    }
+
+    /** Uploads a file as {@code multipart/form-data} in the part named {@code file}, like a browser form. */
+    public Response upload(String path, String fileName, byte[] content, Map<String, String> headers) {
+        String boundary = "----avenra-test-" + UUID.randomUUID();
+        var body = new java.io.ByteArrayOutputStream();
+        body.writeBytes(("--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"" + fileName
+                        + "\"\r\nContent-Type: application/octet-stream\r\n\r\n")
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        body.writeBytes(content);
+        body.writeBytes(("\r\n--" + boundary + "--\r\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        var response = exchange(
+                "POST",
+                path,
+                HttpRequest.BodyPublishers.ofByteArray(body.toByteArray()),
+                "multipart/form-data; boundary=" + boundary,
+                headers,
+                HttpResponse.BodyHandlers.ofString());
+        return parsed(response);
+    }
+
+    /** Downloads raw bytes, as a browser saving a file. */
+    public HttpResponse<byte[]> download(String path) {
+        return exchange(
+                "GET",
+                path,
+                HttpRequest.BodyPublishers.noBody(),
+                null,
+                Map.of(),
+                HttpResponse.BodyHandlers.ofByteArray());
+    }
+
     private Response send(String method, String path, Object body, Map<String, String> headers) {
+        var response = exchange(
+                method,
+                path,
+                body == null
+                        ? HttpRequest.BodyPublishers.noBody()
+                        : HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(body)),
+                body == null ? null : "application/json",
+                headers,
+                HttpResponse.BodyHandlers.ofString());
+        return parsed(response);
+    }
+
+    private Response parsed(HttpResponse<String> response) {
+        String text = response.body();
+        boolean json = response.headers()
+                .firstValue("Content-Type")
+                .map(type -> type.contains("json"))
+                .orElse(false);
+        JsonNode node = text.isBlank() || !json ? null : JSON.readTree(text);
+        return new Response(response.statusCode(), node, response.headers().allValues("Set-Cookie"), response);
+    }
+
+    private <T> HttpResponse<T> exchange(
+            String method,
+            String path,
+            HttpRequest.BodyPublisher publisher,
+            String contentType,
+            Map<String, String> headers,
+            HttpResponse.BodyHandler<T> handler) {
         boolean stateChanging = !method.equals("GET");
         if (stateChanging && !cookies.containsKey("XSRF-TOKEN")) {
             send("GET", "/api/v1/auth/csrf", null, Map.of());
         }
-        var request = HttpRequest.newBuilder(URI.create(base + path));
+        var request = HttpRequest.newBuilder(URI.create(base + path)).method(method, publisher);
+        if (contentType != null) {
+            request.header("Content-Type", contentType);
+        }
+        if (!cookies.isEmpty()) {
+            request.header(
+                    "Cookie",
+                    cookies.entrySet().stream()
+                            .map(entry -> entry.getKey() + "=" + entry.getValue())
+                            .collect(Collectors.joining("; ")));
+        }
+        if (stateChanging && cookies.containsKey("XSRF-TOKEN")) {
+            request.header("X-XSRF-TOKEN", cookies.get("XSRF-TOKEN"));
+        }
+        headers.forEach(request::header);
         try {
-            request.method(
-                    method,
-                    body == null
-                            ? HttpRequest.BodyPublishers.noBody()
-                            : HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(body)));
-            if (body != null) {
-                request.header("Content-Type", "application/json");
-            }
-            if (!cookies.isEmpty()) {
-                request.header(
-                        "Cookie",
-                        cookies.entrySet().stream()
-                                .map(entry -> entry.getKey() + "=" + entry.getValue())
-                                .collect(Collectors.joining("; ")));
-            }
-            if (stateChanging && cookies.containsKey("XSRF-TOKEN")) {
-                request.header("X-XSRF-TOKEN", cookies.get("XSRF-TOKEN"));
-            }
-            headers.forEach(request::header);
-            HttpResponse<String> response = HTTP.send(request.build(), HttpResponse.BodyHandlers.ofString());
-            List<String> setCookies = response.headers().allValues("Set-Cookie");
-            setCookies.forEach(this::remember);
-            JsonNode json = response.body().isBlank() ? null : JSON.readTree(response.body());
-            return new Response(response.statusCode(), json, setCookies, response);
+            HttpResponse<T> response = HTTP.send(request.build(), handler);
+            response.headers().allValues("Set-Cookie").forEach(this::remember);
+            return response;
         } catch (IOException exception) {
             throw new java.io.UncheckedIOException(exception);
         } catch (InterruptedException exception) {
