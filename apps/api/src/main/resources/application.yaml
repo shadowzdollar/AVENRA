@@ -55,6 +55,12 @@ spring:
       max-request-size: -1
       file-size-threshold: 0
 
+  # Request bodies must match the contract exactly: unknown fields are rejected,
+  # not ignored (additionalProperties: false, Guidelines §32).
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+
   jpa:
     open-in-view: false
     hibernate:

@@ -35,10 +35,12 @@ public final class TestServices {
             .withEnv("S3_SECRET_KEY", S3_SECRET_KEY)
             .withCreateContainerCmdModifier(cmd -> cmd.withEntrypoint("/bin/sh", "-c"))
             // One argument: the whole shell script.
-            .withCommand(new String[] {"printf '{\"identities\":[{\"name\":\"avenra\",\"credentials\":[{\"accessKey\":\"%s\","
-                    + "\"secretKey\":\"%s\"}],\"actions\":[\"Admin\",\"Read\",\"Write\",\"List\",\"Tagging\"]}]}' "
-                    + "\"$S3_ACCESS_KEY\" \"$S3_SECRET_KEY\" > /tmp/s3.json && "
-                    + "exec weed server -dir=/data -s3 -s3.port=8333 -s3.config=/tmp/s3.json -ip.bind=0.0.0.0"})
+            .withCommand(new String[] {
+                "printf '{\"identities\":[{\"name\":\"avenra\",\"credentials\":[{\"accessKey\":\"%s\","
+                        + "\"secretKey\":\"%s\"}],\"actions\":[\"Admin\",\"Read\",\"Write\",\"List\",\"Tagging\"]}]}' "
+                        + "\"$S3_ACCESS_KEY\" \"$S3_SECRET_KEY\" > /tmp/s3.json && "
+                        + "exec weed server -dir=/data -s3 -s3.port=8333 -s3.config=/tmp/s3.json -ip.bind=0.0.0.0"
+            })
             .waitingFor(Wait.forHttp("/").forPort(8333).forStatusCodeMatching(status -> status < 500))
             .withStartupTimeout(Duration.ofMinutes(2));
 
