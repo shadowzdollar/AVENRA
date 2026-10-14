@@ -37,6 +37,14 @@ public record TenantScope(
         return new TenantScope(userId, organizationId, hex, requestLinkTokenHashHex);
     }
 
+    /**
+     * The platform acting on its own, for one organization (a job) or for none (a platform job).
+     * Only background jobs use this; requests always act for a user or a request link.
+     */
+    public static TenantScope system(@Nullable UUID organizationId) {
+        return new TenantScope(null, organizationId, null, null);
+    }
+
     /** A client holding a request link: no user, no organization, only the link. */
     public static TenantScope requestLink(String tokenHashHex) {
         return new TenantScope(null, null, null, tokenHashHex);

@@ -77,7 +77,7 @@ public class AccountService {
             if (existing.isPresent()) {
                 var user = existing.get();
                 if (user.emailVerified()) {
-                    outgoing.sendAfterCommit(emails.alreadyRegistered(user.email(), user.displayName()));
+                    outgoing.queue(emails.alreadyRegistered(user.email(), user.displayName()), null);
                 } else {
                     sendVerification(user.id(), user.email(), user.displayName());
                 }
@@ -125,8 +125,13 @@ public class AccountService {
                                     SecureTokens.hash(token),
                                     now(),
                                     now().plus(properties.passwordResetValidity()));
-                            outgoing.sendAfterCommit(emails.passwordReset(
-                                    user.email(), user.displayName(), token, properties.passwordResetValidity()));
+                            outgoing.queue(
+                                    emails.passwordReset(
+                                            user.email(),
+                                            user.displayName(),
+                                            token,
+                                            properties.passwordResetValidity()),
+                                    null);
                             audit.record(AuditLog.Event.of("identity.password_reset.requested", null, user.id()));
                         }));
     }
@@ -139,7 +144,7 @@ public class AccountService {
             passwords.requireAcceptable("newPassword", newPassword, EmailAddress.of(user.email()));
             users.updatePasswordHash(userId, passwords.hash(newPassword), now());
             sessions.revokeAllExcept(userId, null);
-            outgoing.sendAfterCommit(emails.passwordChanged(user.email(), user.displayName()));
+            outgoing.queue(emails.passwordChanged(user.email(), user.displayName()), null);
             audit.record(AuditLog.Event.of("identity.password_reset.completed", null, userId));
         });
     }
@@ -155,7 +160,7 @@ public class AccountService {
             passwords.requireAcceptable("newPassword", newPassword, EmailAddress.of(user.email()));
             users.updatePasswordHash(userId, passwords.hash(newPassword), now());
             sessions.revokeAllExcept(userId, currentSession);
-            outgoing.sendAfterCommit(emails.passwordChanged(user.email(), user.displayName()));
+            outgoing.queue(emails.passwordChanged(user.email(), user.displayName()), null);
             audit.record(AuditLog.Event.of("identity.password.changed", null, userId));
         });
     }
@@ -168,7 +173,7 @@ public class AccountService {
                 SecureTokens.hash(token),
                 now(),
                 now().plus(properties.emailVerificationValidity()));
-        outgoing.sendAfterCommit(emails.verification(email, name, token, properties.emailVerificationValidity()));
+        outgoing.queue(emails.verification(email, name, token, properties.emailVerificationValidity()), null);
     }
 
     /** Rate-limit subject for an email address, hashed so addresses never appear in Redis. */

@@ -97,6 +97,10 @@ class IdentityFlowIT extends IntegrationTestBase {
             browser.post("/api/v1/auth/sign-up", signUp(email));
             String first = outbox.latestToken(email, "email-verification").orElseThrow();
             browser.post("/api/v1/auth/email-verification/resend", Map.of("email", email));
+            // Email is delivered by a job: wait for the second message before taking the latest token.
+            outbox.await(message -> message.to().equals(email)
+                    && message.category().equals("email-verification")
+                    && !message.body().contains(first));
             String second = outbox.latestToken(email, "email-verification").orElseThrow();
 
             assertThat(browser.post("/api/v1/auth/email-verification", Map.of("token", first))
@@ -150,7 +154,9 @@ class IdentityFlowIT extends IntegrationTestBase {
             var again = browser().post("/api/v1/auth/sign-up", signUp(email));
             assertThat(again.status()).isEqualTo(202);
             assertThat(again.raw().body()).isEmpty();
-            assertThat(outbox.to(email)).anyMatch(message -> message.category().equals("already-registered"));
+            assertThat(outbox.await(message ->
+                            message.to().equals(email) && message.category().equals("already-registered")))
+                    .isNotEmpty();
         }
 
         @Test

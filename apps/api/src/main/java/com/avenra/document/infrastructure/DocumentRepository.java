@@ -64,8 +64,8 @@ public class DocumentRepository {
     }
 
     public void insertVersion(VersionRow row) {
-        jdbc.sql("insert into document_versions (" + COLUMNS + ") values (:document, :version, :org, :name, :type,"
-                        + " :size, :sha, :key, :scan, :signature, :user, :link, :at)")
+        jdbc.sql("insert into document_versions (" + COLUMNS + ", last_scanned_at) values (:document, :version, :org,"
+                        + " :name, :type, :size, :sha, :key, :scan, :signature, :user, :link, :at, :at)")
                 .param("document", row.documentId())
                 .param("version", row.version())
                 .param("org", row.organizationId())

@@ -1,54 +1,68 @@
 package com.avenra.platform.email;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.avenra.platform.crypto.SecretBox;
+import com.avenra.platform.jobs.JobQueue;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.Base64;
+import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Sends email only after the surrounding database transaction commits (ADR-015), so no email goes
- * out for a change that rolled back. Delivery is retried a few times; if it still fails the error
- * is logged and the user can ask for the email again. Phase 4 moves this to the durable job queue.
+ * Queues email durably (ADR-025): each message becomes an {@code email.send} job in the caller's
+ * transaction, so it is sent exactly when the change commits and survives crashes. The message,
+ * which may hold a single-use link, is encrypted at rest and erased once the job finishes.
  */
 @Component
 public class OutgoingEmail {
 
-    private static final Logger log = LoggerFactory.getLogger(OutgoingEmail.class);
-    private static final int ATTEMPTS = 3;
+    static final String JOB_TYPE = "email.send";
+    static final int ATTEMPTS = 8;
 
-    private final EmailSender sender;
+    /** The job payload: only the category is readable without the key. */
+    record Payload(String messageId, String category, String keyId, String sealed) {}
 
-    OutgoingEmail(EmailSender sender) {
-        this.sender = sender;
+    private final JobQueue jobs;
+    private final SecretBox box;
+    private final JsonMapper json;
+
+    OutgoingEmail(JobQueue jobs, SecretBox box, JsonMapper json) {
+        this.jobs = jobs;
+        this.box = box;
+        this.json = json;
     }
 
-    public void sendAfterCommit(EmailMessage message) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            throw new IllegalStateException("sendAfterCommit must be called inside a transaction");
-        }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                deliver(message);
-            }
-        });
+    /**
+     * @param organizationId the organization the email is sent for, or {@code null} for account
+     *     email; it must be the organization the transaction acts in
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void queue(EmailMessage message, @Nullable UUID organizationId) {
+        String messageId = UUID.randomUUID().toString();
+        var sealed = box.seal(json.writeValueAsBytes(message), associatedData(messageId));
+        var payload = new Payload(
+                messageId,
+                message.category(),
+                sealed.keyId(),
+                Base64.getEncoder().encodeToString(sealed.ciphertext()));
+        jobs.enqueue(JobQueue.Request.of(JOB_TYPE, organizationId, payload)
+                .idempotencyKey(messageId)
+                .maxAttempts(ATTEMPTS)
+                .delay(Duration.ZERO));
     }
 
-    private void deliver(EmailMessage message) {
-        for (int attempt = 1; attempt <= ATTEMPTS; attempt++) {
-            try {
-                sender.send(message);
-                log.atInfo().addKeyValue("email.category", message.category()).log("Email sent");
-                return;
-            } catch (RuntimeException exception) {
-                log.atWarn()
-                        .addKeyValue("email.category", message.category())
-                        .addKeyValue("attempt", attempt)
-                        .setCause(exception)
-                        .log("Email delivery failed");
-            }
-        }
-        log.atError().addKeyValue("email.category", message.category()).log("Email not delivered after retries");
+    EmailMessage open(Payload payload) {
+        byte[] plain = box.open(
+                new SecretBox.Sealed(payload.keyId(), Base64.getDecoder().decode(payload.sealed())),
+                associatedData(payload.messageId()));
+        return json.readValue(new String(plain, StandardCharsets.UTF_8), EmailMessage.class);
+    }
+
+    private static String associatedData(String messageId) {
+        return "email:" + messageId;
     }
 }

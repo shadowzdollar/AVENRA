@@ -130,14 +130,16 @@ public class RequestLinkService {
                             String sender = users.find(userId)
                                     .map(UserDirectory.UserSummary::displayName)
                                     .orElse("Someone");
-                            outgoing.sendAfterCommit(requestEmail(
-                                    email,
-                                    name,
-                                    sender,
-                                    access.organizationName(organizationId),
-                                    target.title(),
-                                    token,
-                                    days));
+                            outgoing.queue(
+                                    requestEmail(
+                                            email,
+                                            name,
+                                            sender,
+                                            access.organizationName(organizationId),
+                                            target.title(),
+                                            token,
+                                            days),
+                                    organizationId);
                             audit.record(AuditLog.Event.of("work.request_link.created", organizationId, userId)
                                     .resource("request_link", row.id())
                                     .detail("workId", workId.toString())
