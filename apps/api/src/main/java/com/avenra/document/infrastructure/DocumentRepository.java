@@ -64,8 +64,8 @@ public class DocumentRepository {
     }
 
     public void insertVersion(VersionRow row) {
-        jdbc.sql("insert into document_versions (" + COLUMNS + ") values (:document, :version, :org, :name, :type,"
-                        + " :size, :sha, :key, :scan, :signature, :user, :link, :at)")
+        jdbc.sql("insert into document_versions (" + COLUMNS + ", last_scanned_at) values (:document, :version, :org,"
+                        + " :name, :type, :size, :sha, :key, :scan, :signature, :user, :link, :at, :at)")
                 .param("document", row.documentId())
                 .param("version", row.version())
                 .param("org", row.organizationId())
@@ -90,6 +90,46 @@ public class DocumentRepository {
                 .param("version", version)
                 .query(VersionRow.class)
                 .optional();
+    }
+
+    /** The version locked for rescanning, with the requirement its document belongs to. */
+    public Optional<VersionRow> findVersionForUpdate(UUID organizationId, UUID documentId, int version) {
+        return jdbc.sql("select " + COLUMNS + " from document_versions"
+                        + " where organization_id = :org and document_id = :document and version = :version for update")
+                .param("org", organizationId)
+                .param("document", documentId)
+                .param("version", version)
+                .query(VersionRow.class)
+                .optional();
+    }
+
+    public Optional<UUID> requirementOf(UUID documentId) {
+        return jdbc.sql("select requirement_id from documents where id = :id")
+                .param("id", documentId)
+                .query(UUID.class)
+                .optional();
+    }
+
+    public void markScanned(UUID documentId, int version, OffsetDateTime now) {
+        jdbc.sql("update document_versions set last_scanned_at = :now where document_id = :document and version = :v")
+                .param("document", documentId)
+                .param("v", version)
+                .param("now", now)
+                .update();
+    }
+
+    public void quarantine(UUID documentId, int version, String key, String signature, OffsetDateTime now) {
+        jdbc.sql("""
+                        update document_versions
+                        set scan_status = 'INFECTED', scan_signature = :signature, storage_key = :key, last_scanned_at = :now
+                        where document_id = :document and version = :v
+                        """)
+                .param("document", documentId)
+                .param("v", version)
+                .param("key", key)
+                .param("signature", signature)
+                .param("now", now)
+                .update();
     }
 
     public List<VersionRow> findVersions(Collection<UUID> documentIds) {

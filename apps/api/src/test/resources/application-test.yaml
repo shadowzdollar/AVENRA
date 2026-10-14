@@ -26,6 +26,14 @@ avenra:
       uploads: { capacity: 100000, refill: 1m }
       client-uploads: { capacity: 100000, refill: 1m }
 
+  # Fast jobs for tests (ADR-022). Schedules fire once at start; tests fire
+  # them explicitly when they need to.
+  jobs:
+    poll-interval: 100ms
+    retry-base: 200ms
+    retry-cap: 1s
+    schedule-interval: 1h
+
 # Tests capture email with TestOutbox; this SMTP host is never contacted.
 spring:
   mail:

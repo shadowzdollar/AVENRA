@@ -36,3 +36,7 @@ Statuses: `Proposed` → `Accepted` → (`Superseded by ADR-NNN` | `Deprecated`)
 | [019](ADR-019-document-storage.md) | Document storage and access | Accepted |
 | [020](ADR-020-client-request-links.md) | Client request links | Accepted |
 | [021](ADR-021-malware-scanning.md) | Malware scanning of uploads | Accepted |
+| [022](ADR-022-job-engine.md) | In-house job engine on PostgreSQL | Accepted |
+| [023](ADR-023-executions-and-automation.md) | Execution records and automatic work transitions | Accepted |
+| [024](ADR-024-exceptions-and-human-tasks.md) | Exceptions and human tasks | Accepted |
+| [025](ADR-025-durable-email-and-reminders.md) | Durable email and client reminders | Accepted |

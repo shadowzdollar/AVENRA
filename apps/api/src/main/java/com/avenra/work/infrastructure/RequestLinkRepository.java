@@ -26,10 +26,17 @@ public class RequestLinkRepository {
             OffsetDateTime createdAt,
             OffsetDateTime expiresAt,
             @Nullable OffsetDateTime revokedAt,
-            @Nullable OffsetDateTime lastOpenedAt) {}
+            @Nullable OffsetDateTime lastOpenedAt,
+            int remindersSent,
+            @Nullable OffsetDateTime lastRemindedAt,
+            @Nullable OffsetDateTime expiryHandledAt) {}
+
+    /** The encrypted copy of a link token (ADR-025). */
+    public record SealedToken(String keyId, byte[] ciphertext) {}
 
     private static final String LINK = "id, organization_id, work_id, recipient_email, recipient_name, message,"
-            + " created_by, created_at, expires_at, revoked_at, last_opened_at";
+            + " created_by, created_at, expires_at, revoked_at, last_opened_at, reminders_sent, last_reminded_at,"
+            + " expiry_handled_at";
 
     private final JdbcClient jdbc;
 
@@ -37,9 +44,10 @@ public class RequestLinkRepository {
         this.jdbc = jdbc;
     }
 
-    public void insert(LinkRow row, byte[] tokenHash, Collection<UUID> requirementIds) {
-        jdbc.sql("insert into request_links (" + LINK + ", token_hash) values (:id, :org, :work, :email, :name,"
-                        + " :message, :by, :created, :expires, null, null, :hash)")
+    public void insert(LinkRow row, byte[] tokenHash, SealedToken sealed, Collection<UUID> requirementIds) {
+        jdbc.sql("insert into request_links (" + LINK + ", token_hash, token_key_id, token_ciphertext) values (:id,"
+                        + " :org, :work, :email, :name, :message, :by, :created, :expires, null, null, 0, null, null,"
+                        + " :hash, :keyId, :sealed)")
                 .param("id", row.id())
                 .param("org", row.organizationId())
                 .param("work", row.workId())
@@ -50,6 +58,8 @@ public class RequestLinkRepository {
                 .param("created", row.createdAt())
                 .param("expires", row.expiresAt())
                 .param("hash", tokenHash)
+                .param("keyId", sealed.keyId())
+                .param("sealed", sealed.ciphertext())
                 .update();
         for (UUID requirementId : requirementIds) {
             jdbc.sql("""
@@ -92,7 +102,7 @@ public class RequestLinkRepository {
 
     public boolean revoke(UUID organizationId, UUID workId, UUID linkId, OffsetDateTime now) {
         return jdbc.sql("""
-                                update request_links set revoked_at = :now
+                                update request_links set revoked_at = :now, token_key_id = null, token_ciphertext = null
                                 where organization_id = :org and work_id = :work and id = :id and revoked_at is null
                                 """)
                         .param("org", organizationId)
@@ -126,6 +136,54 @@ public class RequestLinkRepository {
                 .param("now", now)
                 .query(LinkRow.class)
                 .optional();
+    }
+
+    /** The link with its encrypted token, locked; only inside the link's organization. */
+    public Optional<LinkRow> findForUpdate(UUID organizationId, UUID linkId) {
+        return jdbc.sql("select " + LINK + " from request_links where organization_id = :org and id = :id for update")
+                .param("org", organizationId)
+                .param("id", linkId)
+                .query(LinkRow.class)
+                .optional();
+    }
+
+    public Optional<SealedToken> sealedToken(UUID linkId) {
+        return jdbc.sql("select token_key_id, token_ciphertext from request_links where id = :id"
+                        + " and token_ciphertext is not null")
+                .param("id", linkId)
+                .query((rs, row) -> new SealedToken(rs.getString(1), rs.getBytes(2)))
+                .optional();
+    }
+
+    public void recordReminder(UUID linkId, int number, OffsetDateTime now) {
+        jdbc.sql("update request_links set reminders_sent = :number, last_reminded_at = :now where id = :id")
+                .param("id", linkId)
+                .param("number", number)
+                .param("now", now)
+                .update();
+    }
+
+    /** An expired link: its token copy is erased and it is not handled again. */
+    public void markExpiryHandled(UUID linkId, OffsetDateTime now) {
+        jdbc.sql("""
+                        update request_links set expiry_handled_at = :now, token_key_id = null, token_ciphertext = null
+                        where id = :id
+                        """).param("id", linkId).param("now", now).update();
+    }
+
+    /** Active links of work that cover a requirement (to decide automatic transitions). */
+    public long activeLinksCovering(UUID organizationId, UUID requirementId, OffsetDateTime now) {
+        return jdbc.sql("""
+                        select count(*) from request_links l
+                        join request_link_requirements r on r.request_link_id = l.id
+                        where l.organization_id = :org and r.requirement_id = :requirement
+                          and l.revoked_at is null and l.expires_at > :now
+                        """)
+                .param("org", organizationId)
+                .param("requirement", requirementId)
+                .param("now", now)
+                .query(Long.class)
+                .single();
     }
 
     public void markOpened(UUID linkId, OffsetDateTime now) {

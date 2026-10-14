@@ -20,6 +20,7 @@ import com.avenra.work.domain.Completeness;
 import com.avenra.work.domain.RequirementKind;
 import com.avenra.work.domain.WorkFilter;
 import com.avenra.work.domain.WorkStatus;
+import com.avenra.work.infrastructure.ExceptionRepository;
 import com.avenra.work.infrastructure.RequirementRepository;
 import com.avenra.work.infrastructure.RequirementRepository.RequirementRow;
 import com.avenra.work.infrastructure.WorkRepository;
@@ -35,8 +36,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 /**
- * Work, its lifecycle (ADR-018), its tasks and its requirements. The status changes only in
- * {@link #transition}, and only along the lifecycle.
+ * Work, its lifecycle (ADR-018), its tasks and its requirements. People change the status in
+ * {@link #transition}; every change goes through {@link WorkLifecycle}.
  */
 @Service
 public class WorkService {
@@ -45,6 +46,9 @@ public class WorkService {
     private final RequirementRepository requirements;
     private final ClientService clients;
     private final WorkViews views;
+    private final WorkLifecycle lifecycle;
+    private final ExceptionRepository exceptions;
+    private final com.avenra.work.infrastructure.ExecutionRepository executionRows;
     private final OrganizationAccess access;
     private final Idempotency idempotency;
     private final AuditLog audit;
@@ -55,6 +59,9 @@ public class WorkService {
             RequirementRepository requirements,
             ClientService clients,
             WorkViews views,
+            WorkLifecycle lifecycle,
+            ExceptionRepository exceptions,
+            com.avenra.work.infrastructure.ExecutionRepository executionRows,
             OrganizationAccess access,
             Idempotency idempotency,
             AuditLog audit,
@@ -63,6 +70,9 @@ public class WorkService {
         this.requirements = requirements;
         this.clients = clients;
         this.views = views;
+        this.lifecycle = lifecycle;
+        this.exceptions = exceptions;
+        this.executionRows = executionRows;
         this.access = access;
         this.idempotency = idempotency;
         this.audit = audit;
@@ -82,8 +92,13 @@ public class WorkService {
                                             state.required(),
                                             Completeness.RequirementState.of(state.verificationState())),
                                     Collectors.toList())));
+            var open = exceptions.openByWork(
+                    organizationId, rows.stream().map(WorkRow::id).toList());
             return rows.stream()
-                    .map(row -> WorkViews.summary(row, Completeness.of(states.getOrDefault(row.id(), List.of()))))
+                    .map(row -> WorkViews.summary(
+                            row,
+                            Completeness.of(states.getOrDefault(row.id(), List.of())),
+                            open.getOrDefault(row.id(), 0L)))
                     .toList();
         });
     }
@@ -142,12 +157,14 @@ public class WorkService {
                                     null,
                                     null,
                                     now,
-                                    now);
+                                    now,
+                                    null);
                             work.insert(row);
                             work.insertTransition(
                                     organizationId,
                                     row.id(),
-                                    new TransitionRow(UUID.randomUUID(), null, WorkStatus.DRAFT, userId, null, now));
+                                    new TransitionRow(
+                                            UUID.randomUUID(), null, WorkStatus.DRAFT, userId, null, null, now));
                             audit.record(AuditLog.Event.of("work.created", organizationId, userId)
                                     .resource("work", row.id()));
                             return detail(row);
@@ -179,6 +196,7 @@ public class WorkService {
                     current.completedAt(),
                     current.completionReason(),
                     current.createdAt(),
+                    current.overdueFlaggedAt(),
                     current.updatedAt());
             OffsetDateTime now = OffsetDateTime.now(clock);
             work.updateDetails(updated, now);
@@ -202,31 +220,17 @@ public class WorkService {
                 throw ApiException.conflict(
                         "STATUS_CHANGED", "The work changed status meanwhile. Reload it and try again.");
             }
-            if (!current.status().canMoveTo(target)) {
-                throw ApiException.conflict(
-                        "INVALID_TRANSITION", "Work cannot move from " + current.status() + " to " + target + ".");
-            }
-            if (target.needsReason() && reason == null) {
-                throw ApiException.invalid("reason", "is required when moving to " + target);
-            }
-            if (target == WorkStatus.COMPLETED) {
-                requireCompletable(organizationId, workId);
-            }
-            OffsetDateTime now = OffsetDateTime.now(clock);
-            OffsetDateTime startedAt =
-                    current.startedAt() == null && target == WorkStatus.RUNNING ? now : current.startedAt();
-            OffsetDateTime completedAt = target.isFinal() ? now : null;
-            work.changeStatus(
-                    organizationId, workId, target, startedAt, completedAt, target.isFinal() ? reason : null, now);
-            work.insertTransition(
-                    organizationId,
-                    workId,
-                    new TransitionRow(UUID.randomUUID(), current.status(), target, userId, reason, now));
-            audit.record(AuditLog.Event.of("work.transitioned", organizationId, userId)
-                    .resource("work", workId)
-                    .detail("from", current.status().name())
-                    .detail("to", target.name()));
+            lifecycle.move(current, target, reason, WorkLifecycle.Actor.user(userId));
             return detail(find(organizationId, workId));
+        });
+    }
+
+    public List<com.avenra.contract.v1.model.Execution> executions(UUID userId, UUID organizationId, UUID workId) {
+        return access.run(userId, organizationId, Permission.WORK_READ, granted -> {
+            find(organizationId, workId);
+            return executionRows.forWork(organizationId, workId).stream()
+                    .map(WorkViews::execution)
+                    .toList();
         });
     }
 
@@ -266,18 +270,8 @@ public class WorkService {
                                     : requireMember(
                                             organizationId, input.getAssigneeMembershipId(), "assigneeMembershipId");
                             OffsetDateTime now = OffsetDateTime.now(clock);
-                            var row = new TaskRow(
-                                    UUID.randomUUID(),
-                                    workId,
-                                    title,
-                                    "HUMAN",
-                                    condition,
-                                    "OPEN",
-                                    assignee,
-                                    input.getDueAt(),
-                                    null,
-                                    null,
-                                    now);
+                            var row = TaskRow.manual(
+                                    UUID.randomUUID(), workId, title, condition, assignee, input.getDueAt(), now);
                             work.insertTask(organizationId, row, userId);
                             work.touch(organizationId, workId, now);
                             audit.record(AuditLog.Event.of("work.task.created", organizationId, userId)
@@ -296,6 +290,11 @@ public class WorkService {
                     work.findTaskForUpdate(organizationId, workId, taskId).orElseThrow(ApiException::notFound);
             if (task.status().equals(status)) {
                 return WorkViews.task(task);
+            }
+            if (task.origin().equals("SYSTEM")) {
+                throw ApiException.conflict(
+                        "TASK_SYSTEM_MANAGED",
+                        "This task closes itself when its action is done: " + task.requiredAction());
             }
             if (!task.status().equals("OPEN")) {
                 throw ApiException.conflict("TASK_CLOSED", "This task is already " + task.status() + ".");
@@ -363,18 +362,6 @@ public class WorkService {
         return new ApiException("WORK_CLOSED", HttpStatus.CONFLICT, "This work is finished and can no longer change.");
     }
 
-    private void requireCompletable(UUID organizationId, UUID workId) {
-        var loaded = views.load(requirements.forWork(organizationId, workId));
-        if (!loaded.completeness().complete()) {
-            throw ApiException.conflict(
-                    "REQUIREMENTS_INCOMPLETE", "Every required item must be accepted before the work is completed.");
-        }
-        if (work.openTasks(organizationId, workId) > 0) {
-            throw ApiException.conflict(
-                    "TASKS_OPEN", "Every task must be done or cancelled before the work is completed.");
-        }
-    }
-
     private boolean lastTransitionMatches(WorkRow current, WorkStatus from, WorkStatus to) {
         var history = work.transitions(current.organizationId(), current.id());
         if (history.isEmpty()) {
@@ -397,6 +384,10 @@ public class WorkService {
 
     private WorkDetail detail(WorkRow row) {
         return views.detail(
-                row, requirements.forWork(row.organizationId(), row.id()), work.tasks(row.organizationId(), row.id()));
+                row,
+                requirements.forWork(row.organizationId(), row.id()),
+                work.tasks(row.organizationId(), row.id()),
+                exceptions.openForWork(row.organizationId(), row.id()),
+                work.lastReason(row.organizationId(), row.id()).orElse(null));
     }
 }

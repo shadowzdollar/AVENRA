@@ -44,7 +44,9 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
             "document_versions",
             "information_items",
             "request_links",
-            "request_link_requirements");
+            "request_link_requirements",
+            "executions",
+            "work_exceptions");
 
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
@@ -168,10 +170,10 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
         exec(
                 owner,
                 "insert into document_versions (document_id, version, organization_id, file_name, content_type,"
-                        + " size_bytes, sha256, storage_key, scan_status, uploaded_by_user_id, uploaded_at) values ('"
+                        + " size_bytes, sha256, storage_key, scan_status, uploaded_by_user_id, uploaded_at, last_scanned_at) values ('"
                         + document + "', 1, '" + org + "', 'a.pdf', 'application/pdf', 10, decode('" + hex(new byte[32])
                         + "', 'hex'), 'org/" + org + "/documents/" + document + "/v1', 'CLEAN', '" + user
-                        + "', now())");
+                        + "', now(), now())");
         exec(
                 owner,
                 "insert into information_items (id, organization_id, requirement_id, kind, document_id,"
@@ -180,6 +182,18 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
                         + "', '" + org + "', '" + requirement + "', 'DOCUMENT', '" + document + "', 1, 'TEAM_MEMBER', '"
                         + user + "', now(), 'PENDING')");
         exec(owner, "update requirements set current_item_id = '" + item + "' where id = '" + requirement + "'");
+        exec(
+                owner,
+                "insert into executions (id, organization_id, work_id, actor_type, actor_rule, action, status,"
+                        + " created_at, updated_at) values ('" + UUID.randomUUID() + "', '" + org + "', '" + work
+                        + "', 'SYSTEM', 'test.rule', 'test.action', 'COMPLETED', now(), now())");
+        exec(
+                owner,
+                "insert into work_exceptions (id, organization_id, work_id, type, severity, description,"
+                        + " source_type, source_id, status, created_at, updated_at) values ('" + UUID.randomUUID()
+                        + "', '" + org
+                        + "', '" + work + "', 'WORK_OVERDUE', 'HIGH', 'Late', 'work', '" + work
+                        + "', 'OPEN', now(), now())");
     }
 
     private void insertLink(Connection owner, UUID id, byte[] token, String expires, String revoked)
@@ -270,6 +284,19 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
         assertDenied("delete from document_versions where document_id = '" + documentA + "'");
         assertDenied("update work_transitions set to_status = 'COMPLETED'");
         assertDenied("delete from work where id = '" + workA + "'");
+        // Rescans may only quarantine a version under its own key, never release it.
+        assertDenied("update document_versions set scan_status = 'INFECTED', storage_key = 'quarantine/org/" + orgA
+                + "/documents/other' where document_id = '" + documentA + "'");
+        as(
+                userA,
+                orgA,
+                db -> assertThat(db.update(
+                                "update document_versions set scan_status = 'INFECTED',"
+                                        + " storage_key = 'quarantine/' || storage_key where document_id = ?",
+                                documentA))
+                        .isEqualTo(1));
+        assertDenied("update document_versions set scan_status = 'CLEAN', storage_key = 'org/" + orgA + "/documents/"
+                + documentA + "/v1' where document_id = '" + documentA + "'");
         assertDenied("delete from requirements where id = '" + linkedRequirementA + "'");
         // Only the review columns of an item can change.
         as(

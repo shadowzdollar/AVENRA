@@ -103,6 +103,7 @@ function WorkList({ organizationId }: { organizationId: string }) {
                     <p className="text-sm text-text-secondary">
                       {statusLabel(item.status)}
                       {clientName(item.clientId) ? ` · ${clientName(item.clientId)}` : ""}
+                      {item.openExceptions ? <span className="text-error"> · {item.openExceptions} {item.openExceptions === 1 ? "exception" : "exceptions"}</span> : null}
                     </p>
                   </div>
                   <div className="w-40 shrink-0">

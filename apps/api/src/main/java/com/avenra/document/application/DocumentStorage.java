@@ -10,6 +10,11 @@ public interface DocumentStorage {
 
     InputStream get(String key);
 
+    /** Copies an object within the bucket (used to move a file to quarantine). */
+    void copy(String fromKey, String toKey);
+
+    void delete(String key);
+
     final class StorageUnavailableException extends RuntimeException {
 
         private static final long serialVersionUID = 1L;

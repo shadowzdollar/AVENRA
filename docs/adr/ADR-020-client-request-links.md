@@ -1,6 +1,6 @@
 # ADR-020: Client request links
 
-**Status:** Accepted (decided with the product owner, 2026-10-13)
+**Status:** Accepted (decided with the product owner, 2026-10-13) — token storage amended by ADR-025 (encrypted copy for reminders)
 
 ## Context
 

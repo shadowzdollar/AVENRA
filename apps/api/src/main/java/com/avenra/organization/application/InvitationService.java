@@ -112,7 +112,7 @@ public class InvitationService {
                             String inviter = users.find(userId)
                                     .map(UserDirectory.UserSummary::displayName)
                                     .orElse("Someone");
-                            outgoing.sendAfterCommit(invitationEmail(email, inviter, organizationName, token));
+                            outgoing.queue(invitationEmail(email, inviter, organizationName, token), organizationId);
                             audit.record(AuditLog.Event.of("organization.invitation.created", organizationId, userId)
                                     .resource("invitation", row.id())
                                     .detail("role", role.name()));
