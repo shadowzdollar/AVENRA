@@ -80,6 +80,19 @@ class InformationListener {
     }
 
     @EventListener
+    void on(InformationEvents.AcceptedAnswerInconsistent event) {
+        exceptions.raise(
+                event.organizationId(),
+                event.workId(),
+                ExceptionType.INCONSISTENT_INFORMATION,
+                "The accepted answer for \"" + event.requirementTitle() + "\" no longer passes its checks: "
+                        + String.join(" ", event.problems())
+                        + " Ask for a corrected answer, or keep it with an override reason.",
+                "information_item",
+                event.itemId().toString());
+    }
+
+    @EventListener
     void on(InformationEvents.RequestExpiredIncomplete event) {
         exceptions.raise(
                 event.organizationId(),

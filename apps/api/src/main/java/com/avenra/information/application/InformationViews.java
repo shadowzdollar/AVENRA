@@ -39,15 +39,23 @@ public class InformationViews {
 
     private final RequirementRepository requirements;
     private final Documents documents;
+    private final com.avenra.verification.Verification verification;
 
-    InformationViews(RequirementRepository requirements, Documents documents) {
+    InformationViews(
+            RequirementRepository requirements,
+            Documents documents,
+            com.avenra.verification.Verification verification) {
         this.requirements = requirements;
         this.documents = documents;
+        this.verification = verification;
     }
 
     /** Requirement rows with their current items and documents. */
     public record LoadedRequirements(
-            List<RequirementRow> rows, Map<UUID, ItemRow> currentItems, Map<String, Documents.StoredVersion> versions) {
+            List<RequirementRow> rows,
+            Map<UUID, ItemRow> currentItems,
+            Map<String, Documents.StoredVersion> versions,
+            Map<UUID, com.avenra.verification.Verification.Recorded> results) {
 
         @Nullable
         public ItemRow current(RequirementRow row) {
@@ -73,7 +81,7 @@ public class InformationViews {
                 .toList();
         var items =
                 requirements.itemsByIds(itemIds).stream().collect(Collectors.toMap(ItemRow::id, Function.identity()));
-        return new LoadedRequirements(rows, items, versionsOf(items.values()));
+        return new LoadedRequirements(rows, items, versionsOf(items.values()), verification.latest(items.keySet()));
     }
 
     Map<String, Documents.StoredVersion> versionsOf(Collection<ItemRow> items) {
@@ -96,16 +104,30 @@ public class InformationViews {
                         kind(row),
                         row.required(),
                         RequirementState.fromValue(loaded.state(row).name()),
-                        utc(row.createdAt()))
+                        utc(row.createdAt()),
+                        verification.rules(row.id(), row.rulesVersion()).stream()
+                                .map(RuleInputs::toApi)
+                                .toList(),
+                        com.avenra.contract.v1.model.Acceptance.fromValue(row.acceptance()),
+                        com.avenra.contract.v1.model.Risk.fromValue(row.risk()),
+                        row.rulesVersion())
                 .instructions(row.instructions());
         ItemRow current = loaded.current(row);
         if (current != null) {
-            requirement.currentItem(item(current, loaded.versions()));
+            requirement.currentItem(
+                    item(current, loaded.versions(), loaded.results().get(current.id())));
         }
         return requirement;
     }
 
     static InformationItem item(ItemRow row, Map<String, Documents.StoredVersion> versions) {
+        return item(row, versions, null);
+    }
+
+    static InformationItem item(
+            ItemRow row,
+            Map<String, Documents.StoredVersion> versions,
+            com.avenra.verification.Verification.@Nullable Recorded checks) {
         var source = new InformationSource(InformationSource.TypeEnum.fromValue(row.sourceType()))
                 .userId(row.sourceUserId())
                 .requestLinkId(row.sourceLinkId());
@@ -113,7 +135,12 @@ public class InformationViews {
                         VerificationState.fromValue(row.verificationState().name()))
                 .reviewedByUserId(row.reviewedBy())
                 .reviewedAt(utcOrNull(row.reviewedAt()))
-                .reason(row.reviewReason());
+                .reason(row.reviewReason())
+                .decidedBy(
+                        row.decidedBy() == null
+                                ? null
+                                : com.avenra.contract.v1.model.Verification.DecidedByEnum.fromValue(row.decidedBy()))
+                .overrideReason(row.overrideReason());
         var item = new InformationItem(
                         row.id(),
                         row.requirementId(),
@@ -124,6 +151,9 @@ public class InformationViews {
                         verification)
                 .value(row.valueText())
                 .confidence(row.confidence());
+        if (checks != null) {
+            item.checks(result(checks));
+        }
         if (row.documentId() != null && row.documentVersion() != null) {
             var version = versions.get(key(row.documentId(), row.documentVersion()));
             if (version != null) {
@@ -165,6 +195,37 @@ public class InformationViews {
                 .revokedAt(utcOrNull(row.revokedAt()));
     }
 
+    /** A verification result as the API shows it (Guidelines §25). */
+    static com.avenra.contract.v1.model.VerificationResult result(
+            com.avenra.verification.Verification.Recorded recorded) {
+        var result = recorded.result();
+        return new com.avenra.contract.v1.model.VerificationResult(
+                        recorded.id(),
+                        recorded.itemId(),
+                        com.avenra.contract.v1.model.VerificationResult.StatusEnum.fromValue(
+                                result.status().name()),
+                        result.checks().stream()
+                                .map(check -> new com.avenra.contract.v1.model.CheckResult(
+                                                com.avenra.contract.v1.model.RuleType.fromValue(
+                                                        check.rule().name()),
+                                                com.avenra.contract.v1.model.CheckResult.OutcomeEnum.fromValue(
+                                                        check.outcome().name()),
+                                                com.avenra.contract.v1.model.RuleSeverity.fromValue(
+                                                        check.severity().name()),
+                                                check.message())
+                                        .ruleId(check.ruleId())
+                                        .detail(check.detail()))
+                                .toList(),
+                        recorded.evidence().stream()
+                                .map(ref -> new com.avenra.contract.v1.model.Reference(
+                                        ref.get("type"), UUID.fromString(ref.get("id"))))
+                                .toList(),
+                        com.avenra.contract.v1.model.VerificationResult.MethodEnum.RULES,
+                        recorded.rulesVersion(),
+                        utc(recorded.createdAt()))
+                .confidence(result.confidence());
+    }
+
     public static com.avenra.contract.v1.model.Completeness completeness(Completeness completeness) {
         return new com.avenra.contract.v1.model.Completeness(
                 completeness.required(),
@@ -179,7 +240,7 @@ public class InformationViews {
         return com.avenra.contract.v1.model.RequirementKind.fromValue(row.kind().name());
     }
 
-    static String key(UUID documentId, int version) {
+    public static String key(UUID documentId, int version) {
         return documentId + "/" + version;
     }
 }

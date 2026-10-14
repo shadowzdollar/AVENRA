@@ -7,7 +7,9 @@ public enum ExceptionType {
     REQUEST_EXPIRED_INCOMPLETE(Severity.MEDIUM),
     WORK_OVERDUE(Severity.HIGH),
     MALWARE_FOUND(Severity.HIGH),
-    HUMAN_REQUIRED(Severity.MEDIUM);
+    HUMAN_REQUIRED(Severity.MEDIUM),
+    /** An accepted answer no longer passes its checks (ADR-027). */
+    INCONSISTENT_INFORMATION(Severity.HIGH);
 
     public enum Severity {
         LOW,

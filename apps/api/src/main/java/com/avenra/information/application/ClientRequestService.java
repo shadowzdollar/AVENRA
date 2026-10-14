@@ -176,6 +176,10 @@ public class ClientRequestService {
         if (state == Completeness.RequirementState.REJECTED) {
             var current = loaded.current(requirement);
             item.rejectionReason(current == null ? null : current.reviewReason());
+            var checks = current == null ? null : loaded.results().get(current.id());
+            if (checks != null && "RULES".equals(current.decidedBy())) {
+                item.problems(new java.util.ArrayList<>(checks.result().blockingProblems()));
+            }
         }
         if (requirement.kind() == RequirementKind.DOCUMENT) {
             item.acceptedFileTypes(Documents.ACCEPTED_EXTENSIONS);

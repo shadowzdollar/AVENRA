@@ -46,7 +46,11 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
             "request_links",
             "request_link_requirements",
             "executions",
-            "work_exceptions");
+            "work_exceptions",
+            "verification_rules",
+            "verifications",
+            "evidence",
+            "work_completions");
 
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
@@ -194,6 +198,28 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
                         + "', '" + org
                         + "', '" + work + "', 'WORK_OVERDUE', 'HIGH', 'Late', 'work', '" + work
                         + "', 'OPEN', now(), now())");
+        exec(
+                owner,
+                "insert into verification_rules (id, organization_id, requirement_id, version, position, type,"
+                        + " severity, message, created_at) values ('" + UUID.randomUUID() + "', '" + org + "', '"
+                        + requirement
+                        + "', 1, 0, 'FILE_TYPE', 'BLOCKING', 'PDF only', now())");
+        exec(
+                owner,
+                "insert into verifications (id, organization_id, work_id, requirement_id, item_id, rules_version,"
+                        + " status, checks, evidence, method, created_at) values ('" + UUID.randomUUID() + "', '" + org
+                        + "', '"
+                        + work + "', '" + requirement + "', '" + item + "', 1, 'PASSED', '[]', '[]', 'RULES', now())");
+        exec(
+                owner,
+                "insert into evidence (id, organization_id, work_id, requirement_id, kind, reference_type,"
+                        + " reference_id, description, created_at) values ('" + UUID.randomUUID() + "', '" + org
+                        + "', '" + work
+                        + "', '" + requirement + "', 'ANSWER', 'information_item', '" + item + "', 'Answer', now())");
+        exec(
+                owner,
+                "insert into work_completions (organization_id, work_id, manifest, sha256, completed_at) values ('"
+                        + org + "', '" + work + "', '{}', '" + "0".repeat(64) + "', now())");
     }
 
     private void insertLink(Connection owner, UUID id, byte[] token, String expires, String revoked)

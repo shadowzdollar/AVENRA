@@ -4,8 +4,10 @@ import com.avenra.contract.v1.api.InformationApi;
 import com.avenra.contract.v1.model.CreateRequirementRequest;
 import com.avenra.contract.v1.model.InformationItem;
 import com.avenra.contract.v1.model.Requirement;
+import com.avenra.contract.v1.model.RequirementRulesInput;
 import com.avenra.contract.v1.model.ReviewRequest;
 import com.avenra.contract.v1.model.ValueSubmission;
+import com.avenra.contract.v1.model.VerificationResult;
 import com.avenra.information.application.InformationService;
 import com.avenra.platform.security.CurrentUser;
 import java.nio.charset.StandardCharsets;
@@ -90,6 +92,18 @@ class InformationController implements InformationApi {
                 .header("X-Avenra-Sha256", stored.sha256Hex())
                 .cacheControl(CacheControl.noStore())
                 .body(new InputStreamResource(download.content()));
+    }
+
+    @Override
+    public ResponseEntity<Requirement> setRequirementRules(
+            UUID organizationId, UUID workId, UUID requirementId, RequirementRulesInput body) {
+        return ResponseEntity.ok(information.setRules(userId(), organizationId, workId, requirementId, body));
+    }
+
+    @Override
+    public ResponseEntity<List<VerificationResult>> listVerifications(
+            UUID organizationId, UUID workId, UUID requirementId) {
+        return ResponseEntity.ok(information.verifications(userId(), organizationId, workId, requirementId));
     }
 
     private static UUID userId() {

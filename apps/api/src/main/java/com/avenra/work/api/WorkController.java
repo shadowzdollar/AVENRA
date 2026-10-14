@@ -70,6 +70,17 @@ class WorkController implements WorkApi {
     }
 
     @Override
+    public ResponseEntity<List<com.avenra.contract.v1.model.Evidence>> listEvidence(UUID organizationId, UUID workId) {
+        return ResponseEntity.ok(work.evidence(userId(), organizationId, workId));
+    }
+
+    @Override
+    public ResponseEntity<com.avenra.contract.v1.model.CompletionManifest> getCompletion(
+            UUID organizationId, UUID workId) {
+        return ResponseEntity.ok(work.completion(userId(), organizationId, workId));
+    }
+
+    @Override
     public ResponseEntity<List<Execution>> listExecutions(UUID organizationId, UUID workId) {
         return ResponseEntity.ok(work.executions(userId(), organizationId, workId));
     }

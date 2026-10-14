@@ -11,6 +11,7 @@ import com.avenra.contract.v1.model.WorkSummary;
 import com.avenra.contract.v1.model.WorkTransition;
 import com.avenra.information.domain.Completeness;
 import com.avenra.platform.web.ApiTime;
+import com.avenra.work.domain.CompletionCriteria;
 import com.avenra.work.domain.Progress;
 import com.avenra.work.domain.WorkStatus;
 import com.avenra.work.infrastructure.ClientRepository.ClientRow;
@@ -38,7 +39,8 @@ final class WorkViews {
             Completeness completeness,
             List<TaskRow> tasks,
             long openExceptions,
-            @Nullable String lastReason) {
+            @Nullable String lastReason,
+            List<CompletionCriteria.Criterion> criteria) {
         long openTasks =
                 tasks.stream().filter(task -> task.status().equals("OPEN")).count();
         var progress = Progress.of(work.status(), completeness, openTasks, openExceptions, lastReason);
@@ -60,7 +62,15 @@ final class WorkViews {
                 new com.avenra.contract.v1.model.Progress(progress.currentStep(), progress.nextAction())
                         .blockedReason(progress.blockedReason())
                         .openExceptions((int) openExceptions)
-                        .openTasks((int) openTasks));
+                        .openTasks((int) openTasks),
+                criteria.stream()
+                        .map(criterion -> new com.avenra.contract.v1.model.CompletionCriterion(
+                                        com.avenra.contract.v1.model.CompletionCriterion.NameEnum.fromValue(
+                                                criterion.name().name()),
+                                        criterion.met(),
+                                        criterion.description())
+                                .detail(criterion.detail()))
+                        .toList());
         detail.type(work.type())
                 .description(work.description())
                 .clientId(work.clientId())

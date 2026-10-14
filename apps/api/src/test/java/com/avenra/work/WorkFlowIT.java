@@ -191,9 +191,11 @@ class WorkFlowIT extends IntegrationTestBase {
 
         completeness = work(alice, organization, work).get("completeness");
         assertThat(completeness.get("awaitingReview").asInt()).isEqualTo(2);
-        assertThat(transition(alice, organization, work, "RUNNING", "COMPLETED", null)
-                        .code())
-                .isEqualTo("REQUIREMENTS_INCOMPLETE");
+        var incomplete = transition(alice, organization, work, "RUNNING", "COMPLETED", null);
+        assertThat(incomplete.code()).isEqualTo("COMPLETION_CRITERIA_UNMET");
+        assertThat(incomplete.body().get("details").toString())
+                .contains("REQUIREMENTS_ACCEPTED", "TASKS_CLOSED")
+                .doesNotContain("NO_HIGH_EXCEPTIONS");
 
         review(alice, organization, work, income, incomeItem, "ACCEPT", null);
         var rejected = review(alice, organization, work, start, startItem, "REJECT", "Use the contract start date");
@@ -214,9 +216,11 @@ class WorkFlowIT extends IntegrationTestBase {
                         .asBoolean())
                 .isTrue();
 
-        assertThat(transition(alice, organization, work, "RUNNING", "COMPLETED", null)
-                        .code())
-                .isEqualTo("TASKS_OPEN");
+        var tasksOpen = transition(alice, organization, work, "RUNNING", "COMPLETED", null);
+        assertThat(tasksOpen.code()).isEqualTo("COMPLETION_CRITERIA_UNMET");
+        assertThat(tasksOpen.body().get("details").toString())
+                .contains("TASKS_CLOSED")
+                .doesNotContain("REQUIREMENTS_ACCEPTED");
         ok(alice.put(org(organization) + "/work/" + work + "/tasks/" + task + "/status", Map.of("status", "DONE")));
         var done = ok(transition(alice, organization, work, "RUNNING", "COMPLETED", null))
                 .body();

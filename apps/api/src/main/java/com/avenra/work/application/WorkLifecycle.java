@@ -1,7 +1,6 @@
 package com.avenra.work.application;
 
 import com.avenra.audit.AuditLog;
-import com.avenra.information.Information;
 import com.avenra.platform.web.ApiException;
 import com.avenra.work.domain.WorkStatus;
 import com.avenra.work.infrastructure.WorkRepository;
@@ -36,13 +35,13 @@ class WorkLifecycle {
     }
 
     private final WorkRepository work;
-    private final Information information;
+    private final Completions completions;
     private final AuditLog audit;
     private final Clock clock;
 
-    WorkLifecycle(WorkRepository work, Information information, AuditLog audit, Clock clock) {
+    WorkLifecycle(WorkRepository work, Completions completions, AuditLog audit, Clock clock) {
         this.work = work;
-        this.information = information;
+        this.completions = completions;
         this.audit = audit;
         this.clock = clock;
     }
@@ -65,7 +64,7 @@ class WorkLifecycle {
         UUID organizationId = current.organizationId();
         UUID workId = current.id();
         if (target == WorkStatus.COMPLETED) {
-            requireCompletable(organizationId, workId);
+            completions.requireMet(organizationId, workId);
         }
         OffsetDateTime now = OffsetDateTime.now(clock);
         OffsetDateTime startedAt =
@@ -91,21 +90,13 @@ class WorkLifecycle {
                     actor.userId(),
                     now);
         }
+        if (target == WorkStatus.COMPLETED) {
+            completions.seal(work.find(organizationId, workId).orElseThrow(), actor);
+        }
         var event = AuditLog.Event.of("work.transitioned", organizationId, actor.userId())
                 .resource("work", workId)
                 .detail("from", current.status().name())
                 .detail("to", target.name());
         audit.record(actor.rule() == null ? event : event.detail("rule", actor.rule()));
-    }
-
-    private void requireCompletable(UUID organizationId, UUID workId) {
-        if (!information.completeness(organizationId, workId).complete()) {
-            throw ApiException.conflict(
-                    "REQUIREMENTS_INCOMPLETE", "Every required item must be accepted before the work is completed.");
-        }
-        if (work.openTasks(organizationId, workId) > 0) {
-            throw ApiException.conflict(
-                    "TASKS_OPEN", "Every task must be done or cancelled before the work is completed.");
-        }
     }
 }

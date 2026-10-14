@@ -60,6 +60,7 @@ class Submissions {
     private final RequirementRepository requirements;
     private final Documents documents;
     private final ApplicationEventPublisher events;
+    private final AnswerChecks checks;
     private final AuditLog audit;
     private final Clock clock;
 
@@ -67,11 +68,13 @@ class Submissions {
             RequirementRepository requirements,
             Documents documents,
             ApplicationEventPublisher events,
+            AnswerChecks checks,
             AuditLog audit,
             Clock clock) {
         this.requirements = requirements;
         this.documents = documents;
         this.events = events;
+        this.checks = checks;
         this.audit = audit;
         this.clock = clock;
     }
@@ -96,8 +99,7 @@ class Submissions {
         }
         requireNotAccepted(current);
         var item = newItem(requirement, value, null, null, source);
-        record(requirement, item, source, "work.information.submitted");
-        return item;
+        return record(requirement, item, source, "work.information.submitted");
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -130,8 +132,7 @@ class Submissions {
             return new UploadOutcome(null, true);
         }
         var item = newItem(requirement, null, stored.documentId(), stored.version(), source);
-        record(requirement, item, source, "work.document.uploaded");
-        return new UploadOutcome(item, false);
+        return new UploadOutcome(record(requirement, item, source, "work.document.uploaded"), false);
     }
 
     static void requireDocument(RequirementRow requirement) {
@@ -157,11 +158,23 @@ class Submissions {
                 .orElse(null);
     }
 
-    /** Once accepted, a requirement is settled; changing it needs a new requirement. */
-    private static void requireNotAccepted(@Nullable ItemRow current) {
-        if (current != null && current.verificationState() == VerificationState.ACCEPTED) {
+    /**
+     * Once accepted, a requirement is settled, unless its accepted answer stopped passing its checks
+     * (a related answer changed); then a new answer may replace it (ADR-027).
+     */
+    private void requireNotAccepted(@Nullable ItemRow current) {
+        if (current != null
+                && current.verificationState() == VerificationState.ACCEPTED
+                && !acceptedButFailing(current)) {
             throw ApiException.conflict("ALREADY_ACCEPTED", "This item has already been accepted.");
         }
+    }
+
+    private boolean acceptedButFailing(ItemRow item) {
+        var latest = checks.latest(java.util.List.of(item.id())).get(item.id());
+        return latest != null
+                && latest.result().status() == com.avenra.verification.domain.Result.Status.FAILED
+                && item.overrideReason() == null;
     }
 
     private boolean sameContent(ItemRow current, Documents.PreparedFile file) {
@@ -192,10 +205,13 @@ class Submissions {
                 VerificationState.PENDING,
                 null,
                 null,
+                null,
+                null,
                 null);
     }
 
-    private void record(RequirementRow requirement, ItemRow item, Source source, String action) {
+    /** Stores the answer, verifies it (ADR-027) and returns it as decided. */
+    private ItemRow record(RequirementRow requirement, ItemRow item, Source source, String action) {
         requirements.insertItem(item);
         requirements.setCurrentItem(requirement.id(), item.id(), item.receivedAt());
         // The work module follows up (review task, resuming the work) in the organization's scope.
@@ -214,5 +230,7 @@ class Submissions {
                 source.requestLinkId() == null
                         ? event
                         : event.detail("requestLinkId", source.requestLinkId().toString()));
+        checks.checkNewAnswer(requirement, item);
+        return requirements.itemsByIds(java.util.List.of(item.id())).getFirst();
     }
 }

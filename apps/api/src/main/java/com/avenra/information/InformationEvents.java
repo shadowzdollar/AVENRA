@@ -37,6 +37,15 @@ public final class InformationEvents {
     public record ReminderSent(
             UUID organizationId, UUID workId, UUID requestLinkId, int reminder, String recipient, int outstanding) {}
 
+    /** An accepted answer no longer passes its checks (a related answer changed, ADR-027). */
+    public record AcceptedAnswerInconsistent(
+            UUID organizationId,
+            UUID workId,
+            UUID requirementId,
+            String requirementTitle,
+            UUID itemId,
+            java.util.List<String> problems) {}
+
     /** A request link expired with required items still missing. */
     public record RequestExpiredIncomplete(
             UUID organizationId, UUID workId, UUID requestLinkId, String recipient, long missing) {}

@@ -42,6 +42,8 @@ public class WorkService {
     private final ClientService clients;
     private final WorkLifecycle lifecycle;
     private final ExceptionRepository exceptions;
+    private final Completions completions;
+    private final com.avenra.verification.Verification verification;
     private final com.avenra.work.infrastructure.ExecutionRepository executionRows;
     private final OrganizationAccess access;
     private final Idempotency idempotency;
@@ -54,6 +56,8 @@ public class WorkService {
             ClientService clients,
             WorkLifecycle lifecycle,
             ExceptionRepository exceptions,
+            Completions completions,
+            com.avenra.verification.Verification verification,
             com.avenra.work.infrastructure.ExecutionRepository executionRows,
             OrganizationAccess access,
             Idempotency idempotency,
@@ -64,6 +68,8 @@ public class WorkService {
         this.clients = clients;
         this.lifecycle = lifecycle;
         this.exceptions = exceptions;
+        this.completions = completions;
+        this.verification = verification;
         this.executionRows = executionRows;
         this.access = access;
         this.idempotency = idempotency;
@@ -215,6 +221,35 @@ public class WorkService {
         });
     }
 
+    public List<com.avenra.contract.v1.model.Evidence> evidence(UUID userId, UUID organizationId, UUID workId) {
+        return access.run(userId, organizationId, Permission.WORK_READ, granted -> {
+            find(organizationId, workId);
+            return verification.evidence(organizationId, workId).stream()
+                    .map(row -> new com.avenra.contract.v1.model.Evidence(
+                                    row.id(),
+                                    com.avenra.contract.v1.model.Evidence.KindEnum.fromValue(row.kind()),
+                                    new com.avenra.contract.v1.model.Reference(row.referenceType(), row.referenceId()),
+                                    row.description(),
+                                    WorkViews.utc(row.createdAt()))
+                            .requirementId(row.requirementId())
+                            .fingerprint(row.fingerprint()))
+                    .toList();
+        });
+    }
+
+    public com.avenra.contract.v1.model.CompletionManifest completion(UUID userId, UUID organizationId, UUID workId) {
+        return access.run(userId, organizationId, Permission.WORK_READ, granted -> {
+            find(organizationId, workId);
+            var sealed = verification.completion(organizationId, workId).orElseThrow(ApiException::notFound);
+            return new com.avenra.contract.v1.model.CompletionManifest(
+                    sealed.workId(),
+                    WorkViews.utc(sealed.completedAt()),
+                    sealed.manifest(),
+                    sealed.sha256(),
+                    sealed.intact());
+        });
+    }
+
     public List<WorkTransition> history(UUID userId, UUID organizationId, UUID workId) {
         return access.run(userId, organizationId, Permission.WORK_READ, granted -> {
             find(organizationId, workId);
@@ -333,6 +368,7 @@ public class WorkService {
                 view.completeness(),
                 work.tasks(row.organizationId(), row.id()),
                 exceptions.openForWork(row.organizationId(), row.id()),
-                work.lastReason(row.organizationId(), row.id()).orElse(null));
+                work.lastReason(row.organizationId(), row.id()).orElse(null),
+                completions.criteria(row.organizationId(), row.id()));
     }
 }
