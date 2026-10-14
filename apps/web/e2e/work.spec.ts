@@ -2,10 +2,12 @@ import { expect, test } from "@playwright/test";
 import { linkFromEmail, signIn, signUpAndVerify, watchProblems } from "./support";
 
 /**
- * The Phase 3 journey in a real browser (criterion 3.12): a team defines work
- * and what it requires, asks a client for it through a request link, the
- * client answers without an account (a virus is refused), and the team reviews
- * until the work is complete. No CSP violations or script errors anywhere.
+ * The Phase 3 and 4 journey in a real browser (criteria 3.12 and 4.15): a team
+ * defines work and what it requires, asks a client for it through a request
+ * link, the client answers without an account (a virus is refused), the
+ * platform moves the work between waiting and running on its own and opens
+ * review tasks, and the team reviews until the work is complete. No CSP
+ * violations or script errors anywhere.
  */
 
 const PDF = Buffer.from("%PDF-1.7\n% statement\n%%EOF\n", "ascii");
@@ -62,6 +64,10 @@ test("define work, collect from a client through a link, review to complete", as
   await team.getByRole("button", { name: "Send request" }).click();
   await expect(team.getByText("Request sent.")).toBeVisible();
   await expect(team.getByText(clientEmail)).toBeVisible();
+  // Phase 4: the platform moves the work to waiting on its own and says what happens next.
+  await expect(team.getByTestId("work-status")).toHaveText("Waiting for information", { timeout: 15_000 });
+  await expect(team.getByTestId("next-action")).toContainText("client still has to provide 2 items");
+  await expect(team.getByText("automatic (information.requested)")).toBeVisible({ timeout: 15_000 });
 
   // The client, in a separate browser context with no account.
   const link = await linkFromEmail(clientEmail, "/request", "/request#[A-Za-z0-9_-]+");
@@ -90,14 +96,24 @@ test("define work, collect from a client through a link, review to complete", as
   await expect(statement.getByTestId("item-state")).toHaveText("Received");
   await expect(client.getByText("everything requested has been sent")).toBeVisible();
 
-  // The team reviews: rejects one answer, which the client corrects.
+  // Everything answered: the work resumes by itself, with a review task per answer.
   await team.reload();
+  await expect(team.getByTestId("work-status")).toHaveText("Running", { timeout: 15_000 });
+  await expect(team.getByText("automatic (information.received)")).toBeVisible({ timeout: 15_000 });
+  await expect(team.getByText("Review: Company number")).toBeVisible({ timeout: 15_000 });
+  await expect(team.getByText("closes when reviewed").first()).toBeVisible();
+  await expect(team.getByTestId("next-action")).toContainText("Review 2 answers");
+  await expect(team.getByTestId("executions")).toContainText("work.advance");
+
+  // The team reviews: rejects one answer, which the client corrects.
   const number = team.getByTestId("requirement-Company number");
   await expect(number.getByTestId("requirement-state")).toHaveText("Awaiting review");
   await expect(number.getByText("from client link")).toBeVisible();
   await number.getByLabel("Reason for rejecting (shown to the client)").fill("Use the registered number");
   await number.getByRole("button", { name: "Reject" }).click();
   await expect(number.getByTestId("requirement-state")).toHaveText("Needs correction");
+  // The client was asked to correct it: the work waits again.
+  await expect(team.getByTestId("work-status")).toHaveText("Waiting for information", { timeout: 15_000 });
 
   await client.reload();
   await expect(client.getByText("Please correct this: Use the registered number")).toBeVisible();
@@ -106,6 +122,7 @@ test("define work, collect from a client through a link, review to complete", as
   await expect(client.getByTestId("item-Company number").getByTestId("item-state")).toHaveText("Received");
 
   await team.reload();
+  await expect(team.getByTestId("work-status")).toHaveText("Running", { timeout: 15_000 });
   const statementRow = team.getByTestId("requirement-Bank statement");
   // The uploaded file downloads as an attachment.
   const download = team.waitForEvent("download");

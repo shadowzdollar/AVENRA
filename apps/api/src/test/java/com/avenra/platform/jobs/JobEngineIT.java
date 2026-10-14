@@ -254,6 +254,35 @@ class JobEngineIT extends IntegrationTestBase {
     }
 
     @Test
+    void aWorkerCannotFinishAJobAnotherWorkerNowHolds() throws InterruptedException {
+        enqueue("contested");
+        UUID id = jdbc.sql("select id from jobs_claim('slow-worker', 100, 1)")
+                .query(UUID.class)
+                .single();
+        Thread.sleep(1_500);
+        // The lease expired and another worker took the job over.
+        assertThat(jdbc.sql("select id from jobs_claim('new-worker', 100, 60)")
+                        .query(UUID.class)
+                        .list())
+                .contains(id);
+        for (String finish : List.of(
+                "select jobs_succeed(:id, 'slow-worker', false)",
+                "select jobs_retry(:id, 'slow-worker', 1, 'late')",
+                "select jobs_fail(:id, 'slow-worker', 'FAILED', 'NON_RETRYABLE', 'late', false)")) {
+            assertThat(jdbc.sql(finish).param("id", id).query(Boolean.class).single())
+                    .as(finish)
+                    .isFalse();
+        }
+        var job = jdbcOwner("select status, locked_by from jobs where id = '" + id + "'");
+        assertThat(job).containsEntry("status", "RUNNING").containsEntry("locked_by", "new-worker");
+        assertThat(jdbc.sql("select jobs_succeed(:id, 'new-worker', false)")
+                        .param("id", id)
+                        .query(Boolean.class)
+                        .single())
+                .isTrue();
+    }
+
+    @Test
     void concurrentWorkersNeverClaimTheSameJob() throws Exception {
         for (int i = 0; i < 40; i++) {
             enqueue("parallel-" + i);

@@ -280,6 +280,11 @@ class AutomationIT extends IntegrationTestBase {
                 .isEqualTo(1L);
         var exception = exceptions(s).getFirst();
         assertThat(exception.get("type").asString()).isEqualTo("REQUEST_EXPIRED_INCOMPLETE");
+        assertThat(registry.get("avenra.exception.raised")
+                        .tag("type", "REQUEST_EXPIRED_INCOMPLETE")
+                        .counter()
+                        .count())
+                .isPositive();
         assertThat(exception.get("description").asString()).contains("2 required items still missing");
         assertThat(exception.get("status").asString()).isEqualTo("OPEN");
         assertThat(ownerQuery("select token_ciphertext is null from request_links where id = ?", s.link())
