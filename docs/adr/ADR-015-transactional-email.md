@@ -1,6 +1,6 @@
 # ADR-015: Transactional email in Phase 2
 
-**Status:** Accepted
+**Status:** Accepted — delivery amended by ADR-025 (durable outbox)
 
 ## Context
 
