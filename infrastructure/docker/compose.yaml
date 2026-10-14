@@ -83,6 +83,22 @@ services:
         echo "$$out" | grep -qE "created bucket|already exists"
     restart: "no"
 
+  # Malware scanner for uploads (ADR-021). The image bundles signatures;
+  # freshclam keeps them current. The API reaches clamd on 127.0.0.1:13310.
+  clamav:
+    image: clamav/clamav:1.5.4
+    environment:
+      CLAMD_CONF_StreamMaxLength: 30M
+      CLAMD_CONF_MaxFileSize: 30M
+    ports:
+      - "127.0.0.1:${CLAMD_PORT:-13310}:3310"
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
+
   # Local mail catcher (ADR-015): receives every email the applications send;
   # nothing leaves the machine. UI: http://127.0.0.1:18025
   mailpit:

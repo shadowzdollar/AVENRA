@@ -9,6 +9,8 @@ export default defineConfig({
   testDir: "./e2e",
   timeout: 60_000,
   fullyParallel: false,
+  // The journeys share Mailpit and per-address rate limits; run them one at a time.
+  workers: 1,
   retries: 0,
   reporter: [["list"]],
   use: {

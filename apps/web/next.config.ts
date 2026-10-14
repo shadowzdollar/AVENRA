@@ -22,6 +22,11 @@ const config: NextConfig = {
   outputFileTracingRoot: fileURLToPath(new URL("../../", import.meta.url)),
   // The workspace package is TypeScript source; Next compiles it.
   transpilePackages: ["@avenra/contracts"],
+  experimental: {
+    // Uploads pass through the proxy to the API, which enforces the real limit
+    // (25 MB per file, ADR-019); this only has to let them through.
+    proxyClientMaxBodySize: "26mb",
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
