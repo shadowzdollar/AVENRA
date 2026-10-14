@@ -7,7 +7,9 @@ import { useState, type FormEvent } from "react";
 import type { components } from "@avenra/contracts";
 import { AppShell } from "@/components/app-shell";
 import { Alert, Button, Card, Field } from "@/components/ui";
+import { ChecksView } from "@/components/checks-view";
 import { ExceptionRow } from "@/components/exception-row";
+import { cleanRule, RuleEditor } from "@/components/rule-editor";
 import { ValueInput } from "@/components/value-input";
 import { api, idempotencyKey, unwrap } from "@/lib/api";
 import {
@@ -26,6 +28,9 @@ import {
 
 type Requirement = components["schemas"]["Requirement"];
 type WorkDetail = components["schemas"]["WorkDetail"];
+type RuleInput = components["schemas"]["VerificationRuleInput"];
+type Acceptance = components["schemas"]["Acceptance"];
+type Risk = components["schemas"]["Risk"];
 type Ids = { organizationId: string; workId: string };
 
 const SELECT = "h-9 rounded-md border border-border bg-background px-2 text-sm";
@@ -118,6 +123,20 @@ function Lifecycle({ ids, work, canUpdate, owner }: { ids: Ids; work: WorkDetail
           <dd>{work.dueAt ? new Date(work.dueAt).toLocaleDateString() : "None"}</dd>
         </div>
       </dl>
+      {work.status !== "COMPLETED" && work.status !== "CANCELLED" && work.status !== "FAILED" ? (
+        <div className="mt-4 border-t border-border pt-4 text-sm">
+          <p className="text-text-secondary">To complete this work</p>
+          <ul className="mt-1 flex flex-col gap-0.5" data-testid="completion-criteria">
+            {work.completionCriteria.map((criterion) => (
+              <li key={criterion.name} className={criterion.met ? "text-success" : ""}>
+                <span aria-hidden>{criterion.met ? "✓ " : "○ "}</span>
+                {criterion.description}
+                {criterion.detail ? <span className="text-text-secondary"> — {criterion.detail}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {canUpdate && work.allowedTransitions.length > 0 ? (
         <div className="mt-4 flex flex-wrap gap-2">
           {work.allowedTransitions.map((to) => (
@@ -160,17 +179,21 @@ function RequirementRow({
   requirement,
   closed,
   permissions,
+  others,
 }: {
   ids: Ids;
   requirement: Requirement;
   closed: boolean;
   permissions: Set<string>;
+  others: { id: string; title: string; kind: RequirementKind }[];
 }) {
   const refresh = useRefresh(ids);
   const path = { ...ids, requirementId: requirement.id };
   const [value, setValue] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [reason, setReason] = useState("");
+  const [override, setOverride] = useState("");
+  const [editing, setEditing] = useState(false);
   const submit = useMutation({
     mutationFn: async () =>
       unwrap(
@@ -202,18 +225,30 @@ function RequirementRow({
       unwrap(
         await api.POST("/api/v1/organizations/{organizationId}/work/{workId}/requirements/{requirementId}/review", {
           params: { path },
-          body: decision === "REJECT" ? { itemId: requirement.currentItem?.id ?? "", decision, reason } : { itemId: requirement.currentItem?.id ?? "", decision },
+          body: {
+            itemId: requirement.currentItem?.id ?? "",
+            decision,
+            ...(decision === "REJECT" ? { reason } : {}),
+            ...(decision === "ACCEPT" && override.trim() ? { overrideReason: override.trim() } : {}),
+          },
         }),
       ),
     onSuccess: () => {
       setReason("");
+      setOverride("");
       refresh();
     },
   });
 
   const item = requirement.currentItem;
+  const checksFailed = item?.checks !== undefined && item.checks.status !== "PASSED";
+  const rulesRejected = requirement.state === "REJECTED" && item?.verification.decidedBy === "RULES";
+  const acceptedButFailing = requirement.state === "ACCEPTED" && item?.checks?.status === "FAILED" && !item.verification.overrideReason;
+  const needsOverride = checksFailed || rulesRejected;
   const canCollect = permissions.has("information.collect") && !closed && requirement.state !== "ACCEPTED";
-  const canReview = permissions.has("information.verify") && !closed && requirement.state === "SUBMITTED";
+  const canVerify = permissions.has("information.verify") && !closed;
+  const canReview = canVerify && requirement.state === "SUBMITTED";
+  const canOverride = canVerify && (rulesRejected || acceptedButFailing);
   const error = errorText(submit.error ?? upload.error ?? review.error);
 
   return (
@@ -227,6 +262,11 @@ function RequirementRow({
           <p className="text-sm text-text-secondary">
             {KIND_LABELS[requirement.kind]}
             {requirement.instructions ? ` · ${requirement.instructions}` : ""}
+          </p>
+          <p className="text-sm text-text-secondary" data-testid="verification-policy">
+            {requirement.rules.length === 0 ? "No checks" : `${requirement.rules.length} ${requirement.rules.length === 1 ? "check" : "checks"}`}
+            {requirement.acceptance === "AUTOMATIC" ? " · accepted automatically when every check passes" : " · a person accepts"}
+            {requirement.risk === "HIGH" ? " · high risk" : ""}
           </p>
         </div>
         <span className={`shrink-0 text-sm font-medium ${stateTone(requirement.state)}`} data-testid="requirement-state">
@@ -250,13 +290,40 @@ function RequirementRow({
             {item.document ? ` · ${formatBytes(item.document.sizeBytes)} · v${item.document.version}` : ""}
             {` · from ${item.source.type === "CLIENT_LINK" ? "client link" : "team member"} · ${new Date(item.receivedAt).toLocaleString()}`}
           </span>
+          {item.verification.decidedBy ? (
+            <span className="text-text-secondary"> · decided by {item.verification.decidedBy === "RULES" ? "the checks" : "a person"}</span>
+          ) : null}
           {item.verification.reason ? <p className="mt-1 text-error">Rejected: {item.verification.reason}</p> : null}
+          {item.verification.overrideReason ? <p className="mt-1 text-warning">Override: {item.verification.overrideReason}</p> : null}
+          {item.checks ? (
+            <div className="mt-2">
+              <ChecksView result={item.checks} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {(canReview && needsOverride) || canOverride ? (
+        <div className="mt-3">
+          <Field
+            label="Override reason (needed to accept an answer whose checks did not pass)"
+            maxLength={1000}
+            value={override}
+            onChange={(e) => setOverride(e.target.value)}
+          />
+          {canOverride ? (
+            <div className="mt-2">
+              <Button variant="secondary" disabled={!override.trim()} onClick={() => review.mutate("ACCEPT")} busy={review.isPending}>
+                {acceptedButFailing ? "Keep the accepted answer" : "Accept anyway"}
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
       {canReview ? (
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
-          <Button onClick={() => review.mutate("ACCEPT")} busy={review.isPending && review.variables === "ACCEPT"}>
+          <Button onClick={() => review.mutate("ACCEPT")} disabled={needsOverride && !override.trim()} busy={review.isPending && review.variables === "ACCEPT"}>
             Accept
           </Button>
           <div className="flex-1">
@@ -266,6 +333,16 @@ function RequirementRow({
             Reject
           </Button>
         </div>
+      ) : null}
+
+      {permissions.has("work.update") && !closed ? (
+        editing ? (
+          <RuleSettings ids={ids} requirement={requirement} others={others} onDone={() => setEditing(false)} />
+        ) : (
+          <button type="button" className="mt-2 text-sm text-brand hover:underline" onClick={() => setEditing(true)}>
+            Edit checks
+          </button>
+        )
       ) : null}
 
       {canCollect ? (
@@ -314,23 +391,127 @@ function RequirementRow({
   );
 }
 
-function AddRequirement({ ids }: { ids: Ids }) {
+function RuleSettings({
+  ids,
+  requirement,
+  others,
+  onDone,
+}: {
+  ids: Ids;
+  requirement: Requirement;
+  others: { id: string; title: string; kind: RequirementKind }[];
+  onDone: () => void;
+}) {
+  const refresh = useRefresh(ids);
+  const [rules, setRules] = useState<RuleInput[]>(requirement.rules.map((rule) => cleanRule(rule)));
+  const [acceptance, setAcceptance] = useState(requirement.acceptance);
+  const [risk, setRisk] = useState(requirement.risk);
+  const save = useMutation({
+    mutationFn: async () =>
+      unwrap(
+        await api.PUT("/api/v1/organizations/{organizationId}/work/{workId}/requirements/{requirementId}/rules", {
+          params: { path: { ...ids, requirementId: requirement.id } },
+          body: { rules: rules.map(cleanRule), acceptance, risk },
+        }),
+      ),
+    onSuccess: () => {
+      refresh();
+      onDone();
+    },
+  });
+  return (
+    <form
+      className="mt-3 flex flex-col gap-3 rounded-md border border-border p-3"
+      onSubmit={(event: FormEvent) => {
+        event.preventDefault();
+        save.mutate();
+      }}
+    >
+      <RuleEditor kind={requirement.kind} rules={rules} onChange={setRules} others={others} />
+      <AcceptanceChoice acceptance={acceptance} risk={risk} onAcceptance={setAcceptance} onRisk={setRisk} />
+      <div className="flex gap-2">
+        <Button type="submit" busy={save.isPending}>
+          Save checks
+        </Button>
+        <Button type="button" variant="secondary" onClick={onDone}>
+          Cancel
+        </Button>
+      </div>
+      {save.error ? <Alert tone="error">{errorText(save.error)}</Alert> : null}
+    </form>
+  );
+}
+
+function AcceptanceChoice({
+  acceptance,
+  risk,
+  onAcceptance,
+  onRisk,
+}: {
+  acceptance: Acceptance;
+  risk: Risk;
+  onAcceptance: (value: Acceptance) => void;
+  onRisk: (value: Risk) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-4 text-sm">
+      <label className="flex flex-col gap-1">
+        Who accepts answers
+        <select className={SELECT} value={acceptance} onChange={(event) => onAcceptance(event.target.value as Acceptance)} disabled={risk === "HIGH"}>
+          <option value="MANUAL">A person</option>
+          <option value="AUTOMATIC">Automatically, when every check passes</option>
+        </select>
+      </label>
+      <label className="flex flex-col gap-1">
+        Risk
+        <select
+          className={SELECT}
+          value={risk}
+          onChange={(event) => {
+            const value = event.target.value as Risk;
+            onRisk(value);
+            if (value === "HIGH") onAcceptance("MANUAL");
+          }}
+        >
+          <option value="NORMAL">Normal</option>
+          <option value="HIGH">High (always a person)</option>
+        </select>
+      </label>
+    </div>
+  );
+}
+
+function AddRequirement({ ids, others }: { ids: Ids; others: { id: string; title: string; kind: RequirementKind }[] }) {
   const refresh = useRefresh(ids);
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<RequirementKind>("DOCUMENT");
   const [required, setRequired] = useState(true);
   const [instructions, setInstructions] = useState("");
+  const [rules, setRules] = useState<RuleInput[]>([]);
+  const [acceptance, setAcceptance] = useState<Acceptance>("MANUAL");
+  const [risk, setRisk] = useState<Risk>("NORMAL");
   const create = useMutation({
     mutationFn: async () =>
       unwrap(
         await api.POST("/api/v1/organizations/{organizationId}/work/{workId}/requirements", {
           params: { path: ids, header: { "Idempotency-Key": idempotencyKey() } },
-          body: instructions ? { title, kind, required, instructions } : { title, kind, required },
+          body: {
+            title,
+            kind,
+            required,
+            acceptance,
+            risk,
+            rules: rules.map(cleanRule),
+            ...(instructions ? { instructions } : {}),
+          },
         }),
       ),
     onSuccess: () => {
       setTitle("");
       setInstructions("");
+      setRules([]);
+      setAcceptance("MANUAL");
+      setRisk("NORMAL");
       refresh();
     },
   });
@@ -350,7 +531,15 @@ function AddRequirement({ ids }: { ids: Ids }) {
           <label htmlFor="requirement-kind" className="text-sm font-medium">
             Type
           </label>
-          <select id="requirement-kind" value={kind} onChange={(event) => setKind(event.target.value as RequirementKind)} className={SELECT}>
+          <select
+            id="requirement-kind"
+            value={kind}
+            onChange={(event) => {
+              setKind(event.target.value as RequirementKind);
+              setRules([]);
+            }}
+            className={SELECT}
+          >
             {(Object.keys(KIND_LABELS) as RequirementKind[]).map((option) => (
               <option key={option} value={option}>
                 {KIND_LABELS[option]}
@@ -364,6 +553,8 @@ function AddRequirement({ ids }: { ids: Ids }) {
         </label>
       </div>
       <Field label="Instructions for the client (optional)" maxLength={2000} value={instructions} onChange={(e) => setInstructions(e.target.value)} />
+      <RuleEditor kind={kind} rules={rules} onChange={setRules} others={others} />
+      <AcceptanceChoice acceptance={acceptance} risk={risk} onAcceptance={setAcceptance} onRisk={setRisk} />
       <div>
         <Button type="submit" busy={create.isPending}>
           Add requirement
@@ -633,6 +824,61 @@ function Executions({ ids }: { ids: Ids }) {
   );
 }
 
+/** The sealed proof of completion (ADR-028): its hash, and whether it still matches. */
+function CompletionProof({ ids }: { ids: Ids }) {
+  const completion = useQuery({
+    queryKey: ["organization", ids.organizationId, "work", ids.workId, "completion"],
+    queryFn: async () => unwrap(await api.GET("/api/v1/organizations/{organizationId}/work/{workId}/completion", { params: { path: ids } })),
+  });
+  if (!completion.data) {
+    return null;
+  }
+  return (
+    <Card title="Proof of completion">
+      <p className="text-sm" data-testid="manifest-integrity">
+        {completion.data.intact ? (
+          <span className="text-success">Intact: the record matches its fingerprint.</span>
+        ) : (
+          <span className="text-error">Changed: the record no longer matches its fingerprint.</span>
+        )}
+      </p>
+      <p className="mt-1 break-all font-mono text-xs text-text-secondary" data-testid="manifest-sha256">
+        SHA-256 {completion.data.sha256}
+      </p>
+      <details className="mt-3 text-sm">
+        <summary className="cursor-pointer text-brand">Show the completion record</summary>
+        <pre className="mt-2 max-h-96 overflow-auto rounded-md border border-border p-3 text-xs">
+          {JSON.stringify(JSON.parse(completion.data.manifest) as unknown, null, 2)}
+        </pre>
+      </details>
+    </Card>
+  );
+}
+
+function EvidenceList({ ids }: { ids: Ids }) {
+  const evidence = useQuery({
+    queryKey: ["organization", ids.organizationId, "work", ids.workId, "evidence"],
+    queryFn: async () => unwrap(await api.GET("/api/v1/organizations/{organizationId}/work/{workId}/evidence", { params: { path: ids } })),
+    refetchInterval: 5_000,
+  });
+  if (!evidence.data || evidence.data.length === 0) {
+    return null;
+  }
+  return (
+    <Card title="Evidence">
+      <ol className="flex max-h-72 flex-col gap-1 overflow-auto text-sm" data-testid="evidence">
+        {evidence.data.map((entry) => (
+          <li key={entry.id}>
+            <span className="text-text-secondary">{new Date(entry.createdAt).toLocaleString()}</span> · {entry.kind.replaceAll("_", " ").toLowerCase()} ·{" "}
+            {entry.description}
+            {entry.fingerprint ? <span className="font-mono text-xs text-text-secondary"> · {entry.fingerprint.slice(0, 12)}…</span> : null}
+          </li>
+        ))}
+      </ol>
+    </Card>
+  );
+}
+
 function History({ ids }: { ids: Ids }) {
   const history = useQuery({
     queryKey: ["organization", ids.organizationId, "work", ids.workId, "history"],
@@ -695,13 +941,24 @@ function Work({ ids }: { ids: Ids }) {
         {data.requirements.length === 0 ? <p className="text-sm text-text-secondary">Nothing is required yet.</p> : null}
         <ul className="divide-y divide-border">
           {data.requirements.map((requirement) => (
-            <RequirementRow key={requirement.id} ids={ids} requirement={requirement} closed={closed} permissions={permissions} />
+            <RequirementRow
+              key={requirement.id}
+              ids={ids}
+              requirement={requirement}
+              closed={closed}
+              permissions={permissions}
+              others={data.requirements.filter((other) => other.id !== requirement.id).map((other) => ({ id: other.id, title: other.title, kind: other.kind }))}
+            />
           ))}
         </ul>
-        {permissions.has("work.update") && !closed ? <AddRequirement ids={ids} /> : null}
+        {permissions.has("work.update") && !closed ? (
+          <AddRequirement ids={ids} others={data.requirements.map((other) => ({ id: other.id, title: other.title, kind: other.kind }))} />
+        ) : null}
       </Card>
       {permissions.has("information.collect") ? <RequestLinks ids={ids} work={data} closed={closed} /> : null}
       <Tasks ids={ids} work={data} permissions={permissions} closed={closed} />
+      {data.status === "COMPLETED" ? <CompletionProof ids={ids} /> : null}
+      <EvidenceList ids={ids} />
       <Executions ids={ids} />
       <History ids={ids} />
     </div>

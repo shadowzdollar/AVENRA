@@ -128,7 +128,18 @@ function RequestItem({ item, header }: { item: Item; header: { "X-Avenra-Request
           {item.state === "SUBMITTED" ? "Received" : stateLabel(item.state)}
         </span>
       </div>
-      {item.state === "REJECTED" && item.rejectionReason ? (
+      {item.state === "REJECTED" && item.problems && item.problems.length > 0 ? (
+        <div className="mt-3">
+          <Alert tone="error">
+            Please correct this:
+            <ul className="mt-1 list-inside list-disc" data-testid="problems">
+              {item.problems.map((problem) => (
+                <li key={problem}>{problem}</li>
+              ))}
+            </ul>
+          </Alert>
+        </div>
+      ) : item.state === "REJECTED" && item.rejectionReason ? (
         <div className="mt-3">
           <Alert tone="error">Please correct this: {item.rejectionReason}</Alert>
         </div>
