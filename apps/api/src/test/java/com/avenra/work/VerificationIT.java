@@ -39,6 +39,9 @@ class VerificationIT extends IntegrationTestBase {
     @Autowired
     private TestOutbox outbox;
 
+    @Autowired
+    private io.micrometer.core.instrument.MeterRegistry registry;
+
     private record Setup(BrowserClient team, UUID organization, UUID work) {
 
         String path() {
@@ -183,6 +186,11 @@ class VerificationIT extends IntegrationTestBase {
                 .as("still a person's decision")
                 .isEqualTo("PENDING");
 
+        assertThat(registry.get("avenra.verification.completed")
+                        .tag("status", "PASSED")
+                        .counter()
+                        .count())
+                .isPositive();
         var history = ok(s.team().get(s.path() + "/requirements/" + number + "/verifications"))
                 .body();
         assertThat(history.size()).isEqualTo(1);

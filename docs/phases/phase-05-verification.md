@@ -49,17 +49,17 @@ an immutable, hashed evidence manifest: verified completed work.
 | # | Criterion | Evidence | Done |
 |---|---|---|---|
 | 5.1 | ADRs for module split, verification model, evidence and completion | ADR-026, ADR-027, ADR-028 | ☑ |
-| 5.2 | `information` and `verification` modules own their data; no cycles; behaviour unchanged by the split | Modularity test, full suite | ☐ |
-| 5.3 | Every rule type is validated when defined and evaluated deterministically | Unit + integration tests | ☐ |
-| 5.4 | Every answer gets a structured, immutable verification (status, confidence, checks, evidence) | Integration tests | ☐ |
-| 5.5 | Failed blocking checks reject the answer at once with specific reasons the client sees | Integration + end-to-end tests | ☐ |
-| 5.6 | Automatic acceptance only when opted in, all checks passed, confidence ≥ threshold, and not high-risk; recorded as a system decision | Integration tests | ☐ |
-| 5.7 | Consistency checks re-run when a related answer changes | Integration tests | ☐ |
-| 5.8 | People can accept despite failed checks only with an override reason; overrides audited | Integration tests | ☐ |
-| 5.9 | Evidence is first-class; completion produces an immutable, hashed manifest that can be checked | Integration tests | ☐ |
-| 5.10 | Completion criteria are computed server-side, shown, and enforced | Integration tests | ☐ |
-| 5.11 | New tables have row-level security and isolation tests | Integration tests | ☐ |
-| 5.12 | Web: rules, check results, client feedback, criteria and evidence work end to end | End-to-end test | ☐ |
+| 5.2 | `information` and `verification` modules own their data; no cycles; behaviour unchanged by the split | `ModularityTest` (no cycles); the split landed as a pure refactor with the unchanged suite green (56 unit, 125 integration); `information` never imports `work`, `work` uses only the `Information` facade | ☑ |
+| 5.3 | Every rule type is validated when defined and evaluated deterministically | `RuleValidationTest`, `VerifierTest` (deterministic, every rule type), `VerificationIT.rulesAreValidatedWhenDefined` | ☑ |
+| 5.4 | Every answer gets a structured, immutable verification (status, confidence, checks, evidence) | `VerificationIT.everyAnswerGetsAStructuredVerificationWithEvidence`; immutability in `WorkRowLevelSecurityIT.historyCannotBeRewritten` | ☑ |
+| 5.5 | Failed blocking checks reject the answer at once with specific reasons the client sees | `VerificationIT.failedBlockingChecksRejectAClientsAnswerAtOnceWithReasons`, `e2e/verification.spec.ts` | ☑ |
+| 5.6 | Automatic acceptance only when opted in, all checks passed, confidence ≥ threshold, and not high-risk; recorded as a system decision | `VerificationIT.automaticAcceptanceOnlyWhenOptedInAndEverythingPasses`, `…rulesAreValidated…` (high risk + automatic refused; database constraint) | ☑ |
+| 5.7 | Consistency checks re-run when a related answer changes | `VerificationIT.consistencyChecksRunAgainWhenARelatedAnswerChanges`, `…anAcceptedAnswerThatStopsMatching…` | ☑ |
+| 5.8 | People can accept despite failed checks only with an override reason; overrides audited | `VerificationIT.overridesAreRequiredToAcceptFailedChecksAndAreAudited` | ☑ |
+| 5.9 | Evidence is first-class; completion produces an immutable, hashed manifest that can be checked | `VerificationIT.everyAnswerGets…` (evidence), `…completionIsGuardedByCriteriaAndSealsAVerifiableManifest` (hash recomputed, tampering detected) | ☑ |
+| 5.10 | Completion criteria are computed server-side, shown, and enforced | `WorkFlowIT` (`COMPLETION_CRITERIA_UNMET` with the unmet criteria), `VerificationIT.completionIsGuarded…`, `…anAcceptedAnswerThatStopsMatching…` | ☑ |
+| 5.11 | New tables have row-level security and isolation tests | `WorkRowLevelSecurityIT` (verification tables, link decision policy); mutation check: 3 of 3 broken guards caught; `VerificationIT.anotherTenantSeesNoneOfIt` | ☑ |
+| 5.12 | Web: rules, check results, client feedback, criteria and evidence work end to end | `e2e/verification.spec.ts` (checks defined in the browser, immediate client feedback, automatic acceptance, proof intact), `rule-editor.test.tsx` | ☑ |
 | 5.13 | Metrics, threat model, CI green, hardening pass recorded | `docs/security/`, CI, this file | ☐ |
 
 ## Declared deferrals
@@ -73,4 +73,34 @@ an immutable, hashed evidence manifest: verified completed work.
 
 ## Hardening record
 
-_To be completed at phase close._
+Phase 5 Guidelines sections re-read and checked against the code on
+2026-10-14.
+
+| Section | Rule | Result |
+|---|---|---|
+| §21 | Requirements drive completeness | Met. Completeness and completion criteria come from requirements and their decisions |
+| §22, §136 | Information with confidence and verification state | Met. Confidence from checks, verification state, decision method, override, provenance |
+| §23 | Documents verified and versioned | Met. File-type and size checks on the detected facts; checksums in evidence and manifest |
+| §24 | Evidence first-class; results point to evidence | Met. Evidence table; every result lists its evidence references |
+| §25 | Structured verification; confidence never sufficient alone | Met. Status from check outcomes, not confidence; high-risk always decided by people |
+| §50 | Deterministic validation before anything is treated as true | Met. Only deterministic rules decide; AI checks are deferred and will feed the same model |
+| §59 | Audit important actions | Met. Rule changes, decisions, overrides, reconfirmations, exceptions |
+| §101 | Telemetry naming | Met. `avenra.verification.completed` by status |
+| §128 | Modules own their data | Met. `information`, `verification` and `work` split with one-way dependencies (ADR-026), closing the Phase 3 deferral |
+| §137 | Tenant isolation tests | Met at API and database level (mutation-checked) |
+
+Findings fixed during the phase, before merge:
+
+- The generated Java models start optional lists as empty lists, so `minItems: 1`
+  rejected every rule; removed from the contract (rule validation checks them).
+- Answers returned by submit, upload and list lacked their check results.
+- The new exception type was missing from the contract; listing exceptions
+  answered 500.
+- A request link's scope had no update policy on answers, so a rules rejection
+  of a client's answer silently changed nothing; a narrow policy now allows
+  only rules decisions on the link's own answers.
+- An accepted answer that stopped passing after a related answer changed could
+  be neither replaced nor re-reviewed, blocking completion forever; it can now
+  be replaced or reconfirmed with an override.
+- The textbook catastrophic patterns finish instantly on Java 25, so the test
+  did not prove the time budget; it now uses a measured 35-second pattern.
