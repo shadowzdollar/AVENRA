@@ -1,4 +1,4 @@
-package com.avenra.work.api;
+package com.avenra.information.api;
 
 import com.avenra.platform.web.ApiException;
 import java.io.IOException;

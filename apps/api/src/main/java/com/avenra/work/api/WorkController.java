@@ -2,19 +2,14 @@ package com.avenra.work.api;
 
 import com.avenra.contract.v1.api.WorkApi;
 import com.avenra.contract.v1.model.AssignExceptionRequest;
-import com.avenra.contract.v1.model.CreateRequirementRequest;
 import com.avenra.contract.v1.model.CreateTaskRequest;
 import com.avenra.contract.v1.model.CreateWorkRequest;
 import com.avenra.contract.v1.model.ExceptionTransitionRequest;
 import com.avenra.contract.v1.model.Execution;
-import com.avenra.contract.v1.model.InformationItem;
-import com.avenra.contract.v1.model.Requirement;
-import com.avenra.contract.v1.model.ReviewRequest;
 import com.avenra.contract.v1.model.Task;
 import com.avenra.contract.v1.model.TaskStatusRequest;
 import com.avenra.contract.v1.model.TransitionRequest;
 import com.avenra.contract.v1.model.UpdateWorkRequest;
-import com.avenra.contract.v1.model.ValueSubmission;
 import com.avenra.contract.v1.model.WorkDetail;
 import com.avenra.contract.v1.model.WorkException;
 import com.avenra.contract.v1.model.WorkStatus;
@@ -22,36 +17,25 @@ import com.avenra.contract.v1.model.WorkSummary;
 import com.avenra.contract.v1.model.WorkTransition;
 import com.avenra.platform.security.CurrentUser;
 import com.avenra.work.application.ExceptionService;
-import com.avenra.work.application.InformationService;
 import com.avenra.work.application.WorkService;
 import com.avenra.work.domain.WorkFilter;
 import com.avenra.work.infrastructure.ExceptionRepository;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.CacheControl;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 /** Implements the contract's work operations (ADR-008). */
 @RestController
 class WorkController implements WorkApi {
 
     private final WorkService work;
-    private final InformationService information;
     private final ExceptionService exceptions;
 
-    WorkController(WorkService work, InformationService information, ExceptionService exceptions) {
+    WorkController(WorkService work, ExceptionService exceptions) {
         this.work = work;
-        this.information = information;
         this.exceptions = exceptions;
     }
 
@@ -136,66 +120,6 @@ class WorkController implements WorkApi {
     @Override
     public ResponseEntity<Task> setTaskStatus(UUID organizationId, UUID workId, UUID taskId, TaskStatusRequest body) {
         return ResponseEntity.ok(work.setTaskStatus(userId(), organizationId, workId, taskId, body));
-    }
-
-    @Override
-    public ResponseEntity<Requirement> createRequirement(
-            UUID organizationId, UUID workId, String idempotencyKey, CreateRequirementRequest body) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(work.createRequirement(userId(), organizationId, workId, idempotencyKey, body));
-    }
-
-    @Override
-    public ResponseEntity<List<InformationItem>> listInformationItems(
-            UUID organizationId, UUID workId, UUID requirementId) {
-        return ResponseEntity.ok(information.items(userId(), organizationId, workId, requirementId));
-    }
-
-    @Override
-    public ResponseEntity<InformationItem> submitValue(
-            UUID organizationId, UUID workId, UUID requirementId, ValueSubmission body) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(information.submitValue(userId(), organizationId, workId, requirementId, body.getValue()));
-    }
-
-    @Override
-    public ResponseEntity<InformationItem> uploadFile(
-            UUID organizationId, UUID workId, UUID requirementId, MultipartFile file) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(information.uploadFile(
-                        userId(),
-                        organizationId,
-                        workId,
-                        requirementId,
-                        Uploads.open(file),
-                        file.getOriginalFilename()));
-    }
-
-    @Override
-    public ResponseEntity<Requirement> reviewInformation(
-            UUID organizationId, UUID workId, UUID requirementId, ReviewRequest body) {
-        return ResponseEntity.ok(information.review(userId(), organizationId, workId, requirementId, body));
-    }
-
-    /** Files are always attachments with the detected type and no sniffing (ADR-019). */
-    @Override
-    public ResponseEntity<Resource> downloadDocument(UUID organizationId, UUID documentId, Integer version) {
-        var download = information.download(userId(), organizationId, documentId, version);
-        var stored = download.version();
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(stored.contentType()))
-                .contentLength(stored.sizeBytes())
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.attachment()
-                                .filename(stored.fileName(), StandardCharsets.UTF_8)
-                                .build()
-                                .toString())
-                .header("X-Content-Type-Options", "nosniff")
-                .header("Content-Security-Policy", "default-src 'none'; sandbox")
-                .header("X-Avenra-Sha256", stored.sha256Hex())
-                .cacheControl(CacheControl.noStore())
-                .body(new InputStreamResource(download.content()));
     }
 
     private static UUID userId() {

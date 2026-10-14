@@ -1,10 +1,10 @@
-package com.avenra.work.api;
+package com.avenra.information.api;
 
 import com.avenra.contract.v1.api.RequestsApi;
 import com.avenra.contract.v1.model.CreateRequestLinkRequest;
 import com.avenra.contract.v1.model.RequestLink;
+import com.avenra.information.application.RequestLinkService;
 import com.avenra.platform.security.CurrentUser;
-import com.avenra.work.application.RequestLinkService;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;

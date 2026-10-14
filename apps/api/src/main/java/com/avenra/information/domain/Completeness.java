@@ -1,4 +1,4 @@
-package com.avenra.work.domain;
+package com.avenra.information.domain;
 
 import java.util.Collection;
 import org.jspecify.annotations.Nullable;

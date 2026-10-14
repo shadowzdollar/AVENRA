@@ -33,6 +33,8 @@ tags:
   description: Projects that group work.
 - name: work
   description: Work, its lifecycle, tasks, requirements, information and documents.
+- name: information
+  description: Requirements, the answers submitted for them, their review, and documents.
 - name: requests
   description: Request links that ask clients for information.
 - name: client-requests
@@ -1348,7 +1350,7 @@ paths:
       operationId: createRequirement
       summary: Add a requirement to work
       tags:
-      - work
+      - information
       x-avenra-permission: work.update
       x-avenra-audit: required
       x-avenra-idempotency: key-required
@@ -1382,7 +1384,7 @@ paths:
       operationId: listInformationItems
       summary: Everything submitted for a requirement
       tags:
-      - work
+      - information
       x-avenra-permission: information.read
       x-avenra-audit: none
       x-avenra-idempotency: safe
@@ -1414,7 +1416,7 @@ paths:
       description: Creates a new information item; earlier items are kept. Submitting the same value again
         while it awaits review returns the existing item.
       tags:
-      - work
+      - information
       x-avenra-permission: information.collect
       x-avenra-audit: required
       x-avenra-idempotency: idempotent
@@ -1451,7 +1453,7 @@ paths:
         before it is stored (ADR-021). Errors: `FILE_TOO_LARGE`, `FILE_TYPE_NOT_ALLOWED`, `FILE_REJECTED`
         (malware found), `SCANNER_UNAVAILABLE`.'
       tags:
-      - work
+      - information
       x-avenra-permission: information.collect
       x-avenra-audit: required
       x-avenra-idempotency: idempotent
@@ -1487,7 +1489,7 @@ paths:
       description: Reviews the current item of the requirement. Rejecting needs a reason, which the client
         sees. Only an item awaiting review can be reviewed (`NOT_AWAITING_REVIEW`).
       tags:
-      - work
+      - information
       x-avenra-permission: information.verify
       x-avenra-audit: required
       x-avenra-idempotency: idempotent
@@ -1523,7 +1525,7 @@ paths:
       description: Only versions scanned clean can be downloaded (`DOCUMENT_UNAVAILABLE`). Every download
         is audited.
       tags:
-      - work
+      - information
       x-avenra-permission: information.read
       x-avenra-audit: required
       x-avenra-idempotency: safe

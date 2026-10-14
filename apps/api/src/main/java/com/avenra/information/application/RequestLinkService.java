@@ -1,9 +1,14 @@
-package com.avenra.work.application;
+package com.avenra.information.application;
 
 import com.avenra.audit.AuditLog;
 import com.avenra.contract.v1.model.CreateRequestLinkRequest;
 import com.avenra.contract.v1.model.RequestLink;
 import com.avenra.identity.UserDirectory;
+import com.avenra.information.InformationEvents;
+import com.avenra.information.WorkGate;
+import com.avenra.information.infrastructure.RequestLinkRepository;
+import com.avenra.information.infrastructure.RequestLinkRepository.LinkRow;
+import com.avenra.information.infrastructure.RequirementRepository;
 import com.avenra.organization.OrganizationAccess;
 import com.avenra.organization.domain.Permission;
 import com.avenra.platform.AvenraProperties;
@@ -13,10 +18,7 @@ import com.avenra.platform.email.EmailMessage;
 import com.avenra.platform.email.OutgoingEmail;
 import com.avenra.platform.idempotency.Idempotency;
 import com.avenra.platform.web.ApiException;
-import com.avenra.work.infrastructure.RequestLinkRepository;
-import com.avenra.work.infrastructure.RequestLinkRepository.LinkRow;
-import com.avenra.work.infrastructure.RequirementRepository;
-import com.avenra.work.infrastructure.WorkRepository;
+import com.avenra.platform.web.Text;
 import java.net.URI;
 import java.time.Clock;
 import java.time.Duration;
@@ -26,6 +28,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -40,14 +43,13 @@ public class RequestLinkService {
 
     private final RequestLinkRepository links;
     private final RequirementRepository requirements;
-    private final WorkService workService;
-    private final WorkRepository work;
+    private final WorkGate work;
     private final OrganizationAccess access;
     private final Idempotency idempotency;
     private final UserDirectory users;
     private final OutgoingEmail outgoing;
     private final SecretBox box;
-    private final WorkAutomation automation;
+    private final ApplicationEventPublisher events;
     private final AuditLog audit;
     private final URI publicBaseUrl;
     private final Clock clock;
@@ -55,27 +57,25 @@ public class RequestLinkService {
     RequestLinkService(
             RequestLinkRepository links,
             RequirementRepository requirements,
-            WorkService workService,
-            WorkRepository work,
+            WorkGate work,
             OrganizationAccess access,
             Idempotency idempotency,
             UserDirectory users,
             OutgoingEmail outgoing,
             SecretBox box,
-            WorkAutomation automation,
+            ApplicationEventPublisher events,
             AuditLog audit,
             AvenraProperties properties,
             Clock clock) {
         this.links = links;
         this.requirements = requirements;
-        this.workService = workService;
         this.work = work;
         this.access = access;
         this.idempotency = idempotency;
         this.users = users;
         this.outgoing = outgoing;
         this.box = box;
-        this.automation = automation;
+        this.events = events;
         this.audit = audit;
         this.publicBaseUrl = properties.web().publicBaseUrl();
         this.clock = clock;
@@ -89,7 +89,7 @@ public class RequestLinkService {
                     links.requirementIds(rows.stream().map(LinkRow::id).toList());
             OffsetDateTime now = OffsetDateTime.now(clock);
             return rows.stream()
-                    .map(row -> WorkViews.link(row, requirementIds.getOrDefault(row.id(), List.of()), now))
+                    .map(row -> InformationViews.link(row, requirementIds.getOrDefault(row.id(), List.of()), now))
                     .toList();
         });
     }
@@ -112,7 +112,7 @@ public class RequestLinkService {
                         Text.fingerprint(organizationId, workId, email, name, message, days, requested),
                         RequestLink.class,
                         () -> {
-                            var target = workService.openForUpdate(organizationId, workId);
+                            var target = work.lockOpen(organizationId, workId);
                             var ofWork = requirements.forWork(organizationId, workId).stream()
                                     .map(RequirementRepository.RequirementRow::id)
                                     .toList();
@@ -143,7 +143,8 @@ public class RequestLinkService {
                                     SecureTokens.hash(token),
                                     new RequestLinkRepository.SealedToken(sealed.keyId(), sealed.ciphertext()),
                                     requested);
-                            automation.informationRequested(organizationId, workId, row.id());
+                            events.publishEvent(
+                                    new InformationEvents.InformationRequested(organizationId, workId, row.id()));
                             String sender = users.find(userId)
                                     .map(UserDirectory.UserSummary::displayName)
                                     .orElse("Someone");
@@ -161,7 +162,7 @@ public class RequestLinkService {
                                     .resource("request_link", row.id())
                                     .detail("workId", workId.toString())
                                     .detail("requirements", requested.size()));
-                            return WorkViews.link(row, List.copyOf(requested), now);
+                            return InformationViews.link(row, List.copyOf(requested), now);
                         }));
     }
 

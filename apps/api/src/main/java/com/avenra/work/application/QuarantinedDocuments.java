@@ -1,8 +1,8 @@
 package com.avenra.work.application;
 
 import com.avenra.document.DocumentEvents;
+import com.avenra.information.Information;
 import com.avenra.work.domain.ExceptionType;
-import com.avenra.work.infrastructure.RequirementRepository;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component;
 @Component
 class QuarantinedDocuments {
 
-    private final RequirementRepository requirements;
+    private final Information requirements;
     private final Exceptions exceptions;
 
-    QuarantinedDocuments(RequirementRepository requirements, Exceptions exceptions) {
+    QuarantinedDocuments(Information requirements, Exceptions exceptions) {
         this.requirements = requirements;
         this.exceptions = exceptions;
     }
@@ -25,7 +25,7 @@ class QuarantinedDocuments {
     void on(DocumentEvents.Quarantined quarantined) {
         var requirement = quarantined.requirementId() == null
                 ? null
-                : requirements.find(quarantined.requirementId()).orElse(null);
+                : requirements.requirement(quarantined.requirementId()).orElse(null);
         exceptions.raise(
                 quarantined.organizationId(),
                 requirement == null ? null : requirement.workId(),

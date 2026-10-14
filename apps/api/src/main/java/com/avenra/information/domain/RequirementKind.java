@@ -1,4 +1,4 @@
-package com.avenra.work.domain;
+package com.avenra.information.domain;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

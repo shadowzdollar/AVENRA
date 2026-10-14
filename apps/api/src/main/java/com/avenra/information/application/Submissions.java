@@ -1,18 +1,20 @@
-package com.avenra.work.application;
+package com.avenra.information.application;
 
 import com.avenra.audit.AuditLog;
 import com.avenra.document.Documents;
+import com.avenra.information.InformationEvents;
+import com.avenra.information.domain.Completeness.VerificationState;
+import com.avenra.information.domain.RequirementKind;
+import com.avenra.information.infrastructure.RequirementRepository;
+import com.avenra.information.infrastructure.RequirementRepository.ItemRow;
+import com.avenra.information.infrastructure.RequirementRepository.RequirementRow;
 import com.avenra.platform.web.ApiException;
-import com.avenra.work.domain.Completeness.VerificationState;
-import com.avenra.work.domain.RequirementKind;
-import com.avenra.work.infrastructure.RequirementRepository;
-import com.avenra.work.infrastructure.RequirementRepository.ItemRow;
-import com.avenra.work.infrastructure.RequirementRepository.RequirementRow;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -57,19 +59,19 @@ class Submissions {
 
     private final RequirementRepository requirements;
     private final Documents documents;
-    private final WorkAutomation automation;
+    private final ApplicationEventPublisher events;
     private final AuditLog audit;
     private final Clock clock;
 
     Submissions(
             RequirementRepository requirements,
             Documents documents,
-            WorkAutomation automation,
+            ApplicationEventPublisher events,
             AuditLog audit,
             Clock clock) {
         this.requirements = requirements;
         this.documents = documents;
-        this.automation = automation;
+        this.events = events;
         this.audit = audit;
         this.clock = clock;
     }
@@ -196,8 +198,14 @@ class Submissions {
     private void record(RequirementRow requirement, ItemRow item, Source source, String action) {
         requirements.insertItem(item);
         requirements.setCurrentItem(requirement.id(), item.id(), item.receivedAt());
-        // Follow-up (review task, resuming the work) runs as a job in the organization's scope.
-        automation.answerReceived(requirement.organizationId(), requirement.workId(), requirement.id(), item.id());
+        // The work module follows up (review task, resuming the work) in the organization's scope.
+        events.publishEvent(new InformationEvents.AnswerReceived(
+                requirement.organizationId(),
+                requirement.workId(),
+                requirement.id(),
+                requirement.title(),
+                item.id(),
+                source.requestLinkId() != null));
         var event = AuditLog.Event.of(action, requirement.organizationId(), source.userId())
                 .resource("information_item", item.id())
                 .detail("requirementId", requirement.id().toString())

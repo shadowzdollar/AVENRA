@@ -1,4 +1,4 @@
-package com.avenra.work.infrastructure;
+package com.avenra.information.infrastructure;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;

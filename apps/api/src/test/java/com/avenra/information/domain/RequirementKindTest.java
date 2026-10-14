@@ -1,4 +1,4 @@
-package com.avenra.work.domain;
+package com.avenra.information.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

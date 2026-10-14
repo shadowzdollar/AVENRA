@@ -1,10 +1,10 @@
-package com.avenra.work.domain;
+package com.avenra.information.domain;
 
-import static com.avenra.work.domain.Completeness.RequirementState.*;
+import static com.avenra.information.domain.Completeness.RequirementState.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.avenra.work.domain.Completeness.Entry;
-import com.avenra.work.domain.Completeness.VerificationState;
+import com.avenra.information.domain.Completeness.Entry;
+import com.avenra.information.domain.Completeness.VerificationState;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

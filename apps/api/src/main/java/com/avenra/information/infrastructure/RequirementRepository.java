@@ -1,7 +1,7 @@
-package com.avenra.work.infrastructure;
+package com.avenra.information.infrastructure;
 
-import com.avenra.work.domain.Completeness.VerificationState;
-import com.avenra.work.domain.RequirementKind;
+import com.avenra.information.domain.Completeness.VerificationState;
+import com.avenra.information.domain.RequirementKind;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Collection;

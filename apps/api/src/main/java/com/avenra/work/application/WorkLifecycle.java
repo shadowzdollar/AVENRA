@@ -1,9 +1,9 @@
 package com.avenra.work.application;
 
 import com.avenra.audit.AuditLog;
+import com.avenra.information.Information;
 import com.avenra.platform.web.ApiException;
 import com.avenra.work.domain.WorkStatus;
-import com.avenra.work.infrastructure.RequirementRepository;
 import com.avenra.work.infrastructure.WorkRepository;
 import com.avenra.work.infrastructure.WorkRepository.TransitionRow;
 import com.avenra.work.infrastructure.WorkRepository.WorkRow;
@@ -36,16 +36,13 @@ class WorkLifecycle {
     }
 
     private final WorkRepository work;
-    private final RequirementRepository requirements;
-    private final WorkViews views;
+    private final Information information;
     private final AuditLog audit;
     private final Clock clock;
 
-    WorkLifecycle(
-            WorkRepository work, RequirementRepository requirements, WorkViews views, AuditLog audit, Clock clock) {
+    WorkLifecycle(WorkRepository work, Information information, AuditLog audit, Clock clock) {
         this.work = work;
-        this.requirements = requirements;
-        this.views = views;
+        this.information = information;
         this.audit = audit;
         this.clock = clock;
     }
@@ -102,8 +99,7 @@ class WorkLifecycle {
     }
 
     private void requireCompletable(UUID organizationId, UUID workId) {
-        var loaded = views.load(requirements.forWork(organizationId, workId));
-        if (!loaded.completeness().complete()) {
+        if (!information.completeness(organizationId, workId).complete()) {
             throw ApiException.conflict(
                     "REQUIREMENTS_INCOMPLETE", "Every required item must be accepted before the work is completed.");
         }

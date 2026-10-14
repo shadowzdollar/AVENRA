@@ -10,6 +10,7 @@ import com.avenra.organization.OrganizationAccess;
 import com.avenra.organization.domain.Permission;
 import com.avenra.platform.idempotency.Idempotency;
 import com.avenra.platform.web.ApiException;
+import com.avenra.platform.web.Text;
 import com.avenra.work.infrastructure.ClientRepository;
 import com.avenra.work.infrastructure.ClientRepository.ClientRow;
 import com.avenra.work.infrastructure.ClientRepository.ProjectRow;

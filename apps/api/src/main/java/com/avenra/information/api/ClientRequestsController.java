@@ -1,10 +1,10 @@
-package com.avenra.work.api;
+package com.avenra.information.api;
 
 import com.avenra.contract.v1.api.ClientRequestsApi;
 import com.avenra.contract.v1.model.ClientRequest;
 import com.avenra.contract.v1.model.ClientRequestItem;
 import com.avenra.contract.v1.model.ValueSubmission;
-import com.avenra.work.application.ClientRequestService;
+import com.avenra.information.application.ClientRequestService;
 import java.util.UUID;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;

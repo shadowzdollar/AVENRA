@@ -1,67 +1,108 @@
-package com.avenra.work.application;
+package com.avenra.information.application;
 
 import com.avenra.audit.AuditLog;
+import com.avenra.contract.v1.model.CreateRequirementRequest;
 import com.avenra.contract.v1.model.InformationItem;
 import com.avenra.contract.v1.model.Requirement;
 import com.avenra.contract.v1.model.ReviewRequest;
 import com.avenra.document.Documents;
+import com.avenra.information.InformationEvents;
+import com.avenra.information.WorkGate;
+import com.avenra.information.domain.Completeness.VerificationState;
+import com.avenra.information.domain.RequirementKind;
+import com.avenra.information.infrastructure.RequirementRepository;
+import com.avenra.information.infrastructure.RequirementRepository.RequirementRow;
 import com.avenra.organization.OrganizationAccess;
 import com.avenra.organization.domain.Permission;
+import com.avenra.platform.idempotency.Idempotency;
 import com.avenra.platform.web.ApiException;
-import com.avenra.work.domain.Completeness.VerificationState;
-import com.avenra.work.infrastructure.RequirementRepository;
-import com.avenra.work.infrastructure.RequirementRepository.RequirementRow;
-import com.avenra.work.infrastructure.WorkRepository;
+import com.avenra.platform.web.Text;
 import java.io.InputStream;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 /**
- * Information submitted for requirements by team members, its review (manual in Phase 3;
- * automated verification is Phase 5) and document downloads.
+ * Requirements of work, the information team members submit for them, its review, and document
+ * downloads.
  */
 @Service
 public class InformationService {
 
     private final RequirementRepository requirements;
-    private final WorkRepository work;
-    private final WorkService workService;
+    private final WorkGate work;
     private final Submissions submissions;
     private final Documents documents;
-    private final WorkViews views;
-    private final HumanTasks tasks;
-    private final WorkAutomation automation;
+    private final InformationViews views;
+    private final Idempotency idempotency;
+    private final ApplicationEventPublisher events;
     private final OrganizationAccess access;
     private final AuditLog audit;
     private final Clock clock;
 
     InformationService(
             RequirementRepository requirements,
-            WorkRepository work,
-            WorkService workService,
+            WorkGate work,
             Submissions submissions,
             Documents documents,
-            WorkViews views,
-            HumanTasks tasks,
-            WorkAutomation automation,
+            InformationViews views,
+            Idempotency idempotency,
+            ApplicationEventPublisher events,
             OrganizationAccess access,
             AuditLog audit,
             Clock clock) {
         this.requirements = requirements;
         this.work = work;
-        this.workService = workService;
         this.submissions = submissions;
         this.documents = documents;
         this.views = views;
-        this.tasks = tasks;
-        this.automation = automation;
+        this.idempotency = idempotency;
+        this.events = events;
         this.access = access;
         this.audit = audit;
         this.clock = clock;
+    }
+
+    public Requirement createRequirement(
+            UUID userId, UUID organizationId, UUID workId, String idempotencyKey, CreateRequirementRequest input) {
+        String title = Text.required(input.getTitle(), "title");
+        String instructions = Text.optional(input.getInstructions());
+        RequirementKind kind = RequirementKind.valueOf(input.getKind().getValue());
+        boolean required = Boolean.TRUE.equals(input.getRequired());
+        return access.run(
+                userId,
+                organizationId,
+                Permission.WORK_UPDATE,
+                granted -> idempotency.once(
+                        userId,
+                        "createRequirement",
+                        idempotencyKey,
+                        Text.fingerprint(organizationId, workId, title, instructions, kind, required),
+                        Requirement.class,
+                        () -> {
+                            work.lockOpen(organizationId, workId);
+                            OffsetDateTime now = OffsetDateTime.now(clock);
+                            var row = new RequirementRow(
+                                    UUID.randomUUID(),
+                                    organizationId,
+                                    workId,
+                                    title,
+                                    instructions,
+                                    kind,
+                                    required,
+                                    null,
+                                    now);
+                            requirements.insert(row, userId);
+                            work.touch(organizationId, workId);
+                            audit.record(AuditLog.Event.of("work.requirement.created", organizationId, userId)
+                                    .resource("requirement", row.id())
+                                    .detail("workId", workId.toString()));
+                            return views.requirement(row, views.load(List.of(row)));
+                        }));
     }
 
     public List<InformationItem> items(UUID userId, UUID organizationId, UUID workId, UUID requirementId) {
@@ -70,18 +111,20 @@ public class InformationService {
             requirement(organizationId, workId, requirementId);
             var items = requirements.items(requirementId);
             var versions = views.versionsOf(items);
-            return items.stream().map(item -> WorkViews.item(item, versions)).toList();
+            return items.stream()
+                    .map(item -> InformationViews.item(item, versions))
+                    .toList();
         });
     }
 
     public InformationItem submitValue(
             UUID userId, UUID organizationId, UUID workId, UUID requirementId, String value) {
         return access.run(userId, organizationId, Permission.INFORMATION_COLLECT, granted -> {
-            workService.openForUpdate(organizationId, workId);
+            work.lockOpen(organizationId, workId);
             var requirement = lock(workId, requirementId);
             var item = submissions.submitValue(requirement, value, Submissions.Source.teamMember(userId));
-            work.touch(organizationId, workId, OffsetDateTime.now(clock));
-            return WorkViews.item(item, views.versionsOf(List.of(item)));
+            work.touch(organizationId, workId);
+            return InformationViews.item(item, views.versionsOf(List.of(item)));
         });
     }
 
@@ -94,18 +137,18 @@ public class InformationService {
             @Nullable String fileName) {
         // Check access and the target before spending time on the file.
         access.runWithoutResult(userId, organizationId, Permission.INFORMATION_COLLECT, granted -> {
-            workService.openForUpdate(organizationId, workId);
+            work.lockOpen(organizationId, workId);
             Submissions.requireDocument(requirement(organizationId, workId, requirementId));
         });
         try (var prepared = documents.prepare(content, fileName)) {
             var outcome = access.run(userId, organizationId, Permission.INFORMATION_COLLECT, granted -> {
-                workService.openForUpdate(organizationId, workId);
+                work.lockOpen(organizationId, workId);
                 var requirement = lock(workId, requirementId);
                 var result = submissions.storeFile(requirement, prepared, Submissions.Source.teamMember(userId));
                 if (result.item() == null) {
                     return result;
                 }
-                work.touch(organizationId, workId, OffsetDateTime.now(clock));
+                work.touch(organizationId, workId);
                 return result;
             });
             if (outcome.rejected() || outcome.item() == null) {
@@ -115,7 +158,7 @@ public class InformationService {
                     userId,
                     organizationId,
                     Permission.INFORMATION_READ,
-                    granted -> WorkViews.item(outcome.item(), views.versionsOf(List.of(outcome.item()))));
+                    granted -> InformationViews.item(outcome.item(), views.versionsOf(List.of(outcome.item()))));
         }
     }
 
@@ -127,7 +170,7 @@ public class InformationService {
         }
         VerificationState decision = accept ? VerificationState.ACCEPTED : VerificationState.REJECTED;
         return access.run(userId, organizationId, Permission.INFORMATION_VERIFY, granted -> {
-            workService.openForUpdate(organizationId, workId);
+            work.lockOpen(organizationId, workId);
             var requirement = lock(workId, requirementId);
             if (!input.getItemId().equals(requirement.currentItemId())) {
                 throw notAwaitingReview();
@@ -142,11 +185,9 @@ public class InformationService {
             }
             OffsetDateTime now = OffsetDateTime.now(clock);
             requirements.review(item.id(), decision, userId, reason, now);
-            tasks.reviewed(organizationId, requirementId, accept, reason, userId);
-            if (!accept) {
-                automation.answerRejected(organizationId, workId, requirementId, item.id());
-            }
-            work.touch(organizationId, workId, now);
+            events.publishEvent(new InformationEvents.AnswerReviewed(
+                    organizationId, workId, requirementId, item.id(), accept, reason, userId));
+            work.touch(organizationId, workId);
             audit.record(AuditLog.Event.of(
                             accept ? "work.information.accepted" : "work.information.rejected", organizationId, userId)
                     .resource("information_item", item.id())

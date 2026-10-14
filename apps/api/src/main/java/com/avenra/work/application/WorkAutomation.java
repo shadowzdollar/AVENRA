@@ -1,18 +1,13 @@
 package com.avenra.work.application;
 
+import com.avenra.information.Information;
 import com.avenra.platform.jobs.Job;
 import com.avenra.platform.jobs.JobHandler;
 import com.avenra.platform.jobs.JobQueue;
 import com.avenra.platform.jobs.JobWorker;
-import com.avenra.work.domain.Completeness;
 import com.avenra.work.domain.WorkStatus;
-import com.avenra.work.infrastructure.RequestLinkRepository;
-import com.avenra.work.infrastructure.RequirementRepository;
 import com.avenra.work.infrastructure.WorkRepository;
 import com.avenra.work.infrastructure.WorkRepository.WorkRow;
-import java.time.Clock;
-import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.context.annotation.Bean;
@@ -39,11 +34,22 @@ class WorkAutomation {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    void answerReceived(UUID organizationId, UUID workId, UUID requirementId, UUID itemId) {
+    void answerReceived(
+            UUID organizationId,
+            UUID workId,
+            UUID requirementId,
+            String requirementTitle,
+            UUID itemId,
+            boolean fromClient) {
         jobs.enqueue(JobQueue.Request.of(
                         ANSWER_RECEIVED,
                         organizationId,
-                        Map.of("workId", workId, "requirementId", requirementId, "itemId", itemId))
+                        Map.of(
+                                "workId", workId,
+                                "requirementId", requirementId,
+                                "requirementTitle", requirementTitle,
+                                "itemId", itemId,
+                                "fromClient", fromClient))
                 .idempotencyKey(itemId.toString()));
     }
 
@@ -67,31 +73,22 @@ class WorkAutomation {
     static final class Rules {
 
         private final WorkRepository work;
-        private final RequirementRepository requirements;
-        private final RequestLinkRepository links;
+        private final Information information;
         private final WorkLifecycle lifecycle;
-        private final WorkViews views;
         private final Executions executions;
         private final HumanTasks tasks;
-        private final Clock clock;
 
         Rules(
                 WorkRepository work,
-                RequirementRepository requirements,
-                RequestLinkRepository links,
+                Information information,
                 WorkLifecycle lifecycle,
-                WorkViews views,
                 Executions executions,
-                HumanTasks tasks,
-                Clock clock) {
+                HumanTasks tasks) {
             this.work = work;
-            this.requirements = requirements;
-            this.links = links;
+            this.information = information;
             this.lifecycle = lifecycle;
-            this.views = views;
             this.executions = executions;
             this.tasks = tasks;
-            this.clock = clock;
         }
 
         /** Opens the review task and, when nothing asked for is still outstanding, resumes the work. */
@@ -103,17 +100,13 @@ class WorkAutomation {
             if (target == null || target.status().isFinal()) {
                 return;
             }
-            var requirement = requirements.forWork(job.organizationId(), workId).stream()
-                    .filter(row -> row.id().equals(requirementId))
-                    .findFirst()
-                    .orElse(null);
-            if (requirement == null || !itemId.equals(requirement.currentItemId())) {
-                return; // a newer answer arrived meanwhile; its own job handles it
-            }
-            var item = requirements.itemsByIds(List.of(itemId)).getFirst();
-            if (item.verificationState() == Completeness.VerificationState.PENDING) {
+            // Only the current answer, and only while it awaits a decision, needs a review task.
+            if (information.isPendingCurrentAnswer(requirementId, itemId)) {
                 tasks.reviewNeeded(
-                        target, requirement, item.sourceType().equals("CLIENT_LINK") ? "the client" : "a team member");
+                        target,
+                        requirementId,
+                        JobWorker.text(job.payload(), "requirementTitle"),
+                        job.payload().get("fromClient").asBoolean() ? "the client" : "a team member");
             }
             if (target.status() == WorkStatus.WAITING_FOR_INFORMATION && nothingOutstanding(target)) {
                 advance(
@@ -148,7 +141,7 @@ class WorkAutomation {
             if (target == null || target.status() != WorkStatus.RUNNING) {
                 return;
             }
-            if (links.activeLinksCovering(job.organizationId(), requirementId, OffsetDateTime.now(clock)) == 0) {
+            if (!information.askedThroughActiveLink(job.organizationId(), requirementId)) {
                 return; // nobody outside was asked for it; the team corrects it themselves
             }
             advance(
@@ -160,8 +153,7 @@ class WorkAutomation {
         }
 
         private boolean nothingOutstanding(WorkRow target) {
-            var completeness = views.load(requirements.forWork(target.organizationId(), target.id()))
-                    .completeness();
+            var completeness = information.completeness(target.organizationId(), target.id());
             return completeness.missing() == 0 && completeness.rejected() == 0;
         }
 
@@ -195,14 +187,11 @@ class WorkAutomation {
     @Bean
     Rules workRules(
             WorkRepository work,
-            RequirementRepository requirements,
-            RequestLinkRepository links,
+            Information information,
             WorkLifecycle lifecycle,
-            WorkViews views,
             Executions executions,
-            HumanTasks tasks,
-            Clock clock) {
-        return new Rules(work, requirements, links, lifecycle, views, executions, tasks, clock);
+            HumanTasks tasks) {
+        return new Rules(work, information, lifecycle, executions, tasks);
     }
 
     @Bean
@@ -221,16 +210,6 @@ class WorkAutomation {
     }
 
     static JobHandler handler(String type, java.util.function.Consumer<Job> body) {
-        return new JobHandler() {
-            @Override
-            public String type() {
-                return type;
-            }
-
-            @Override
-            public void handle(Job job) {
-                body.accept(job);
-            }
-        };
+        return JobHandler.of(type, body);
     }
 }

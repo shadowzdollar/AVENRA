@@ -1,23 +1,24 @@
-package com.avenra.work.application;
+package com.avenra.information.application;
 
 import com.avenra.audit.AuditLog;
 import com.avenra.contract.v1.model.ClientRequest;
 import com.avenra.contract.v1.model.ClientRequestItem;
 import com.avenra.contract.v1.model.RequirementState;
 import com.avenra.document.Documents;
+import com.avenra.information.WorkGate;
+import com.avenra.information.WorkGate.WorkInfo;
+import com.avenra.information.domain.Completeness;
+import com.avenra.information.domain.RequirementKind;
+import com.avenra.information.infrastructure.RequestLinkRepository;
+import com.avenra.information.infrastructure.RequestLinkRepository.LinkRow;
+import com.avenra.information.infrastructure.RequirementRepository;
+import com.avenra.information.infrastructure.RequirementRepository.RequirementRow;
 import com.avenra.organization.OrganizationAccess;
 import com.avenra.platform.crypto.SecureTokens;
 import com.avenra.platform.tenancy.TenantScope;
 import com.avenra.platform.tenancy.TenantTransactions;
 import com.avenra.platform.web.ApiException;
-import com.avenra.work.domain.Completeness;
-import com.avenra.work.domain.RequirementKind;
-import com.avenra.work.infrastructure.RequestLinkRepository;
-import com.avenra.work.infrastructure.RequestLinkRepository.LinkRow;
-import com.avenra.work.infrastructure.RequirementRepository;
-import com.avenra.work.infrastructure.RequirementRepository.RequirementRow;
-import com.avenra.work.infrastructure.WorkRepository;
-import com.avenra.work.infrastructure.WorkRepository.WorkRow;
+import com.avenra.platform.web.ApiTime;
 import java.io.InputStream;
 import java.time.Clock;
 import java.time.OffsetDateTime;
@@ -39,10 +40,10 @@ public class ClientRequestService {
 
     private final RequestLinkRepository links;
     private final RequirementRepository requirements;
-    private final WorkRepository work;
+    private final WorkGate work;
     private final Submissions submissions;
     private final Documents documents;
-    private final WorkViews views;
+    private final InformationViews views;
     private final OrganizationAccess organizations;
     private final TenantTransactions transactions;
     private final AuditLog audit;
@@ -51,10 +52,10 @@ public class ClientRequestService {
     ClientRequestService(
             RequestLinkRepository links,
             RequirementRepository requirements,
-            WorkRepository work,
+            WorkGate work,
             Submissions submissions,
             Documents documents,
-            WorkViews views,
+            InformationViews views,
             OrganizationAccess organizations,
             TenantTransactions transactions,
             AuditLog audit,
@@ -72,7 +73,7 @@ public class ClientRequestService {
     }
 
     /** The link, the work it belongs to and the requirements it covers, inside the link's scope. */
-    private record Context(LinkRow link, WorkRow work, List<RequirementRow> requirements) {
+    private record Context(LinkRow link, WorkInfo work, List<RequirementRow> requirements) {
 
         RequirementRow requirement(UUID requirementId) {
             return requirements.stream()
@@ -94,7 +95,7 @@ public class ClientRequestService {
                             organizations.organizationName(context.link().organizationId()),
                             context.work().title(),
                             mask(context.link().recipientEmail()),
-                            WorkViews.utc(context.link().expiresAt()),
+                            ApiTime.utc(context.link().expiresAt()),
                             items)
                     .message(context.link().message());
         });
@@ -143,8 +144,8 @@ public class ClientRequestService {
         return transactions.run(TenantScope.requestLink(HexFormat.of().formatHex(hash)), () -> {
             OffsetDateTime now = OffsetDateTime.now(clock);
             LinkRow link = links.findUsableByTokenHash(hash, now).orElseThrow(ClientRequestService::invalidLink);
-            WorkRow target = work.findForRequestLink(link.workId()).orElseThrow(ClientRequestService::invalidLink);
-            if (target.status().isFinal()) {
+            WorkInfo target = work.findForRequestLink(link.workId()).orElseThrow(ClientRequestService::invalidLink);
+            if (target.finished()) {
                 throw invalidLink();
             }
             var covered = links.requirementIds(List.of(link.id())).getOrDefault(link.id(), List.of());
@@ -163,12 +164,12 @@ public class ClientRequestService {
         return item(requirement, views.load(List.of(requirement)));
     }
 
-    private static ClientRequestItem item(RequirementRow requirement, WorkViews.LoadedRequirements loaded) {
+    private static ClientRequestItem item(RequirementRow requirement, InformationViews.LoadedRequirements loaded) {
         Completeness.RequirementState state = loaded.state(requirement);
         var item = new ClientRequestItem(
                         requirement.id(),
                         requirement.title(),
-                        WorkViews.kind(requirement),
+                        InformationViews.kind(requirement),
                         requirement.required(),
                         RequirementState.fromValue(state.name()))
                 .instructions(requirement.instructions());
