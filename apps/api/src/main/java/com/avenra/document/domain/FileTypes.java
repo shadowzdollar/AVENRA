@@ -77,10 +77,19 @@ public final class FileTypes {
         return Optional.empty();
     }
 
-    /** A ZIP is accepted only as an OOXML package: it must contain the content-types part and a main part. */
+    /**
+     * A ZIP is accepted only as an OOXML package: it must contain the content-types part and a main
+     * part, and no macros (VBA projects, as in {@code .docm} or {@code .xlsm}).
+     */
     private static Optional<FileType> ooxml(Path file) throws IOException {
         try (var zip = new ZipFile(file.toFile())) {
             if (zip.size() > MAX_ZIP_ENTRIES || zip.getEntry("[Content_Types].xml") == null) {
+                return Optional.empty();
+            }
+            boolean macros = zip.stream()
+                    .map(entry -> entry.getName().toLowerCase(Locale.ROOT))
+                    .anyMatch(name -> name.endsWith("vbaproject.bin") || name.endsWith("vbadata.xml"));
+            if (macros) {
                 return Optional.empty();
             }
             if (zip.getEntry("word/document.xml") != null) {

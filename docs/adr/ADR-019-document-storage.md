@@ -18,7 +18,7 @@ business document types up to 25 MB.
   storage access is tenant-scoped by construction (ADR-005).
 - **Accepted types** are decided by **file signature**, never by the name or
   the declared content type: PDF, OOXML (DOCX, XLSX, PPTX: ZIP with the
-  matching OOXML part), PNG, JPEG, CSV and plain text (valid UTF-8, no NUL
+  matching OOXML part and no macros), PNG, JPEG, CSV and plain text (valid UTF-8, no NUL
   bytes). The stored content type is the detected one.
 - **Limits:** 25 MB per file (configurable), enforced while streaming.
 - **Integrity:** SHA-256 computed while streaming and stored; downloads can

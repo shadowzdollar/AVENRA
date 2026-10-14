@@ -37,6 +37,15 @@ class DocumentsIT extends IntegrationTestBase {
     @Autowired
     private TestOutbox outbox;
 
+    @Autowired
+    private io.micrometer.core.instrument.MeterRegistry registry;
+
+    @Test
+    void theScannerIsReportedAvailable() {
+        assertThat(registry.get("avenra.malware_scanner.available").gauge().value())
+                .isEqualTo(1.0);
+    }
+
     private record Setup(BrowserClient user, UUID organization, UUID work, UUID requirement, String path) {}
 
     private Setup setup() {
