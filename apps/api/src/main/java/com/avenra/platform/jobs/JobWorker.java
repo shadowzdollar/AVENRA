@@ -98,13 +98,6 @@ public class JobWorker implements SmartLifecycle {
 
     @Override
     public void start() {
-        transactions.executeWithoutResult(status ->
-                schedules.forEach(schedule -> jdbc.sql("select schedules_register(:name, :type, :seconds)")
-                        .param("name", schedule.name())
-                        .param("type", schedule.jobType())
-                        .param("seconds", (int) schedule.interval().toSeconds())
-                        .query(Object.class)
-                        .optional()));
         if (!properties.workerEnabled()) {
             log.info("Job worker disabled on this instance");
             return;
@@ -196,8 +189,34 @@ public class JobWorker implements SmartLifecycle {
         }
     }
 
+    /**
+     * Registers the declared schedules. Runs in the scheduler loop, not at startup, so the
+     * application starts (alive, not ready) while the database is unreachable and registers once
+     * it is back.
+     */
+    public void registerSchedules() {
+        transactions.executeWithoutResult(status ->
+                schedules.forEach(schedule -> jdbc.sql("select schedules_register(:name, :type, :seconds)")
+                        .param("name", schedule.name())
+                        .param("type", schedule.jobType())
+                        .param("seconds", (int) schedule.interval().toSeconds())
+                        .query(Object.class)
+                        .optional()));
+    }
+
     private void scheduleLoop() {
+        boolean registered = false;
         while (running) {
+            if (!registered) {
+                try {
+                    registerSchedules();
+                    registered = true;
+                } catch (RuntimeException failure) {
+                    log.atWarn().setCause(failure).log("Registering schedules failed; retrying");
+                    sleep(properties.pollInterval());
+                    continue;
+                }
+            }
             try {
                 fireSchedules();
             } catch (RuntimeException failure) {

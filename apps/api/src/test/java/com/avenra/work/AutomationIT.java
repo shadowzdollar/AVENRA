@@ -201,22 +201,29 @@ class AutomationIT extends IntegrationTestBase {
     @Test
     void remindersFollowTheScheduleAndStopWhenAnswered() {
         var s = setup();
-        assertThat(sweepReminders()).as("too early for a reminder").isZero();
+        sweepReminders();
+        assertThat(remindersQueued(s.link())).as("too early for a reminder").isEqualTo(0L);
 
         ownerUpdate("update request_links set created_at = now() - interval '4 days' where id = ?", s.link());
-        assertThat(sweepReminders()).isEqualTo(1);
-        assertThat(sweepReminders()).as("the same slot never twice").isZero();
+        sweepReminders();
+        assertThat(remindersQueued(s.link())).isEqualTo(1L);
+        sweepReminders();
+        assertThat(remindersQueued(s.link())).as("the same slot never twice").isEqualTo(1L);
         var first = await().atMost(WAIT)
                 .until(() -> reminders(s), list -> list.size() == 1)
                 .getFirst();
         assertThat(first.body()).contains("#" + s.token()).contains("Legal name", "Company number");
         await().atMost(WAIT).until(() -> link(s).get("remindersSent").asInt() == 1);
-        assertThat(sweepReminders()).as("next reminder only after the interval").isZero();
+        sweepReminders();
+        assertThat(remindersQueued(s.link()))
+                .as("next reminder only after the interval")
+                .isEqualTo(1L);
 
         // Three days later, with one item answered, the second reminder lists only the rest.
         answer(s, s.name(), "Globex Corporation");
         ownerUpdate("update request_links set last_reminded_at = now() - interval '4 days' where id = ?", s.link());
-        assertThat(sweepReminders()).isEqualTo(1);
+        sweepReminders();
+        assertThat(remindersQueued(s.link())).isEqualTo(2L);
         var second = await().atMost(WAIT)
                 .until(() -> reminders(s), list -> list.size() == 2)
                 .getLast();
@@ -229,7 +236,8 @@ class AutomationIT extends IntegrationTestBase {
         answer(s, s.number(), "12345678");
         await().atMost(WAIT).until(() -> link(s).get("remindersSent").asInt() == 2);
         ownerUpdate("update request_links set last_reminded_at = now() - interval '4 days' where id = ?", s.link());
-        assertThat(sweepReminders()).isZero();
+        sweepReminders();
+        assertThat(remindersQueued(s.link())).isEqualTo(2L);
     }
 
     @Test
@@ -239,11 +247,13 @@ class AutomationIT extends IntegrationTestBase {
                 "update request_links set created_at = now() - interval '4 days', reminders_sent = 3,"
                         + " last_reminded_at = now() - interval '4 days' where id = ?",
                 s.link());
-        assertThat(sweepReminders()).isZero();
+        sweepReminders();
+        assertThat(remindersQueued(s.link())).isEqualTo(0L);
         var other = setup();
         ownerUpdate("update request_links set created_at = now() - interval '4 days' where id = ?", other.link());
         ok204(other.team().delete(other.path() + "/request-links/" + other.link()));
-        assertThat(sweepReminders()).isZero();
+        sweepReminders();
+        assertThat(remindersQueued(other.link())).isEqualTo(0L);
         assertThat(ownerQuery("select token_ciphertext is null from request_links where id = ?", other.link())
                         .getFirst()
                         .getFirst())
@@ -258,9 +268,16 @@ class AutomationIT extends IntegrationTestBase {
                 "update request_links set created_at = now() - interval '20 days', expires_at = now() -"
                         + " interval '1 minute' where id = ?",
                 s.link());
-        assertThat(sweepExpired()).isEqualTo(1);
+        sweepExpired();
         await().atMost(WAIT).until(() -> !exceptions(s).isEmpty());
-        assertThat(sweepExpired()).as("handled once").isZero();
+        sweepExpired();
+        // Other tests' links share the database; this link was handled exactly once.
+        assertThat(ownerQuery(
+                                "select count(*) from jobs where type = 'request_link.expired' and idempotency_key = ?",
+                                s.link().toString())
+                        .getFirst()
+                        .getFirst())
+                .isEqualTo(1L);
         var exception = exceptions(s).getFirst();
         assertThat(exception.get("type").asString()).isEqualTo("REQUEST_EXPIRED_INCOMPLETE");
         assertThat(exception.get("description").asString()).contains("2 required items still missing");
@@ -358,7 +375,7 @@ class AutomationIT extends IntegrationTestBase {
     }
 
     @Test
-    void aRescanFindsMalwareInAStoredFileAndQuarantinesIt() {
+    void aRescanFindsMalwareInAStoredFileAndQuarantinesIt() throws Exception {
         var team = TestAccounts.signedIn(port, outbox, TestAccounts.newEmail());
         UUID organization = team.createOrganization("Rescan Ltd");
         UUID work = createWork(team, organization, "Statements");
@@ -374,7 +391,13 @@ class AutomationIT extends IntegrationTestBase {
         // New signatures now recognise the stored file; simulated by replacing its content. The sweep
         // is asked for every version scanned before now (the schedule uses 7 days).
         try (var s3 = TestServices.s3Client()) {
-            s3.putObject(r -> r.bucket(TestServices.S3_BUCKET).key(key), RequestBody.fromBytes(eicar()));
+            // Same request shape as the application: an explicit SHA-256 checksum.
+            String sha256 = java.util.Base64.getEncoder()
+                    .encodeToString(
+                            java.security.MessageDigest.getInstance("SHA-256").digest(eicar()));
+            s3.putObject(
+                    r -> r.bucket(TestServices.S3_BUCKET).key(key).checksumSHA256(sha256),
+                    RequestBody.fromBytes(eicar()));
         }
         assertThat(jdbc.sql("select sweep_rescans(0, 500)").query(Integer.class).single())
                 .isPositive();
@@ -411,6 +434,15 @@ class AutomationIT extends IntegrationTestBase {
         return jdbc.sql("select sweep_reminders(259200, 259200, 3)")
                 .query(Integer.class)
                 .single();
+    }
+
+    /** Reminder jobs queued for one link so far (other tests' links share the database). */
+    private long remindersQueued(UUID link) {
+        return (Long) ownerQuery(
+                        "select count(*) from jobs where type = 'request_link.remind' and idempotency_key like ?",
+                        link + ":%")
+                .getFirst()
+                .getFirst();
     }
 
     private int sweepExpired() {

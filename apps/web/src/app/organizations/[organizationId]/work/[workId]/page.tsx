@@ -7,6 +7,7 @@ import { useState, type FormEvent } from "react";
 import type { components } from "@avenra/contracts";
 import { AppShell } from "@/components/app-shell";
 import { Alert, Button, Card, Field } from "@/components/ui";
+import { ExceptionRow } from "@/components/exception-row";
 import { ValueInput } from "@/components/value-input";
 import { api, idempotencyKey, unwrap } from "@/lib/api";
 import {
@@ -45,7 +46,7 @@ function useRefresh({ organizationId, workId }: Ids) {
   return () => void queries.invalidateQueries({ queryKey: ["organization", organizationId, "work", workId] });
 }
 
-function Lifecycle({ ids, work, canUpdate }: { ids: Ids; work: WorkDetail; canUpdate: boolean }) {
+function Lifecycle({ ids, work, canUpdate, owner }: { ids: Ids; work: WorkDetail; canUpdate: boolean; owner: string | undefined }) {
   const refresh = useRefresh(ids);
   const [target, setTarget] = useState<WorkStatus | null>(null);
   const [reason, setReason] = useState("");
@@ -91,6 +92,32 @@ function Lifecycle({ ids, work, canUpdate }: { ids: Ids; work: WorkDetail; canUp
           </p>
         </div>
       </div>
+      <dl className="mt-4 grid gap-3 border-t border-border pt-4 text-sm sm:grid-cols-2" data-testid="progress">
+        <div>
+          <dt className="text-text-secondary">Current step</dt>
+          <dd data-testid="current-step">{work.progress.currentStep}</dd>
+        </div>
+        <div>
+          <dt className="text-text-secondary">Next action</dt>
+          <dd data-testid="next-action">{work.progress.nextAction}</dd>
+        </div>
+        {work.progress.blockedReason ? (
+          <div>
+            <dt className="text-text-secondary">Blocked because</dt>
+            <dd className="text-error" data-testid="blocked-reason">
+              {work.progress.blockedReason}
+            </dd>
+          </div>
+        ) : null}
+        <div>
+          <dt className="text-text-secondary">Owner</dt>
+          <dd>{owner ?? "Nobody"}</dd>
+        </div>
+        <div>
+          <dt className="text-text-secondary">Deadline</dt>
+          <dd>{work.dueAt ? new Date(work.dueAt).toLocaleDateString() : "None"}</dd>
+        </div>
+      </dl>
       {canUpdate && work.allowedTransitions.length > 0 ? (
         <div className="mt-4 flex flex-wrap gap-2">
           {work.allowedTransitions.map((to) => (
@@ -383,9 +410,22 @@ function Tasks({ ids, work, permissions, closed }: { ids: Ids; work: WorkDetail;
           <li key={task.id} className="flex items-center justify-between gap-4 py-2">
             <div>
               <p className={task.status === "OPEN" ? "" : "text-text-secondary line-through"}>{task.title}</p>
-              <p className="text-text-secondary">Done when: {task.completionCondition}</p>
+              {task.origin === "SYSTEM" ? (
+                <>
+                  <p>{task.requiredAction}</p>
+                  <p className="text-text-secondary">
+                    {task.reason}
+                    {task.dueAt ? ` · by ${new Date(task.dueAt).toLocaleDateString()}` : ""}
+                    {task.choices && task.choices.length > 0 ? ` · choices: ${task.choices.map((choice) => choice.toLowerCase()).join(", ")}` : ""}
+                  </p>
+                </>
+              ) : (
+                <p className="text-text-secondary">Done when: {task.completionCondition}</p>
+              )}
             </div>
-            {task.status === "OPEN" && permissions.has("work.execute") && !closed ? (
+            {task.origin === "SYSTEM" && task.status === "OPEN" ? (
+              <span className="shrink-0 text-text-secondary">closes when reviewed</span>
+            ) : task.status === "OPEN" && permissions.has("work.execute") && !closed ? (
               <div className="flex gap-2">
                 <Button variant="secondary" onClick={() => finish.mutate({ taskId: task.id, status: "DONE" })}>
                   Done
@@ -487,6 +527,7 @@ function RequestLinks({ ids, work, closed }: { ids: Ids; work: WorkDetail; close
               <span className="text-text-secondary">
                 · {link.requirementIds.length} items · {link.status.toLowerCase()} · until {new Date(link.expiresAt).toLocaleDateString()}
                 {link.lastOpenedAt ? ` · opened ${new Date(link.lastOpenedAt).toLocaleString()}` : " · not opened yet"}
+                {link.remindersSent > 0 ? ` · ${link.remindersSent} ${link.remindersSent === 1 ? "reminder" : "reminders"} sent` : ""}
               </span>
             </span>
             {link.status === "ACTIVE" ? (
@@ -542,9 +583,60 @@ function RequestLinks({ ids, work, closed }: { ids: Ids; work: WorkDetail; close
   );
 }
 
+function Exceptions({ ids, canUpdate }: { ids: Ids; canUpdate: boolean }) {
+  const exceptions = useQuery({
+    queryKey: ["organization", ids.organizationId, "work", ids.workId, "exceptions"],
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/organizations/{organizationId}/exceptions", {
+          params: { path: { organizationId: ids.organizationId }, query: { workId: ids.workId } },
+        }),
+      ),
+    refetchInterval: 5_000,
+  });
+  if (!exceptions.data || exceptions.data.length === 0) {
+    return null;
+  }
+  return (
+    <Card title="Exceptions">
+      <ul className="divide-y divide-border">
+        {exceptions.data.map((exception) => (
+          <ExceptionRow key={exception.id} ids={ids} exception={exception} canUpdate={canUpdate} />
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+function Executions({ ids }: { ids: Ids }) {
+  const executions = useQuery({
+    queryKey: ["organization", ids.organizationId, "work", ids.workId, "executions"],
+    queryFn: async () => unwrap(await api.GET("/api/v1/organizations/{organizationId}/work/{workId}/executions", { params: { path: ids } })),
+    refetchInterval: 5_000,
+  });
+  if (!executions.data || executions.data.length === 0) {
+    return null;
+  }
+  return (
+    <Card title="Automated actions">
+      <ol className="flex flex-col gap-1 text-sm" data-testid="executions">
+        {executions.data.map((execution) => (
+          <li key={execution.id}>
+            <span className="text-text-secondary">{new Date(execution.createdAt).toLocaleString()}</span> · {execution.action}
+            {execution.actor.rule ? <span className="text-text-secondary"> ({execution.actor.rule})</span> : null} ·{" "}
+            <span className={execution.status === "FAILED" ? "text-error" : ""}>{execution.status.toLowerCase()}</span>
+            {execution.error ? <span className="text-error"> — {execution.error}</span> : null}
+          </li>
+        ))}
+      </ol>
+    </Card>
+  );
+}
+
 function History({ ids }: { ids: Ids }) {
   const history = useQuery({
     queryKey: ["organization", ids.organizationId, "work", ids.workId, "history"],
+    refetchInterval: 5_000,
     queryFn: async () => unwrap(await api.GET("/api/v1/organizations/{organizationId}/work/{workId}/transitions", { params: { path: ids } })),
   });
   return (
@@ -553,6 +645,7 @@ function History({ ids }: { ids: Ids }) {
         {history.data?.map((transition) => (
           <li key={transition.id}>
             <span className="text-text-secondary">{new Date(transition.at).toLocaleString()}</span> · {statusLabel(transition.to)}
+            <span className="text-text-secondary"> · {transition.actorRule ? `automatic (${transition.actorRule})` : "by a person"}</span>
             {transition.reason ? <span className="text-text-secondary"> — {transition.reason}</span> : null}
           </li>
         ))}
@@ -566,6 +659,12 @@ function Work({ ids }: { ids: Ids }) {
   const work = useQuery({
     queryKey: ["organization", ids.organizationId, "work", ids.workId],
     queryFn: async () => unwrap(await api.GET("/api/v1/organizations/{organizationId}/work/{workId}", { params: { path: ids } })),
+    // Background jobs move work on their own (ADR-023): keep the page current.
+    refetchInterval: 5_000,
+  });
+  const members = useQuery({
+    queryKey: ["organization", ids.organizationId, "members"],
+    queryFn: async () => unwrap(await api.GET("/api/v1/organizations/{organizationId}/members", { params: { path: { organizationId: ids.organizationId } } })),
   });
   if (work.error) {
     return <Alert tone="error">{errorText(work.error)}</Alert>;
@@ -585,7 +684,13 @@ function Work({ ids }: { ids: Ids }) {
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">{data.title}</h1>
         {data.description ? <p className="mt-1 text-sm text-text-secondary">{data.description}</p> : null}
       </div>
-      <Lifecycle ids={ids} work={data} canUpdate={permissions.has("work.update")} />
+      <Lifecycle
+        ids={ids}
+        work={data}
+        canUpdate={permissions.has("work.update")}
+        owner={members.data?.find((member) => member.membershipId === data.ownerMembershipId)?.displayName}
+      />
+      <Exceptions ids={ids} canUpdate={permissions.has("work.update")} />
       <Card title="What is required">
         {data.requirements.length === 0 ? <p className="text-sm text-text-secondary">Nothing is required yet.</p> : null}
         <ul className="divide-y divide-border">
@@ -597,6 +702,7 @@ function Work({ ids }: { ids: Ids }) {
       </Card>
       {permissions.has("information.collect") ? <RequestLinks ids={ids} work={data} closed={closed} /> : null}
       <Tasks ids={ids} work={data} permissions={permissions} closed={closed} />
+      <Executions ids={ids} />
       <History ids={ids} />
     </div>
   );
