@@ -3,6 +3,7 @@ package com.avenra.organization.application;
 import com.avenra.audit.AuditLog;
 import com.avenra.contract.v1.model.Member;
 import com.avenra.identity.UserDirectory;
+import com.avenra.organization.OrganizationAccess;
 import com.avenra.organization.domain.Permission;
 import com.avenra.organization.domain.Role;
 import com.avenra.organization.infrastructure.OrganizationRepository;

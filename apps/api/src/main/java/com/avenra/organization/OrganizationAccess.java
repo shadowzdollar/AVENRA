@@ -1,4 +1,4 @@
-package com.avenra.organization.application;
+package com.avenra.organization;
 
 import com.avenra.organization.domain.Permission;
 import com.avenra.organization.domain.Role;
@@ -42,6 +42,25 @@ public class OrganizationAccess {
             transactions.enterOrganization(organizationId);
             return work.apply(new Access(userId, organizationId, membership.id(), membership.role()));
         });
+    }
+
+    /**
+     * Whether {@code membershipId} is a membership of the organization. Must run inside {@link #run}
+     * for that organization (row-level security hides other organizations' memberships anyway).
+     */
+    public boolean isMembership(UUID organizationId, UUID membershipId) {
+        return organizations.membershipExists(organizationId, membershipId);
+    }
+
+    /**
+     * The name of an organization visible to the current transaction: the caller's current
+     * organization, or the one that issued the request link it holds.
+     */
+    public String organizationName(UUID organizationId) {
+        return organizations
+                .findOrganization(organizationId)
+                .orElseThrow(ApiException::notFound)
+                .name();
     }
 
     public void runWithoutResult(

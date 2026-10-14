@@ -76,6 +76,15 @@ public class OrganizationRepository {
                 .optional();
     }
 
+    public boolean membershipExists(UUID organizationId, UUID membershipId) {
+        return jdbc.sql("select count(*) from memberships where organization_id = :org and id = :id")
+                        .param("org", organizationId)
+                        .param("id", membershipId)
+                        .query(Long.class)
+                        .single()
+                > 0;
+    }
+
     public Optional<MembershipRow> findMembershipForUpdate(UUID organizationId, UUID membershipId) {
         return jdbc.sql("""
                         select id, organization_id, user_id, role, created_at from memberships

@@ -47,6 +47,14 @@ spring:
       mail.smtp.timeout: 10000
       mail.smtp.writetimeout: 10000
 
+  # Uploads are spooled to disk; sizes are enforced by RequestBodySizeLimitFilter
+  # and the document module (ADR-019).
+  servlet:
+    multipart:
+      max-file-size: -1
+      max-request-size: -1
+      file-size-threshold: 0
+
   jpa:
     open-in-view: false
     hibernate:
@@ -63,6 +71,18 @@ avenra:
     # Comma-separated list in environment variables: AVENRA_WEB_ALLOWED_ORIGINS.
     allowed-origins: []
     max-request-body-size: 1MB
+    max-upload-size: 25MB
+  # Documents (ADR-019) and malware scanning (ADR-021).
+  documents:
+    storage:
+      endpoint: ${AVENRA_S3_ENDPOINT:}
+      region: ${AVENRA_S3_REGION:us-east-1}
+      bucket: ${AVENRA_S3_BUCKET}
+      access-key: ${AVENRA_S3_ACCESS_KEY}
+      secret-key: ${AVENRA_S3_SECRET_KEY}
+    scanner:
+      host: ${AVENRA_CLAMD_HOST:localhost}
+      port: ${AVENRA_CLAMD_PORT:3310}
   # Application-level encryption (Guidelines §69, ADR-017). Keys come from the
   # environment as AVENRA_CRYPTO_KEYS_<ID>=<32 random bytes, base64>.
   crypto:
@@ -81,7 +101,11 @@ avenra:
       email-send: { capacity: 5, refill: 1h }
       token-check: { capacity: 20, refill: 15m }
       invitations: { capacity: 50, refill: 1h }
-    fail-closed: [sign-up, sign-in, sign-in-account, mfa, password-reset, email-send, token-check]
+      request-links: { capacity: 50, refill: 1h }
+      client-requests: { capacity: 60, refill: 10m }
+      uploads: { capacity: 100, refill: 1h }
+      client-uploads: { capacity: 30, refill: 1h }
+    fail-closed: [sign-up, sign-in, sign-in-account, mfa, password-reset, email-send, token-check, client-requests, client-uploads]
 
 server:
   port: ${PORT:8080}
@@ -141,7 +165,7 @@ management:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState,db,redis
+          include: readinessState,db,redis,malwareScanner
   # Email is sent after commit with retries; an SMTP outage must not take the
   # API out of service, so mail is not part of health.
   health:

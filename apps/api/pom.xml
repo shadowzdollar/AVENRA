@@ -41,6 +41,8 @@
         <openapi-generator.version>7.26.0</openapi-generator.version>
         <datasource-micrometer.version>2.3.0</datasource-micrometer.version>
         <bouncycastle.version>1.86</bouncycastle.version>
+        <!-- S3 client for document storage (ADR-019). -->
+        <aws-sdk.version>2.55.10</aws-sdk.version>
         <!-- The API contract is the source of truth (ADR-008). -->
         <avenra.contract>${project.basedir}/../../packages/contracts/openapi/avenra.v1.yaml</avenra.contract>
     </properties>
@@ -51,6 +53,13 @@
                 <groupId>org.springframework.modulith</groupId>
                 <artifactId>spring-modulith-bom</artifactId>
                 <version>${spring-modulith.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws-sdk.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -88,6 +97,30 @@
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
             <version>${bouncycastle.version}</version>
+        </dependency>
+        <!-- Document storage in a private S3-compatible bucket (ADR-019). Only the JDK-based
+             HTTP client; the Netty and Apache clients are excluded. -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>netty-nio-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>apache-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>apache5-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>url-connection-client</artifactId>
         </dependency>
         <!-- Transactional email over SMTP (ADR-015). -->
         <dependency>

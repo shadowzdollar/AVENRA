@@ -55,7 +55,11 @@ class WebSecurityConfiguration {
             new Endpoint(HttpMethod.POST, "/api/v1/auth/sign-in"),
             new Endpoint(HttpMethod.POST, "/api/v1/auth/sign-in/mfa"),
             new Endpoint(HttpMethod.POST, "/api/v1/auth/password-reset"),
-            new Endpoint(HttpMethod.POST, "/api/v1/auth/password-reset/confirm"));
+            new Endpoint(HttpMethod.POST, "/api/v1/auth/password-reset/confirm"),
+            // Client request links: the request token is the credential (ADR-020).
+            new Endpoint(HttpMethod.GET, "/api/v1/client-requests/current"),
+            new Endpoint(HttpMethod.POST, "/api/v1/client-requests/current/requirements/{requirementId}/value"),
+            new Endpoint(HttpMethod.POST, "/api/v1/client-requests/current/requirements/{requirementId}/file"));
 
     static final String CSRF_COOKIE = "XSRF-TOKEN";
     static final String CSRF_HEADER = "X-XSRF-TOKEN";

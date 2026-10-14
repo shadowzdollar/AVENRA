@@ -4,6 +4,7 @@ import com.avenra.audit.AuditLog;
 import com.avenra.contract.v1.model.Organization;
 import com.avenra.contract.v1.model.OrganizationMembership;
 import com.avenra.identity.MembershipDirectory;
+import com.avenra.organization.OrganizationAccess;
 import com.avenra.organization.domain.Permission;
 import com.avenra.organization.domain.Role;
 import com.avenra.organization.infrastructure.OrganizationRepository;

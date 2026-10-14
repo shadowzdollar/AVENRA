@@ -28,6 +28,7 @@ public class TenantTransactions {
             set("app.user_id", scope.userId());
             set("app.organization_id", scope.organizationId());
             set("app.invitation_token_hash", scope.invitationTokenHashHex());
+            set("app.request_link_token_hash", scope.requestLinkTokenHashHex());
             return work.get();
         });
     }

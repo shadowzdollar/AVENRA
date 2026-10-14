@@ -17,15 +17,19 @@ change through controlled transitions (§19).
 - **Work** carries the §19 fields. Its `status` changes only through
   explicit transitions on a state machine in the domain layer:
 
-  ```text
-  DRAFT → READY → RUNNING ⇄ WAITING_FOR_INFORMATION
-                     ⇅              ⇅
-             WAITING_FOR_APPROVAL ⇄ BLOCKED
-  RUNNING → COMPLETED | FAILED
-  any open state → CANCELLED
-  ```
+  | From | To |
+  |---|---|
+  | DRAFT | READY, CANCELLED |
+  | READY | DRAFT, RUNNING, CANCELLED |
+  | RUNNING | WAITING_FOR_INFORMATION, WAITING_FOR_APPROVAL, BLOCKED, COMPLETED, FAILED, CANCELLED |
+  | WAITING_FOR_INFORMATION | RUNNING, WAITING_FOR_APPROVAL, BLOCKED, CANCELLED |
+  | WAITING_FOR_APPROVAL | RUNNING, WAITING_FOR_INFORMATION, BLOCKED, CANCELLED |
+  | BLOCKED | RUNNING, WAITING_FOR_INFORMATION, WAITING_FOR_APPROVAL, CANCELLED |
+  | FAILED, COMPLETED, CANCELLED | — (final) |
 
-  Every transition is recorded (from, to, actor, reason, time) and audited.
+  Moving to BLOCKED, FAILED or CANCELLED needs a reason. COMPLETED needs every
+  required requirement accepted and no open task. Every transition is
+  recorded (from, to, actor, reason, time) and audited.
   Terminal states (COMPLETED, FAILED, CANCELLED) cannot be left; reopening
   creates new work. Phase 3 transitions are made by people with
   `work.update`; Phase 4 adds transitions made by execution.
