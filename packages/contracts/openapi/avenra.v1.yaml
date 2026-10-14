@@ -3383,6 +3383,7 @@ components:
           - WORK_OVERDUE
           - MALWARE_FOUND
           - HUMAN_REQUIRED
+          - INCONSISTENT_INFORMATION
         severity:
           type: string
           enum:
@@ -3615,13 +3616,13 @@ components:
           maximum: 4000
         values:
           type: array
-          minItems: 1
           maxItems: 50
           items:
             type: string
             minLength: 1
             maxLength: 200
-          description: '`ONE_OF`: allowed values (text compares ignoring case).'
+          description: '`ONE_OF`: allowed values (text compares ignoring case). Required (non-empty) for
+            its rule type; checked when the rule is defined.'
         min:
           type: string
           pattern: ^-?[0-9]+(\.[0-9]+)?$
@@ -3658,11 +3659,11 @@ components:
           description: '`DATE_ORDER`: this date relative to the other.'
         contentTypes:
           type: array
-          minItems: 1
           maxItems: 10
           items:
             type: string
-          description: '`FILE_TYPE`: accepted detected types, e.g. `application/pdf`.'
+          description: '`FILE_TYPE`: accepted detected types, e.g. `application/pdf`. Required (non-empty)
+            for its rule type; checked when the rule is defined.'
         maxBytes:
           type: integer
           format: int64
@@ -3704,13 +3705,13 @@ components:
           maximum: 4000
         values:
           type: array
-          minItems: 1
           maxItems: 50
           items:
             type: string
             minLength: 1
             maxLength: 200
-          description: '`ONE_OF`: allowed values (text compares ignoring case).'
+          description: '`ONE_OF`: allowed values (text compares ignoring case). Required (non-empty) for
+            its rule type; checked when the rule is defined.'
         min:
           type: string
           pattern: ^-?[0-9]+(\.[0-9]+)?$
@@ -3747,11 +3748,11 @@ components:
           description: '`DATE_ORDER`: this date relative to the other.'
         contentTypes:
           type: array
-          minItems: 1
           maxItems: 10
           items:
             type: string
-          description: '`FILE_TYPE`: accepted detected types, e.g. `application/pdf`.'
+          description: '`FILE_TYPE`: accepted detected types, e.g. `application/pdf`. Required (non-empty)
+            for its rule type; checked when the rule is defined.'
         maxBytes:
           type: integer
           format: int64

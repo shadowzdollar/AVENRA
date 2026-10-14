@@ -190,8 +190,10 @@ public class InformationService {
             requirement(organizationId, workId, requirementId);
             var items = requirements.items(requirementId);
             var versions = views.versionsOf(items);
+            var checks = verification.latest(
+                    items.stream().map(RequirementRepository.ItemRow::id).toList());
             return items.stream()
-                    .map(item -> InformationViews.item(item, versions))
+                    .map(item -> InformationViews.item(item, versions, checks.get(item.id())))
                     .toList();
         });
     }
@@ -203,7 +205,7 @@ public class InformationService {
             var requirement = lock(workId, requirementId);
             var item = submissions.submitValue(requirement, value, Submissions.Source.teamMember(userId));
             work.touch(organizationId, workId);
-            return InformationViews.item(item, views.versionsOf(List.of(item)));
+            return withChecks(item);
         });
     }
 
@@ -234,10 +236,7 @@ public class InformationService {
                 throw Submissions.fileRejected();
             }
             return access.run(
-                    userId,
-                    organizationId,
-                    Permission.INFORMATION_READ,
-                    granted -> InformationViews.item(outcome.item(), views.versionsOf(List.of(outcome.item()))));
+                    userId, organizationId, Permission.INFORMATION_READ, granted -> withChecks(outcome.item()));
         }
     }
 
@@ -340,6 +339,13 @@ public class InformationService {
 
     private RequirementRow lock(UUID workId, UUID requirementId) {
         return requirements.findForUpdate(workId, requirementId).orElseThrow(ApiException::notFound);
+    }
+
+    private InformationItem withChecks(RequirementRepository.ItemRow item) {
+        return InformationViews.item(
+                item,
+                views.versionsOf(List.of(item)),
+                verification.latest(List.of(item.id())).get(item.id()));
     }
 
     private boolean failedNow(RequirementRepository.ItemRow item) {

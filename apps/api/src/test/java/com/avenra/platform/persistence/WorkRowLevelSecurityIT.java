@@ -310,6 +310,13 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
         assertDenied("delete from document_versions where document_id = '" + documentA + "'");
         assertDenied("update work_transitions set to_status = 'COMPLETED'");
         assertDenied("delete from work where id = '" + workA + "'");
+        // Verification records are insert-only too (V6).
+        assertDenied("update verifications set status = 'PASSED'");
+        assertDenied("delete from verifications");
+        assertDenied("update evidence set description = 'x'");
+        assertDenied("update verification_rules set message = 'x'");
+        assertDenied("update work_completions set manifest = '{}'");
+        assertDenied("delete from work_completions");
         // Rescans may only quarantine a version under its own key, never release it.
         assertDenied("update document_versions set scan_status = 'INFECTED', storage_key = 'quarantine/org/" + orgA
                 + "/documents/other' where document_id = '" + documentA + "'");
@@ -369,6 +376,39 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
                 assertThat(count(db, "organizations")).isZero();
             });
         }
+    }
+
+    @Test
+    void aRequestLinkCanRecordOnlyRulesDecisionsOnItsOwnAnswers() {
+        UUID own = UUID.randomUUID();
+        String insert = "insert into information_items (id, organization_id, requirement_id, kind, value_text,"
+                + " source_type, source_link_id, received_at, verification_state) values (?, ?, ?, 'TEXT', 'v',"
+                + " 'CLIENT_LINK', ?, now(), 'PENDING')";
+        asLink(activeToken, db -> db.update(insert, own, orgA, linkedRequirementA, linkA));
+        asLink(
+                activeToken,
+                db -> assertThat(db.update(
+                                "update information_items set verification_state = 'REJECTED', decided_by = 'RULES',"
+                                        + " review_reason = 'Use 8 digits' where id = ?",
+                                own))
+                        .isEqualTo(1));
+        // Not a person's decision, and not someone else's answer.
+        assertThatThrownBy(() -> asLink(
+                        activeToken,
+                        db -> db.update(
+                                "update information_items set verification_state = 'ACCEPTED', decided_by = 'PERSON',"
+                                        + " reviewed_by = ? where id = ?",
+                                userA,
+                                own)))
+                .satisfies(WorkRowLevelSecurityIT::isInsufficientPrivilege);
+        asLink(
+                activeToken,
+                db -> assertThat(db.update(
+                                "update information_items set verification_state = 'REJECTED', decided_by = 'RULES',"
+                                        + " review_reason = 'x' where id = ?",
+                                itemA))
+                        .as("an answer by a team member")
+                        .isZero());
     }
 
     @Test
