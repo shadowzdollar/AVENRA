@@ -57,3 +57,16 @@ const { data, error } = await api.GET("/api/v1/meta");
   contract tests above, which limits the risk.
 - Breaking-change detection against the last released contract runs in CI
   (Phase 1 step 12).
+
+## Accepted breaking changes
+
+CI fails on breaking changes against `main` (stricter than ADR-008, which
+compares with the last released contract). Before the first release, an
+intentional change may be accepted by adding its oasdiff message to
+`accepted-breaking-changes.txt`, with the reason recorded here. Nothing is
+released yet, so no client is affected by these entries.
+
+| Change | Reason | Added |
+|---|---|---|
+| `INCONSISTENT_INFORMATION` added to the exception `type` enum (4 operations) | Phase 5 (ADR-027): an accepted answer that stops passing its checks raises this exception. Clients must treat exception types they do not know as a generic exception. | 2026-10-15 |
+

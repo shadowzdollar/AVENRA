@@ -1,5 +1,6 @@
 package com.avenra.work.domain;
 
+import com.avenra.information.domain.Completeness;
 import org.jspecify.annotations.Nullable;
 
 /**

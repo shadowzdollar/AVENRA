@@ -3,7 +3,6 @@ package com.avenra.work.application;
 import com.avenra.audit.AuditLog;
 import com.avenra.platform.web.ApiException;
 import com.avenra.work.domain.WorkStatus;
-import com.avenra.work.infrastructure.RequirementRepository;
 import com.avenra.work.infrastructure.WorkRepository;
 import com.avenra.work.infrastructure.WorkRepository.TransitionRow;
 import com.avenra.work.infrastructure.WorkRepository.WorkRow;
@@ -36,16 +35,13 @@ class WorkLifecycle {
     }
 
     private final WorkRepository work;
-    private final RequirementRepository requirements;
-    private final WorkViews views;
+    private final Completions completions;
     private final AuditLog audit;
     private final Clock clock;
 
-    WorkLifecycle(
-            WorkRepository work, RequirementRepository requirements, WorkViews views, AuditLog audit, Clock clock) {
+    WorkLifecycle(WorkRepository work, Completions completions, AuditLog audit, Clock clock) {
         this.work = work;
-        this.requirements = requirements;
-        this.views = views;
+        this.completions = completions;
         this.audit = audit;
         this.clock = clock;
     }
@@ -68,7 +64,7 @@ class WorkLifecycle {
         UUID organizationId = current.organizationId();
         UUID workId = current.id();
         if (target == WorkStatus.COMPLETED) {
-            requireCompletable(organizationId, workId);
+            completions.requireMet(organizationId, workId);
         }
         OffsetDateTime now = OffsetDateTime.now(clock);
         OffsetDateTime startedAt =
@@ -94,22 +90,13 @@ class WorkLifecycle {
                     actor.userId(),
                     now);
         }
+        if (target == WorkStatus.COMPLETED) {
+            completions.seal(work.find(organizationId, workId).orElseThrow(), actor);
+        }
         var event = AuditLog.Event.of("work.transitioned", organizationId, actor.userId())
                 .resource("work", workId)
                 .detail("from", current.status().name())
                 .detail("to", target.name());
         audit.record(actor.rule() == null ? event : event.detail("rule", actor.rule()));
-    }
-
-    private void requireCompletable(UUID organizationId, UUID workId) {
-        var loaded = views.load(requirements.forWork(organizationId, workId));
-        if (!loaded.completeness().complete()) {
-            throw ApiException.conflict(
-                    "REQUIREMENTS_INCOMPLETE", "Every required item must be accepted before the work is completed.");
-        }
-        if (work.openTasks(organizationId, workId) > 0) {
-            throw ApiException.conflict(
-                    "TASKS_OPEN", "Every task must be done or cancelled before the work is completed.");
-        }
     }
 }

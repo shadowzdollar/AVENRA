@@ -40,3 +40,6 @@ Statuses: `Proposed` → `Accepted` → (`Superseded by ADR-NNN` | `Deprecated`)
 | [023](ADR-023-executions-and-automation.md) | Execution records and automatic work transitions | Accepted |
 | [024](ADR-024-exceptions-and-human-tasks.md) | Exceptions and human tasks | Accepted |
 | [025](ADR-025-durable-email-and-reminders.md) | Durable email and client reminders | Accepted |
+| [026](ADR-026-information-and-verification-modules.md) | Information and verification modules | Accepted |
+| [027](ADR-027-verification-model.md) | Verification model | Accepted |
+| [028](ADR-028-evidence-and-completion.md) | Evidence and completion | Accepted |

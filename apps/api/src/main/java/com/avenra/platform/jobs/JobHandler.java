@@ -12,6 +12,21 @@ public interface JobHandler {
 
     void handle(Job job);
 
+    /** A handler from a function, for handlers declared as beans. */
+    static JobHandler of(String type, java.util.function.Consumer<Job> body) {
+        return new JobHandler() {
+            @Override
+            public String type() {
+                return type;
+            }
+
+            @Override
+            public void handle(Job job) {
+                body.accept(job);
+            }
+        };
+    }
+
     /** Whether the payload is erased when the job finishes (for payloads holding secrets). */
     default boolean erasePayloadWhenFinished() {
         return false;

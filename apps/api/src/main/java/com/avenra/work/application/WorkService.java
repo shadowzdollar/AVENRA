@@ -1,10 +1,8 @@
 package com.avenra.work.application;
 
 import com.avenra.audit.AuditLog;
-import com.avenra.contract.v1.model.CreateRequirementRequest;
 import com.avenra.contract.v1.model.CreateTaskRequest;
 import com.avenra.contract.v1.model.CreateWorkRequest;
-import com.avenra.contract.v1.model.Requirement;
 import com.avenra.contract.v1.model.Task;
 import com.avenra.contract.v1.model.TaskStatusRequest;
 import com.avenra.contract.v1.model.TransitionRequest;
@@ -12,17 +10,15 @@ import com.avenra.contract.v1.model.UpdateWorkRequest;
 import com.avenra.contract.v1.model.WorkDetail;
 import com.avenra.contract.v1.model.WorkSummary;
 import com.avenra.contract.v1.model.WorkTransition;
+import com.avenra.information.Information;
 import com.avenra.organization.OrganizationAccess;
 import com.avenra.organization.domain.Permission;
 import com.avenra.platform.idempotency.Idempotency;
 import com.avenra.platform.web.ApiException;
-import com.avenra.work.domain.Completeness;
-import com.avenra.work.domain.RequirementKind;
+import com.avenra.platform.web.Text;
 import com.avenra.work.domain.WorkFilter;
 import com.avenra.work.domain.WorkStatus;
 import com.avenra.work.infrastructure.ExceptionRepository;
-import com.avenra.work.infrastructure.RequirementRepository;
-import com.avenra.work.infrastructure.RequirementRepository.RequirementRow;
 import com.avenra.work.infrastructure.WorkRepository;
 import com.avenra.work.infrastructure.WorkRepository.TaskRow;
 import com.avenra.work.infrastructure.WorkRepository.TransitionRow;
@@ -31,23 +27,23 @@ import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 /**
- * Work, its lifecycle (ADR-018), its tasks and its requirements. People change the status in
+ * Work, its lifecycle (ADR-018) and its tasks. Requirements belong to the information module. People change the status in
  * {@link #transition}; every change goes through {@link WorkLifecycle}.
  */
 @Service
 public class WorkService {
 
     private final WorkRepository work;
-    private final RequirementRepository requirements;
+    private final Information information;
     private final ClientService clients;
-    private final WorkViews views;
     private final WorkLifecycle lifecycle;
     private final ExceptionRepository exceptions;
+    private final Completions completions;
+    private final com.avenra.verification.Verification verification;
     private final com.avenra.work.infrastructure.ExecutionRepository executionRows;
     private final OrganizationAccess access;
     private final Idempotency idempotency;
@@ -56,22 +52,24 @@ public class WorkService {
 
     WorkService(
             WorkRepository work,
-            RequirementRepository requirements,
+            Information information,
             ClientService clients,
-            WorkViews views,
             WorkLifecycle lifecycle,
             ExceptionRepository exceptions,
+            Completions completions,
+            com.avenra.verification.Verification verification,
             com.avenra.work.infrastructure.ExecutionRepository executionRows,
             OrganizationAccess access,
             Idempotency idempotency,
             AuditLog audit,
             Clock clock) {
         this.work = work;
-        this.requirements = requirements;
+        this.information = information;
         this.clients = clients;
-        this.views = views;
         this.lifecycle = lifecycle;
         this.exceptions = exceptions;
+        this.completions = completions;
+        this.verification = verification;
         this.executionRows = executionRows;
         this.access = access;
         this.idempotency = idempotency;
@@ -82,23 +80,12 @@ public class WorkService {
     public List<WorkSummary> list(UUID userId, UUID organizationId, WorkFilter filter) {
         return access.run(userId, organizationId, Permission.WORK_READ, granted -> {
             var rows = work.list(organizationId, filter);
-            var states = requirements
-                    .states(organizationId, rows.stream().map(WorkRow::id).toList())
-                    .stream()
-                    .collect(Collectors.groupingBy(
-                            RequirementRepository.RequirementStateRow::workId,
-                            Collectors.mapping(
-                                    state -> new Completeness.Entry(
-                                            state.required(),
-                                            Completeness.RequirementState.of(state.verificationState())),
-                                    Collectors.toList())));
+            var completeness = information.completenessByWork(
+                    organizationId, rows.stream().map(WorkRow::id).toList());
             var open = exceptions.openByWork(
                     organizationId, rows.stream().map(WorkRow::id).toList());
             return rows.stream()
-                    .map(row -> WorkViews.summary(
-                            row,
-                            Completeness.of(states.getOrDefault(row.id(), List.of())),
-                            open.getOrDefault(row.id(), 0L)))
+                    .map(row -> WorkViews.summary(row, completeness.get(row.id()), open.getOrDefault(row.id(), 0L)))
                     .toList();
         });
     }
@@ -234,6 +221,35 @@ public class WorkService {
         });
     }
 
+    public List<com.avenra.contract.v1.model.Evidence> evidence(UUID userId, UUID organizationId, UUID workId) {
+        return access.run(userId, organizationId, Permission.WORK_READ, granted -> {
+            find(organizationId, workId);
+            return verification.evidence(organizationId, workId).stream()
+                    .map(row -> new com.avenra.contract.v1.model.Evidence(
+                                    row.id(),
+                                    com.avenra.contract.v1.model.Evidence.KindEnum.fromValue(row.kind()),
+                                    new com.avenra.contract.v1.model.Reference(row.referenceType(), row.referenceId()),
+                                    row.description(),
+                                    WorkViews.utc(row.createdAt()))
+                            .requirementId(row.requirementId())
+                            .fingerprint(row.fingerprint()))
+                    .toList();
+        });
+    }
+
+    public com.avenra.contract.v1.model.CompletionManifest completion(UUID userId, UUID organizationId, UUID workId) {
+        return access.run(userId, organizationId, Permission.WORK_READ, granted -> {
+            find(organizationId, workId);
+            var sealed = verification.completion(organizationId, workId).orElseThrow(ApiException::notFound);
+            return new com.avenra.contract.v1.model.CompletionManifest(
+                    sealed.workId(),
+                    WorkViews.utc(sealed.completedAt()),
+                    sealed.manifest(),
+                    sealed.sha256(),
+                    sealed.intact());
+        });
+    }
+
     public List<WorkTransition> history(UUID userId, UUID organizationId, UUID workId) {
         return access.run(userId, organizationId, Permission.WORK_READ, granted -> {
             find(organizationId, workId);
@@ -311,44 +327,6 @@ public class WorkService {
         });
     }
 
-    public Requirement createRequirement(
-            UUID userId, UUID organizationId, UUID workId, String idempotencyKey, CreateRequirementRequest input) {
-        String title = Text.required(input.getTitle(), "title");
-        String instructions = Text.optional(input.getInstructions());
-        RequirementKind kind = RequirementKind.valueOf(input.getKind().getValue());
-        boolean required = Boolean.TRUE.equals(input.getRequired());
-        return access.run(
-                userId,
-                organizationId,
-                Permission.WORK_UPDATE,
-                granted -> idempotency.once(
-                        userId,
-                        "createRequirement",
-                        idempotencyKey,
-                        Text.fingerprint(organizationId, workId, title, instructions, kind, required),
-                        Requirement.class,
-                        () -> {
-                            openForUpdate(organizationId, workId);
-                            OffsetDateTime now = OffsetDateTime.now(clock);
-                            var row = new RequirementRow(
-                                    UUID.randomUUID(),
-                                    organizationId,
-                                    workId,
-                                    title,
-                                    instructions,
-                                    kind,
-                                    required,
-                                    null,
-                                    now);
-                            requirements.insert(row, userId);
-                            work.touch(organizationId, workId, now);
-                            audit.record(AuditLog.Event.of("work.requirement.created", organizationId, userId)
-                                    .resource("requirement", row.id())
-                                    .detail("workId", workId.toString()));
-                            return views.requirement(row, views.load(List.of(row)));
-                        }));
-    }
-
     /** Work that is still open, locked for a change. Final work cannot change (ADR-018). */
     WorkRow openForUpdate(UUID organizationId, UUID workId) {
         WorkRow row = work.findForUpdate(organizationId, workId).orElseThrow(ApiException::notFound);
@@ -383,11 +361,14 @@ public class WorkService {
     }
 
     private WorkDetail detail(WorkRow row) {
-        return views.detail(
+        var view = information.requirementsOf(row.organizationId(), row.id());
+        return WorkViews.detail(
                 row,
-                requirements.forWork(row.organizationId(), row.id()),
+                view.requirements(),
+                view.completeness(),
                 work.tasks(row.organizationId(), row.id()),
                 exceptions.openForWork(row.organizationId(), row.id()),
-                work.lastReason(row.organizationId(), row.id()).orElse(null));
+                work.lastReason(row.organizationId(), row.id()).orElse(null),
+                completions.criteria(row.organizationId(), row.id()));
     }
 }

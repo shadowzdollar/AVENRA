@@ -113,6 +113,15 @@ public class ExceptionRepository {
                 .single();
     }
 
+    public long openHighForWork(UUID organizationId, UUID workId) {
+        return jdbc.sql("select count(*) from work_exceptions where organization_id = :org and work_id = :work"
+                        + " and severity = 'HIGH' and status not in ('RESOLVED', 'DISMISSED')")
+                .param("org", organizationId)
+                .param("work", workId)
+                .query(Long.class)
+                .single();
+    }
+
     public java.util.Map<UUID, Long> openByWork(UUID organizationId, java.util.Collection<UUID> workIds) {
         if (workIds.isEmpty()) {
             return java.util.Map.of();

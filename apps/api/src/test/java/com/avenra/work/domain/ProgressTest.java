@@ -2,6 +2,7 @@ package com.avenra.work.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.avenra.information.domain.Completeness;
 import org.junit.jupiter.api.Test;
 
 /** What the work page tells people (Guidelines §107). */

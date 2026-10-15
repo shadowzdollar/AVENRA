@@ -1,6 +1,5 @@
 package com.avenra.work.application;
 
-import com.avenra.work.infrastructure.RequirementRepository.RequirementRow;
 import com.avenra.work.infrastructure.WorkRepository;
 import com.avenra.work.infrastructure.WorkRepository.TaskRow;
 import com.avenra.work.infrastructure.WorkRepository.WorkRow;
@@ -33,14 +32,14 @@ class HumanTasks {
 
     /** An answer arrived for a requirement: someone must accept or reject it. */
     @Transactional(propagation = Propagation.MANDATORY)
-    void reviewNeeded(WorkRow target, RequirementRow requirement, String source) {
+    void reviewNeeded(WorkRow target, UUID requirementId, String requirementTitle, String source) {
         OffsetDateTime now = OffsetDateTime.now(clock);
         work.openSystemTask(
                 target.organizationId(),
                 new TaskRow(
                         UUID.randomUUID(),
                         target.id(),
-                        "Review: " + requirement.title(),
+                        "Review: " + requirementTitle,
                         "The answer is accepted or rejected",
                         "HUMAN",
                         "OPEN",
@@ -50,12 +49,25 @@ class HumanTasks {
                         null,
                         now,
                         "SYSTEM",
-                        "Accept the answer for \"" + requirement.title() + "\", or reject it with a reason the client"
+                        "Accept the answer for \"" + requirementTitle + "\", or reject it with a reason the client"
                                 + " will see",
                         "An answer arrived from " + source,
                         "ACCEPT,REJECT",
                         REQUIREMENT,
-                        requirement.id()));
+                        requirementId));
+    }
+
+    /** The platform decided on the answer (ADR-027): the review task is closed as decided by rules. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    void decidedBySystem(UUID organizationId, UUID requirementId, boolean accepted, @Nullable String reason) {
+        work.closeSystemTask(
+                organizationId,
+                REQUIREMENT,
+                requirementId,
+                "DONE",
+                (accepted ? "Accepted automatically" : "Rejected automatically: " + reason),
+                null,
+                OffsetDateTime.now(clock));
     }
 
     /** The answer was reviewed: the review task is done. */

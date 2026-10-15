@@ -8,6 +8,7 @@ import com.avenra.contract.v1.model.WorkExceptionSource;
 import com.avenra.organization.OrganizationAccess;
 import com.avenra.organization.domain.Permission;
 import com.avenra.platform.web.ApiException;
+import com.avenra.platform.web.Text;
 import com.avenra.work.domain.ExceptionStatus;
 import com.avenra.work.infrastructure.ExceptionRepository;
 import com.avenra.work.infrastructure.ExceptionRepository.ExceptionRow;

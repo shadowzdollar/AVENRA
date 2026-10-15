@@ -33,6 +33,8 @@ tags:
   description: Projects that group work.
 - name: work
   description: Work, its lifecycle, tasks, requirements, information and documents.
+- name: information
+  description: Requirements, the answers submitted for them, their review, and documents.
 - name: requests
   description: Request links that ask clients for information.
 - name: client-requests
@@ -1348,7 +1350,7 @@ paths:
       operationId: createRequirement
       summary: Add a requirement to work
       tags:
-      - work
+      - information
       x-avenra-permission: work.update
       x-avenra-audit: required
       x-avenra-idempotency: key-required
@@ -1382,7 +1384,7 @@ paths:
       operationId: listInformationItems
       summary: Everything submitted for a requirement
       tags:
-      - work
+      - information
       x-avenra-permission: information.read
       x-avenra-audit: none
       x-avenra-idempotency: safe
@@ -1414,7 +1416,7 @@ paths:
       description: Creates a new information item; earlier items are kept. Submitting the same value again
         while it awaits review returns the existing item.
       tags:
-      - work
+      - information
       x-avenra-permission: information.collect
       x-avenra-audit: required
       x-avenra-idempotency: idempotent
@@ -1451,7 +1453,7 @@ paths:
         before it is stored (ADR-021). Errors: `FILE_TOO_LARGE`, `FILE_TYPE_NOT_ALLOWED`, `FILE_REJECTED`
         (malware found), `SCANNER_UNAVAILABLE`.'
       tags:
-      - work
+      - information
       x-avenra-permission: information.collect
       x-avenra-audit: required
       x-avenra-idempotency: idempotent
@@ -1487,7 +1489,7 @@ paths:
       description: Reviews the current item of the requirement. Rejecting needs a reason, which the client
         sees. Only an item awaiting review can be reviewed (`NOT_AWAITING_REVIEW`).
       tags:
-      - work
+      - information
       x-avenra-permission: information.verify
       x-avenra-audit: required
       x-avenra-idempotency: idempotent
@@ -1523,7 +1525,7 @@ paths:
       description: Only versions scanned clean can be downloaded (`DOCUMENT_UNAVAILABLE`). Every download
         is audited.
       tags:
-      - work
+      - information
       x-avenra-permission: information.read
       x-avenra-audit: required
       x-avenra-idempotency: safe
@@ -1903,6 +1905,130 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Execution'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/requirements/{requirementId}/rules:
+    put:
+      operationId: setRequirementRules
+      summary: Set how a requirement is verified
+      description: Replaces the rules, acceptance mode and risk (ADR-027). The current answer, if it awaits
+        a decision, is verified again under the new rules. Rule errors answer `INVALID_RULE`.
+      tags:
+      - information
+      x-avenra-permission: work.update
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/RequirementId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequirementRulesInput'
+      responses:
+        '200':
+          description: Updated; a new rule version.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Requirement'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/requirements/{requirementId}/verifications:
+    get:
+      operationId: listVerifications
+      summary: Verification results of a requirement
+      tags:
+      - information
+      x-avenra-permission: information.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/RequirementId'
+      responses:
+        '200':
+          description: Results, newest first (at most 200).
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VerificationResult'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/evidence:
+    get:
+      operationId: listEvidence
+      summary: Evidence collected for work
+      tags:
+      - work
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      responses:
+        '200':
+          description: Evidence, newest first (at most 500).
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Evidence'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/completion:
+    get:
+      operationId: getCompletion
+      summary: The completion manifest of completed work
+      description: Exists once the work is completed (`NOT_FOUND` before). `intact` re-checks the stored
+        manifest against its hash (ADR-028).
+      tags:
+      - work
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      responses:
+        '200':
+          description: The manifest, its SHA-256, and whether it still matches.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompletionManifest'
         4XX:
           $ref: '#/components/responses/ClientError'
         5XX:
@@ -2599,6 +2725,7 @@ components:
       - tasks
       - allowedTransitions
       - progress
+      - completionCriteria
       properties:
         id:
           type: string
@@ -2659,6 +2786,11 @@ components:
           description: Statuses reachable from the current one.
         progress:
           $ref: '#/components/schemas/Progress'
+        completionCriteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompletionCriterion'
+          description: What completing the work requires (ADR-028).
     TransitionRequest:
       type: object
       additionalProperties: false
@@ -2837,6 +2969,15 @@ components:
           $ref: '#/components/schemas/RequirementKind'
         required:
           type: boolean
+        rules:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/VerificationRuleInput'
+        acceptance:
+          $ref: '#/components/schemas/Acceptance'
+        risk:
+          $ref: '#/components/schemas/Risk'
     Requirement:
       type: object
       additionalProperties: false
@@ -2847,6 +2988,10 @@ components:
       - required
       - state
       - createdAt
+      - rules
+      - acceptance
+      - risk
+      - rulesVersion
       properties:
         id:
           type: string
@@ -2866,6 +3011,17 @@ components:
         createdAt:
           type: string
           format: date-time
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/VerificationRule'
+        acceptance:
+          $ref: '#/components/schemas/Acceptance'
+        risk:
+          $ref: '#/components/schemas/Risk'
+        rulesVersion:
+          type: integer
+          minimum: 0
     ValueSubmission:
       type: object
       additionalProperties: false
@@ -2947,6 +3103,8 @@ components:
           description: Set by automated verification (Phase 5).
         verification:
           $ref: '#/components/schemas/Verification'
+        checks:
+          $ref: '#/components/schemas/VerificationResult'
     Verification:
       type: object
       additionalProperties: false
@@ -2963,6 +3121,15 @@ components:
           format: date-time
         reason:
           type: string
+        decidedBy:
+          type: string
+          enum:
+          - PERSON
+          - RULES
+          description: 'Who decided: a person or the rules.'
+        overrideReason:
+          type: string
+          description: Why a person accepted despite failed checks.
     DocumentVersion:
       type: object
       additionalProperties: false
@@ -3023,6 +3190,11 @@ components:
           minLength: 1
           maxLength: 1000
           description: Required when rejecting; shown to the client.
+        overrideReason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Required to accept an answer whose checks failed or need review (`OVERRIDE_REQUIRED`).
     CreateRequestLinkRequest:
       type: object
       additionalProperties: false
@@ -3169,6 +3341,11 @@ components:
           items:
             type: string
           description: 'For documents: accepted file extensions.'
+        problems:
+          type: array
+          items:
+            type: string
+          description: What is wrong with the last answer, from the blocking checks.
     ExceptionStatus:
       type: string
       enum:
@@ -3206,6 +3383,9 @@ components:
           - WORK_OVERDUE
           - MALWARE_FOUND
           - HUMAN_REQUIRED
+          - INCONSISTENT_INFORMATION
+          description: 'What raised the exception. New types are added over time: treat a type you do
+            not know as a generic exception.'
         severity:
           type: string
           enum:
@@ -3387,6 +3567,389 @@ components:
         id:
           type: string
           format: uuid
+    RuleType:
+      type: string
+      enum:
+      - PATTERN
+      - LENGTH
+      - ONE_OF
+      - RANGE
+      - DATE_RANGE
+      - EQUALS_REQUIREMENT
+      - DATE_ORDER
+      - FILE_TYPE
+      - FILE_SIZE
+    RuleSeverity:
+      type: string
+      enum:
+      - BLOCKING
+      - ADVISORY
+      description: Blocking failures reject the answer; advisory ones need a person (ADR-027).
+    VerificationRuleInput:
+      type: object
+      additionalProperties: false
+      description: One deterministic check (ADR-027). Only the fields of its type apply.
+      required:
+      - type
+      - severity
+      - message
+      properties:
+        type:
+          $ref: '#/components/schemas/RuleType'
+        severity:
+          $ref: '#/components/schemas/RuleSeverity'
+        message:
+          type: string
+          minLength: 1
+          maxLength: 300
+          description: Shown when the check fails, also to the client for blocking rules.
+        pattern:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: '`PATTERN`: a regular expression the whole value must match.'
+        minLength:
+          type: integer
+          minimum: 0
+          maximum: 4000
+        maxLength:
+          type: integer
+          minimum: 1
+          maximum: 4000
+        values:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+          description: '`ONE_OF`: allowed values (text compares ignoring case). Required (non-empty) for
+            its rule type; checked when the rule is defined.'
+        min:
+          type: string
+          pattern: ^-?[0-9]+(\.[0-9]+)?$
+          description: '`RANGE`: smallest allowed number.'
+        max:
+          type: string
+          pattern: ^-?[0-9]+(\.[0-9]+)?$
+          description: '`RANGE`: largest allowed number.'
+        notBefore:
+          type: string
+          format: date
+        notAfter:
+          type: string
+          format: date
+        minDaysFromToday:
+          type: integer
+          minimum: -36500
+          maximum: 36500
+          description: '`DATE_RANGE`: at least this many days from the day of the check (e.g. 30: not
+            expiring within a month).'
+        maxDaysFromToday:
+          type: integer
+          minimum: -36500
+          maximum: 36500
+        otherRequirementId:
+          type: string
+          format: uuid
+          description: '`EQUALS_REQUIREMENT`, `DATE_ORDER`: a requirement of the same work.'
+        order:
+          type: string
+          enum:
+          - BEFORE
+          - AFTER
+          description: '`DATE_ORDER`: this date relative to the other.'
+        contentTypes:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+          description: '`FILE_TYPE`: accepted detected types, e.g. `application/pdf`. Required (non-empty)
+            for its rule type; checked when the rule is defined.'
+        maxBytes:
+          type: integer
+          format: int64
+          minimum: 1
+          description: '`FILE_SIZE`: largest file.'
+    VerificationRule:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - type
+      - severity
+      - message
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/RuleType'
+        severity:
+          $ref: '#/components/schemas/RuleSeverity'
+        message:
+          type: string
+          minLength: 1
+          maxLength: 300
+          description: Shown when the check fails, also to the client for blocking rules.
+        pattern:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: '`PATTERN`: a regular expression the whole value must match.'
+        minLength:
+          type: integer
+          minimum: 0
+          maximum: 4000
+        maxLength:
+          type: integer
+          minimum: 1
+          maximum: 4000
+        values:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+          description: '`ONE_OF`: allowed values (text compares ignoring case). Required (non-empty) for
+            its rule type; checked when the rule is defined.'
+        min:
+          type: string
+          pattern: ^-?[0-9]+(\.[0-9]+)?$
+          description: '`RANGE`: smallest allowed number.'
+        max:
+          type: string
+          pattern: ^-?[0-9]+(\.[0-9]+)?$
+          description: '`RANGE`: largest allowed number.'
+        notBefore:
+          type: string
+          format: date
+        notAfter:
+          type: string
+          format: date
+        minDaysFromToday:
+          type: integer
+          minimum: -36500
+          maximum: 36500
+          description: '`DATE_RANGE`: at least this many days from the day of the check (e.g. 30: not
+            expiring within a month).'
+        maxDaysFromToday:
+          type: integer
+          minimum: -36500
+          maximum: 36500
+        otherRequirementId:
+          type: string
+          format: uuid
+          description: '`EQUALS_REQUIREMENT`, `DATE_ORDER`: a requirement of the same work.'
+        order:
+          type: string
+          enum:
+          - BEFORE
+          - AFTER
+          description: '`DATE_ORDER`: this date relative to the other.'
+        contentTypes:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+          description: '`FILE_TYPE`: accepted detected types, e.g. `application/pdf`. Required (non-empty)
+            for its rule type; checked when the rule is defined.'
+        maxBytes:
+          type: integer
+          format: int64
+          minimum: 1
+          description: '`FILE_SIZE`: largest file.'
+    Acceptance:
+      type: string
+      enum:
+      - MANUAL
+      - AUTOMATIC
+      description: '`AUTOMATIC`: answers that pass every check with enough confidence are accepted by
+        the platform; not allowed for high-risk requirements.'
+    Risk:
+      type: string
+      enum:
+      - NORMAL
+      - HIGH
+      description: High-risk requirements are always decided by a person.
+    RequirementRulesInput:
+      type: object
+      additionalProperties: false
+      required:
+      - rules
+      - acceptance
+      - risk
+      properties:
+        rules:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/VerificationRuleInput'
+        acceptance:
+          $ref: '#/components/schemas/Acceptance'
+        risk:
+          $ref: '#/components/schemas/Risk'
+    CheckResult:
+      type: object
+      additionalProperties: false
+      required:
+      - rule
+      - outcome
+      - severity
+      - message
+      properties:
+        ruleId:
+          type: string
+          format: uuid
+        rule:
+          $ref: '#/components/schemas/RuleType'
+        outcome:
+          type: string
+          enum:
+          - PASSED
+          - FAILED
+          - SKIPPED
+          description: '`SKIPPED`: the check could not run yet (e.g. the other answer is missing).'
+        severity:
+          $ref: '#/components/schemas/RuleSeverity'
+        message:
+          type: string
+        detail:
+          type: string
+    VerificationResult:
+      type: object
+      additionalProperties: false
+      description: A structured verification (Guidelines §25, ADR-027). Immutable.
+      required:
+      - id
+      - itemId
+      - status
+      - checks
+      - evidence
+      - method
+      - rulesVersion
+      - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        itemId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - PASSED
+          - FAILED
+          - NEEDS_REVIEW
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Share of passed check weight; unset when there are no rules. Describes the checks,
+            not the truth.
+        checks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheckResult'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reference'
+        method:
+          type: string
+          enum:
+          - RULES
+        rulesVersion:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+    CompletionCriterion:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - met
+      - description
+      properties:
+        name:
+          type: string
+          enum:
+          - REQUIREMENTS_ACCEPTED
+          - CHECKS_PASSED
+          - NO_HIGH_EXCEPTIONS
+          - TASKS_CLOSED
+        met:
+          type: boolean
+        description:
+          type: string
+        detail:
+          type: string
+    Evidence:
+      type: object
+      additionalProperties: false
+      description: First-class evidence (Guidelines §24, ADR-028). Immutable.
+      required:
+      - id
+      - kind
+      - reference
+      - description
+      - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum:
+          - ANSWER
+          - DOCUMENT_VERSION
+          - VERIFICATION
+          - HUMAN_DECISION
+          - SYSTEM_DECISION
+        requirementId:
+          type: string
+          format: uuid
+        reference:
+          $ref: '#/components/schemas/Reference'
+        description:
+          type: string
+        fingerprint:
+          type: string
+          description: SHA-256 of the evidenced content, where there is one.
+        createdAt:
+          type: string
+          format: date-time
+    CompletionManifest:
+      type: object
+      additionalProperties: false
+      description: Proof of verified completion (ADR-028).
+      required:
+      - workId
+      - completedAt
+      - manifest
+      - sha256
+      - intact
+      properties:
+        workId:
+          type: string
+          format: uuid
+        completedAt:
+          type: string
+          format: date-time
+        manifest:
+          type: string
+          description: 'Canonical JSON: the work, criteria, and per requirement the accepted answer, verification
+            and decision.'
+        sha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        intact:
+          type: boolean
+          description: The stored manifest still matches its hash.
   securitySchemes:
     sessionCookie:
       type: apiKey

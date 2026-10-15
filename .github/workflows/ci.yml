@@ -59,6 +59,8 @@ jobs:
           base: base-contract.v1.yaml
           revision: packages/contracts/openapi/avenra.v1.yaml
           fail-on: ERR
+          # Intentional, reviewed changes only; each is explained in packages/contracts/README.md.
+          err-ignore: packages/contracts/accepted-breaking-changes.txt
 
   api:
     name: API (format, compile, unit + integration tests)
