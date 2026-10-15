@@ -70,3 +70,4 @@ released yet, so no client is affected by these entries.
 |---|---|---|
 | `INCONSISTENT_INFORMATION` added to the exception `type` enum (4 operations) | Phase 5 (ADR-027): an accepted answer that stops passing its checks raises this exception. Clients must treat exception types they do not know as a generic exception. | 2026-10-15 |
 
+| `DOCUMENT_KIND` and `DOCUMENT_FIELD` added to the rule `type` and check `rule` enums (36 operation/property pairs) | Phase 6 (ADR-031): advisory rules that read the document. Clients must show rule types they do not know as a generic check. | 2026-10-15 |
