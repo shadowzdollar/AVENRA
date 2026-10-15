@@ -9,6 +9,8 @@ public enum Permission {
     ORGANIZATION_MANAGE("organization.manage"),
     MEMBERS_READ("members.read"),
     MEMBERS_MANAGE("members.manage"),
+    AI_READ("ai.read"),
+    AI_MANAGE("ai.manage"),
     WORK_READ("work.read"),
     WORK_CREATE("work.create"),
     WORK_UPDATE("work.update"),

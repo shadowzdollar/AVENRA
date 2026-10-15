@@ -89,6 +89,12 @@ avenra:
     scanner:
       host: ${AVENRA_CLAMD_HOST:localhost}
       port: ${AVENRA_CLAMD_PORT:3310}
+  # The AI service (ADR-029) and AI spending (ADR-030). The token is shared with
+  # the AI service and never logged.
+  ai:
+    url: ${AVENRA_AI_URL:http://127.0.0.1:8090}
+    service-token: ${AVENRA_AI_SERVICE_TOKEN}
+    daily-call-limit: ${AVENRA_AI_DAILY_CALL_LIMIT:500}
   # Application-level encryption (Guidelines §69, ADR-017). Keys come from the
   # environment as AVENRA_CRYPTO_KEYS_<ID>=<32 random bytes, base64>.
   crypto:

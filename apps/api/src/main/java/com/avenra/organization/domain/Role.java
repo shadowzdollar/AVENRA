@@ -11,7 +11,8 @@ import java.util.Set;
  */
 public enum Role {
     OWNER(EnumSet.allOf(Permission.class)),
-    ADMIN(EnumSet.complementOf(EnumSet.of(BILLING_MANAGE))),
+    // Only owners decide whether client documents may be read automatically (ADR-030).
+    ADMIN(EnumSet.complementOf(EnumSet.of(BILLING_MANAGE, AI_MANAGE))),
     MANAGER(EnumSet.of(
             ORGANIZATION_READ,
             MEMBERS_READ,

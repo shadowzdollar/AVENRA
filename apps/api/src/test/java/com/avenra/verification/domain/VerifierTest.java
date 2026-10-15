@@ -144,4 +144,97 @@ class VerifierTest {
         assertThat(Verifier.confidence(List.of())).isNull();
         assertThat(BigDecimal.ONE).isEqualByComparingTo(verify(rules, answer).confidence());
     }
+
+    private static Answer read(Answer.Reading reading) {
+        return Answer.document(new Answer.DocumentFacts("application/pdf", 2_000, "a".repeat(64), reading));
+    }
+
+    private static Answer.Reading passport(String surname, String expiry, Boolean located) {
+        return new Answer.Reading(
+                Answer.Reading.Availability.AVAILABLE,
+                null,
+                "passport",
+                List.of(
+                        new Answer.ReadField("Surname", true, surname, "Surname: " + surname, located),
+                        new Answer.ReadField("Date of expiry", true, expiry, "Expiry " + expiry, located),
+                        new Answer.ReadField("Tax number", false, null, null, null)));
+    }
+
+    @Test
+    void documentChecksReadTheKindAndFieldsWithTheirSource() {
+        UUID legalName = UUID.randomUUID();
+        var rules = List.of(
+                Rules.documentKind(Rule.Severity.ADVISORY, "Passport", "National identity card"),
+                Rules.documentField("Surname", Rule.FieldKind.TEXT, null, legalName, Rule.Severity.ADVISORY),
+                Rules.documentField("Date of expiry", Rule.FieldKind.DATE, 30, null, Rule.Severity.ADVISORY));
+        var related = Map.of(legalName, Optional.of(Answer.value(Kind.TEXT, "  doe ")));
+        var result = Verifier.verify(rules, read(passport("Doe", "2027-01-01", true)), related, TODAY);
+        assertThat(result.checks()).extracting(Result.Check::outcome).containsOnly(Outcome.PASSED);
+        assertThat(result.checks().get(0).detail()).isEqualTo("read automatically as passport");
+        assertThat(result.checks().get(1).detail()).isEqualTo("read \"Doe\" from \"Surname: Doe\"");
+        assertThat(result.status()).isEqualTo(Result.Status.PASSED);
+    }
+
+    @Test
+    void documentChecksAreAdvisoryAndNeverCountTowardsConfidence() {
+        var rules = List.of(
+                Rules.pattern("x"),
+                Rules.documentKind(Rule.Severity.ADVISORY, "invoice"),
+                Rules.documentField("Tax number", Rule.FieldKind.TEXT, null, null, Rule.Severity.ADVISORY));
+        var answer = Answer.value(Kind.TEXT, "x");
+        // Only deterministic checks make the confidence; reading checks cannot raise or lower it.
+        assertThat(Verifier.confidence(
+                        Verifier.verify(rules, answer, Map.of(), TODAY).checks()))
+                .isEqualByComparingTo("1");
+
+        var onlyReading =
+                Verifier.verify(rules.subList(1, 3), read(passport("Doe", "2027-01-01", true)), Map.of(), TODAY);
+        assertThat(onlyReading.status()).isEqualTo(Result.Status.NEEDS_REVIEW);
+        assertThat(onlyReading.blockingProblems()).isEmpty();
+        assertThat(onlyReading.confidence()).isNull();
+        assertThat(onlyReading.checks())
+                .extracting(Result.Check::detail)
+                .containsExactly("read automatically as passport", "Tax number was not found in the document");
+    }
+
+    @Test
+    void documentChecksWaitForTheReadingAndSayWhy() {
+        var rules = List.of(Rules.documentKind(Rule.Severity.ADVISORY, "passport"));
+        var waiting = verify(rules, Answer.document(new Answer.DocumentFacts("application/pdf", 1, "a".repeat(64))));
+        assertThat(waiting.checks().getFirst().outcome()).isEqualTo(Outcome.SKIPPED);
+        assertThat(waiting.checks().getFirst().detail()).isEqualTo("waiting for the document to be read");
+        var off = verify(rules, read(Answer.Reading.unavailable("Automatic document reading is switched off.")));
+        assertThat(off.checks().getFirst().detail()).isEqualTo("Automatic document reading is switched off.");
+        assertThat(off.status()).isEqualTo(Result.Status.NEEDS_REVIEW);
+    }
+
+    @Test
+    void aQuoteThatIsNotInTheDocumentFailsItsCheck() {
+        var rule = Rules.documentField("Surname", Rule.FieldKind.TEXT, null, null, Rule.Severity.ADVISORY);
+        var notLocated = verify(List.of(rule), read(passport("Doe", "2027-01-01", false)));
+        assertThat(notLocated.checks().getFirst().outcome()).isEqualTo(Outcome.FAILED);
+        assertThat(notLocated.checks().getFirst().detail()).endsWith("but that passage is not in the document");
+        var image = verify(List.of(rule), read(passport("Doe", "2027-01-01", null)));
+        assertThat(image.checks().getFirst().outcome()).isEqualTo(Outcome.PASSED);
+        assertThat(image.checks().getFirst().detail()).contains("read from an image");
+    }
+
+    @Test
+    void readDatesAndValuesAreComparedLikeAnswers() {
+        UUID legalName = UUID.randomUUID();
+        var expiresSoon = verify(
+                List.of(Rules.documentField("Date of expiry", Rule.FieldKind.DATE, 30, null, Rule.Severity.ADVISORY)),
+                read(passport("Doe", "2026-10-20", true)));
+        assertThat(expiresSoon.checks().getFirst().outcome()).isEqualTo(Outcome.FAILED);
+        var differentName = Verifier.verify(
+                List.of(Rules.documentField("Surname", Rule.FieldKind.TEXT, null, legalName, Rule.Severity.ADVISORY)),
+                read(passport("Doe", "2027-01-01", true)),
+                Map.of(legalName, Optional.of(Answer.value(Kind.TEXT, "Roe"))),
+                TODAY);
+        assertThat(differentName.checks().getFirst().outcome()).isEqualTo(Outcome.FAILED);
+        var unknownOther = verify(
+                List.of(Rules.documentField("Surname", Rule.FieldKind.TEXT, null, legalName, Rule.Severity.ADVISORY)),
+                read(passport("Doe", "2027-01-01", true)));
+        assertThat(unknownOther.checks().getFirst().outcome()).isEqualTo(Outcome.SKIPPED);
+    }
 }

@@ -1,5 +1,8 @@
 package com.avenra.information.application;
 
+import com.avenra.ai.Ai;
+import com.avenra.document.DocumentEvents;
+import com.avenra.document.DocumentReadings;
 import com.avenra.document.Documents;
 import com.avenra.information.InformationEvents;
 import com.avenra.information.domain.Completeness.VerificationState;
@@ -10,6 +13,7 @@ import com.avenra.information.infrastructure.RequirementRepository.RequirementRo
 import com.avenra.platform.jobs.JobHandler;
 import com.avenra.platform.jobs.JobQueue;
 import com.avenra.platform.jobs.JobWorker;
+import com.avenra.platform.tenancy.TenantTransactions;
 import com.avenra.verification.Verification;
 import com.avenra.verification.domain.Answer;
 import com.avenra.verification.domain.Result;
@@ -22,9 +26,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +51,8 @@ class AnswerChecks {
     private final Verification verification;
     private final RequirementRepository requirements;
     private final Documents documents;
+    private final DocumentReadings readings;
+    private final TenantTransactions transactions;
     private final JobQueue jobs;
     private final ApplicationEventPublisher events;
     private final Clock clock;
@@ -53,12 +61,16 @@ class AnswerChecks {
             Verification verification,
             RequirementRepository requirements,
             Documents documents,
+            DocumentReadings readings,
+            TenantTransactions transactions,
             JobQueue jobs,
             ApplicationEventPublisher events,
             Clock clock) {
         this.verification = verification;
         this.requirements = requirements;
         this.documents = documents;
+        this.readings = readings;
+        this.transactions = transactions;
         this.jobs = jobs;
         this.events = events;
         this.clock = clock;
@@ -151,7 +163,7 @@ class AnswerChecks {
                 subject(requirement, item),
                 rules,
                 requirement.rulesVersion(),
-                answer(item),
+                answer(requirement, item, rules),
                 related(requirement, rules));
         requirements.setConfidence(item.id(), recorded.result().confidence());
         return recorded;
@@ -187,7 +199,7 @@ class AnswerChecks {
                 .map(item -> Answer.value(kind(item.kind()), item.valueText()));
     }
 
-    private Answer answer(ItemRow item) {
+    private Answer answer(RequirementRow requirement, ItemRow item, List<Rule> rules) {
         if (item.kind() != RequirementKind.DOCUMENT) {
             return Answer.value(kind(item.kind()), item.valueText());
         }
@@ -195,8 +207,77 @@ class AnswerChecks {
                 .filter(stored -> stored.version() == item.documentVersion())
                 .findFirst()
                 .orElseThrow();
-        return Answer.document(
-                new Answer.DocumentFacts(version.contentType(), version.sizeBytes(), version.sha256Hex()));
+        return Answer.document(new Answer.DocumentFacts(
+                version.contentType(), version.sizeBytes(), version.sha256Hex(), reading(requirement, item, rules)));
+    }
+
+    /**
+     * The automatic reading the document rules need (ADR-031), or {@code null} when no rule needs
+     * one. Readings are only looked up and scheduled in the organization's scope; in a request
+     * link's scope the checks wait, and the follow-up job completes them.
+     */
+    private Answer.@Nullable Reading reading(RequirementRow requirement, ItemRow item, List<Rule> rules) {
+        var spec = spec(rules);
+        if (spec.asksForNothing()) {
+            return null;
+        }
+        if (transactions.organizationInScope().isEmpty()) {
+            return Answer.Reading.unavailable("waiting for the document to be read");
+        }
+        var reading = readings.reading(requirement.organizationId(), item.documentId(), item.documentVersion(), spec);
+        return switch (reading.status()) {
+            case PENDING -> Answer.Reading.unavailable("waiting for the document to be read");
+            case SKIPPED, FAILED ->
+                Answer.Reading.unavailable(
+                        reading.reason() == null ? "the document could not be read automatically" : reading.reason());
+            case DONE -> {
+                var result = java.util.Objects.requireNonNull(reading.result());
+                yield new Answer.Reading(
+                        Answer.Reading.Availability.AVAILABLE,
+                        null,
+                        result.kind() == null ? null : result.kind().label(),
+                        result.fields().stream()
+                                .map(field -> new Answer.ReadField(
+                                        field.name(), field.found(), field.value(), field.quote(), field.located()))
+                                .toList());
+            }
+        };
+    }
+
+    /** What the document rules ask a reading for: every kind label, every field. */
+    static DocumentReadings.Spec spec(List<Rule> rules) {
+        var kinds = new java.util.ArrayList<String>();
+        var fields = new java.util.ArrayList<Ai.FieldRequest>();
+        for (Rule rule : rules) {
+            if (rule.type() == Rule.Type.DOCUMENT_KIND) {
+                kinds.addAll(rule.values());
+            } else if (rule.type() == Rule.Type.DOCUMENT_FIELD && rule.field() != null && rule.fieldKind() != null) {
+                fields.add(new Ai.FieldRequest(rule.field(), rule.fieldKind().name()));
+            }
+        }
+        return new DocumentReadings.Spec(kinds, fields);
+    }
+
+    /** A reading arrived: verify the answer that uses that document version again. */
+    @EventListener
+    void on(DocumentEvents.Read read) {
+        if (read.requirementId() == null) {
+            return;
+        }
+        var found = requirements.find(read.requirementId()).orElse(null);
+        if (found == null) {
+            return;
+        }
+        var requirement = requirements.findForUpdate(found.workId(), found.id()).orElse(null);
+        if (requirement == null || requirement.currentItemId() == null) {
+            return;
+        }
+        var item = requirements.itemsByIds(List.of(requirement.currentItemId())).getFirst();
+        if (read.documentId().equals(item.documentId())
+                && item.documentVersion() != null
+                && item.documentVersion() == read.version()) {
+            recheckCurrent(requirement);
+        }
     }
 
     static Verification.Subject subject(RequirementRow requirement, ItemRow item) {

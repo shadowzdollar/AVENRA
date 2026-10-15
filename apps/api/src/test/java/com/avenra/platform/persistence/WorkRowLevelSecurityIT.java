@@ -32,7 +32,7 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
     private static final String INSUFFICIENT_PRIVILEGE = "42501";
     private static final String FOREIGN_KEY_VIOLATION = "23503";
 
-    /** Every tenant-owned table added in Phase 3. */
+    /** Every tenant-owned table added since Phase 3. */
     private static final List<String> TABLES = List.of(
             "clients",
             "projects",
@@ -50,7 +50,10 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
             "verification_rules",
             "verifications",
             "evidence",
-            "work_completions");
+            "work_completions",
+            "ai_settings",
+            "ai_invocations",
+            "document_readings");
 
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
@@ -220,6 +223,25 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
                 owner,
                 "insert into work_completions (organization_id, work_id, manifest, sha256, completed_at) values ('"
                         + org + "', '" + work + "', '{}', '" + "0".repeat(64) + "', now())");
+        exec(
+                owner,
+                "insert into ai_settings (organization_id, document_reading, updated_by, updated_at) values ('" + org
+                        + "', true, '" + user + "', now())");
+        UUID invocation = UUID.randomUUID();
+        exec(
+                owner,
+                "insert into ai_invocations (id, organization_id, purpose, subject_id, subject_version, provider,"
+                        + " model_requested, model, prompt_name, prompt_version, prompt_sha256, input_tokens,"
+                        + " output_tokens, cache_read_tokens, cache_write_tokens, latency_ms, outcome, attempt,"
+                        + " created_at) values ('" + invocation + "', '" + org + "', 'document.read', '" + document
+                        + "', 1, 'fake', 'fake', 'fake', 'document_read', 1, '" + "0".repeat(64)
+                        + "', 1, 1, 0, 0, 1, 'SUCCEEDED', 1, now())");
+        exec(
+                owner,
+                "insert into document_readings (id, organization_id, document_id, version, spec_hash, spec, status,"
+                        + " result, invocation_id, created_at, completed_at) values ('" + UUID.randomUUID() + "', '"
+                        + org + "', '" + document + "', 1, '" + "0".repeat(64)
+                        + "', '{}', 'DONE', '{}', '" + invocation + "', now(), now())");
     }
 
     private void insertLink(Connection owner, UUID id, byte[] token, String expires, String revoked)

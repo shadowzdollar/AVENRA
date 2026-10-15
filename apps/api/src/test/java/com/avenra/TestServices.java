@@ -114,6 +114,8 @@ public final class TestServices {
         properties.put("AVENRA_S3_SECRET_KEY", S3_SECRET_KEY);
         properties.put("AVENRA_CLAMD_HOST", clamdHost());
         properties.put("AVENRA_CLAMD_PORT", clamdPort());
+        properties.put("AVENRA_AI_URL", TestAiService.url());
+        properties.put("AVENRA_AI_SERVICE_TOKEN", TestAiService.TOKEN);
         return Map.copyOf(properties);
     }
 

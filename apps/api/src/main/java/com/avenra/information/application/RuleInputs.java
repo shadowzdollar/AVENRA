@@ -41,7 +41,11 @@ final class RuleInputs {
                         ? null
                         : Rule.Order.valueOf(input.getOrder().getValue()),
                 input.getContentTypes() == null ? List.of() : input.getContentTypes(),
-                input.getMaxBytes());
+                input.getMaxBytes(),
+                input.getField() == null ? null : input.getField().strip(),
+                input.getFieldKind() == null
+                        ? null
+                        : Rule.FieldKind.valueOf(input.getFieldKind().getValue()));
     }
 
     static VerificationRule toApi(Rule rule) {
@@ -67,7 +71,13 @@ final class RuleInputs {
                                 ? null
                                 : com.avenra.contract.v1.model.VerificationRule.OrderEnum.fromValue(
                                         rule.order().name()))
-                .maxBytes(rule.maxBytes());
+                .maxBytes(rule.maxBytes())
+                .field(rule.field())
+                .fieldKind(
+                        rule.fieldKind() == null
+                                ? null
+                                : com.avenra.contract.v1.model.FieldKind.fromValue(
+                                        rule.fieldKind().name()));
         if (!rule.values().isEmpty()) {
             api.values(new ArrayList<>(rule.values()));
         }

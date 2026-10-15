@@ -28,7 +28,9 @@ public record Rule(
         @Nullable UUID otherRequirementId,
         @Nullable Order order,
         List<String> contentTypes,
-        @Nullable Long maxBytes) {
+        @Nullable Long maxBytes,
+        @Nullable String field,
+        @Nullable FieldKind fieldKind) {
 
     public Rule {
         values = values == null ? List.of() : List.copyOf(values);
@@ -44,7 +46,23 @@ public record Rule(
         EQUALS_REQUIREMENT,
         DATE_ORDER,
         FILE_TYPE,
-        FILE_SIZE
+        FILE_SIZE,
+        /** The document reads as one of {@link #values()} (ADR-031). Advisory only. */
+        DOCUMENT_KIND,
+        /** A field read from the document is present, and optionally matches (ADR-031). Advisory only. */
+        DOCUMENT_FIELD;
+
+        /** Based on an automatic reading of the document: advisory, never a decision (ADR-031). */
+        public boolean aiDerived() {
+            return this == DOCUMENT_KIND || this == DOCUMENT_FIELD;
+        }
+    }
+
+    /** How a field read from a document is compared. */
+    public enum FieldKind {
+        TEXT,
+        NUMBER,
+        DATE
     }
 
     public enum Severity {
@@ -81,7 +99,9 @@ public record Rule(
                 otherRequirementId,
                 order,
                 contentTypes,
-                maxBytes);
+                maxBytes,
+                field,
+                fieldKind);
     }
 
     public boolean refersToOtherRequirement() {

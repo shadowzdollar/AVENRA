@@ -49,14 +49,20 @@ public final class Verifier {
         return open ? Result.Status.NEEDS_REVIEW : Result.Status.PASSED;
     }
 
-    /** Share of passed weight; blocking checks weigh 2, advisory 1; unset without rules. */
+    /**
+     * Share of passed weight; blocking checks weigh 2, advisory 1; unset without rules. Checks based
+     * on an automatic reading are left out, so they can never raise an answer into automatic
+     * acceptance (ADR-031).
+     */
     static @Nullable BigDecimal confidence(List<Check> checks) {
-        if (checks.isEmpty()) {
+        List<Check> deterministic =
+                checks.stream().filter(check -> !check.rule().aiDerived()).toList();
+        if (deterministic.isEmpty()) {
             return null;
         }
         int total = 0;
         int passed = 0;
-        for (Check check : checks) {
+        for (Check check : deterministic) {
             total += check.severity().weight();
             if (check.outcome() == Outcome.PASSED) {
                 passed += check.severity().weight();
@@ -85,6 +91,8 @@ public final class Verifier {
                             rule,
                             facts(answer).sizeBytes() <= rule.maxBytes(),
                             facts(answer).sizeBytes() + " bytes");
+                case DOCUMENT_KIND -> documentKind(rule, facts(answer).reading());
+                case DOCUMENT_FIELD -> documentField(rule, facts(answer).reading(), related, today);
             };
         } catch (PatternTooSlow slow) {
             return new Check(
@@ -114,6 +122,67 @@ public final class Verifier {
                 rule.severity(),
                 rule.message(),
                 detail);
+    }
+
+    private static Check skipped(Rule rule, String detail) {
+        return new Check(rule.id(), rule.type(), Outcome.SKIPPED, rule.severity(), rule.message(), detail);
+    }
+
+    private static Check documentKind(Rule rule, Answer.@Nullable Reading reading) {
+        if (reading == null || reading.availability() != Answer.Reading.Availability.AVAILABLE) {
+            return skipped(rule, reason(reading));
+        }
+        String label = reading.kindLabel() == null ? "other" : reading.kindLabel();
+        boolean passed =
+                rule.values().stream().anyMatch(allowed -> allowed.strip().equalsIgnoreCase(label.strip()));
+        return outcome(rule, passed, "read automatically as " + label);
+    }
+
+    private static Check documentField(
+            Rule rule, Answer.@Nullable Reading reading, Map<UUID, Optional<Answer>> related, LocalDate today) {
+        if (reading == null || reading.availability() != Answer.Reading.Availability.AVAILABLE) {
+            return skipped(rule, reason(reading));
+        }
+        var field = reading.fields().stream()
+                .filter(candidate -> candidate.name().equalsIgnoreCase(rule.field()))
+                .findFirst()
+                .orElse(null);
+        if (field == null || !field.found() || field.value() == null) {
+            return outcome(rule, false, rule.field() + " was not found in the document");
+        }
+        String read = "read \"" + field.value() + "\" from \"" + field.quote() + "\"";
+        if (Boolean.FALSE.equals(field.located())) {
+            return outcome(rule, false, read + ", but that passage is not in the document");
+        }
+        if (field.located() == null) {
+            read += " (read from an image; the passage could not be located in text)";
+        }
+        Answer readAnswer = Answer.value(fieldKind(rule.fieldKind()), field.value());
+        if (rule.minDaysFromToday() != null || rule.maxDaysFromToday() != null) {
+            LocalDate date = LocalDate.parse(field.value());
+            boolean inRange = (rule.minDaysFromToday() == null
+                            || !date.isBefore(today.plusDays(rule.minDaysFromToday())))
+                    && (rule.maxDaysFromToday() == null || !date.isAfter(today.plusDays(rule.maxDaysFromToday())));
+            if (!inRange) {
+                return outcome(rule, false, read);
+            }
+        }
+        if (rule.otherRequirementId() != null) {
+            Optional<Answer> other = related.get(rule.otherRequirementId());
+            if (other == null || other.isEmpty()) {
+                return skipped(rule, "waiting for the related answer");
+            }
+            return outcome(rule, equal(readAnswer, other.get()), read);
+        }
+        return outcome(rule, true, read);
+    }
+
+    private static String reason(Answer.@Nullable Reading reading) {
+        return reading == null || reading.reason() == null ? "waiting for the document to be read" : reading.reason();
+    }
+
+    private static Kind fieldKind(Rule.@Nullable FieldKind kind) {
+        return kind == null ? Kind.TEXT : Kind.valueOf(kind.name());
     }
 
     private static Check length(Rule rule, String value) {

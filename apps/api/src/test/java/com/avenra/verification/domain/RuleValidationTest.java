@@ -87,6 +87,8 @@ class RuleValidationTest {
                 null,
                 null,
                 List.of(),
+                null,
+                null,
                 null);
         assertThat(problems(Kind.TEXT, withValues)).singleElement().asString().contains("does not belong");
     }
@@ -106,5 +108,55 @@ class RuleValidationTest {
                 .asString()
                 .contains("same kind");
         assertThat(problems(Kind.DATE, Rules.dateOrder(DATE_SIBLING, null))).hasSize(1);
+    }
+
+    @Test
+    void documentRulesAreAdvisoryAndWellFormed() {
+        UUID self = UUID.randomUUID();
+        UUID name = UUID.randomUUID();
+        UUID start = UUID.randomUUID();
+        Map<UUID, Kind> siblings = Map.of(name, Kind.TEXT, start, Kind.DATE);
+        var advisory = Rule.Severity.ADVISORY;
+        assertThat(RuleValidation.problems(
+                        List.of(
+                                Rules.documentKind(advisory, "passport", "utility bill"),
+                                Rules.documentField("Surname", Rule.FieldKind.TEXT, null, name, advisory),
+                                Rules.documentField("Date of expiry", Rule.FieldKind.DATE, 30, null, advisory)),
+                        Kind.DOCUMENT,
+                        self,
+                        siblings,
+                        1_000_000))
+                .isEmpty();
+        assertThat(problems(Kind.DOCUMENT, Rules.documentKind(Rule.Severity.BLOCKING, "passport")))
+                .singleElement()
+                .asString()
+                .contains("can only be ADVISORY");
+        assertThat(problems(Kind.TEXT, Rules.documentKind(advisory, "passport")))
+                .singleElement()
+                .asString()
+                .contains("does not apply");
+        assertThat(problems(Kind.DOCUMENT, Rules.documentKind(advisory)))
+                .singleElement()
+                .asString()
+                .contains("needs values");
+        assertThat(problems(Kind.DOCUMENT, Rules.documentKind(advisory, "other")))
+                .isNotEmpty();
+        assertThat(problems(Kind.DOCUMENT, Rules.documentKind(advisory, "<script>")))
+                .isNotEmpty();
+        assertThat(problems(Kind.DOCUMENT, Rules.documentField("1st", Rule.FieldKind.TEXT, null, null, advisory)))
+                .isNotEmpty();
+        assertThat(problems(Kind.DOCUMENT, Rules.documentField("Name", Rule.FieldKind.TEXT, 30, null, advisory)))
+                .singleElement()
+                .asString()
+                .contains("only to date fields");
+        assertThat(RuleValidation.problems(
+                        List.of(Rules.documentField("Start", Rule.FieldKind.TEXT, null, start, advisory)),
+                        Kind.DOCUMENT,
+                        self,
+                        siblings,
+                        1_000_000))
+                .singleElement()
+                .asString()
+                .contains("field's kind");
     }
 }

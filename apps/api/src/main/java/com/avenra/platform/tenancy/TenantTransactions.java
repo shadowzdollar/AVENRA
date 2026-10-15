@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -16,10 +17,13 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class TenantTransactions {
 
     private final TransactionTemplate transactions;
+    private final TransactionTemplate separate;
     private final JdbcClient jdbc;
 
     TenantTransactions(TransactionTemplate transactions, JdbcClient jdbc) {
         this.transactions = transactions;
+        this.separate = new TransactionTemplate(java.util.Objects.requireNonNull(transactions.getTransactionManager()));
+        this.separate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.jdbc = jdbc;
     }
 
@@ -31,6 +35,31 @@ public class TenantTransactions {
             set("app.request_link_token_hash", scope.requestLinkTokenHashHex());
             return work.get();
         });
+    }
+
+    /**
+     * Runs work in its own transaction that commits on its own, even if the caller's transaction
+     * later rolls back. For records that must survive a failure they describe, such as the cost of
+     * an AI call that a job will retry.
+     */
+    public <T> T runSeparately(TenantScope scope, Supplier<T> work) {
+        return separate.execute(status -> {
+            set("app.user_id", scope.userId());
+            set("app.organization_id", scope.organizationId());
+            set("app.invitation_token_hash", scope.invitationTokenHashHex());
+            set("app.request_link_token_hash", scope.requestLinkTokenHashHex());
+            return work.get();
+        });
+    }
+
+    /**
+     * The organization the current transaction acts in, as row-level security sees it; empty in a
+     * request link's or a user's scope. Must run inside {@link #run}.
+     */
+    public java.util.Optional<UUID> organizationInScope() {
+        return jdbc.sql("select app_organization_id()").query((rs, row) -> rs.getObject(1, UUID.class)).list().stream()
+                .filter(java.util.Objects::nonNull)
+                .findFirst();
     }
 
     public void runWithoutResult(TenantScope scope, Runnable work) {

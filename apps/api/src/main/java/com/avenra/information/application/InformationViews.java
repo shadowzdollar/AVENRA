@@ -11,6 +11,7 @@ import com.avenra.contract.v1.model.Requirement;
 import com.avenra.contract.v1.model.RequirementState;
 import com.avenra.contract.v1.model.Verification;
 import com.avenra.contract.v1.model.VerificationState;
+import com.avenra.document.DocumentReadings;
 import com.avenra.document.Documents;
 import com.avenra.information.domain.Completeness;
 import com.avenra.information.infrastructure.RequestLinkRepository.LinkRow;
@@ -40,14 +41,17 @@ public class InformationViews {
     private final RequirementRepository requirements;
     private final Documents documents;
     private final com.avenra.verification.Verification verification;
+    private final DocumentReadings readings;
 
     InformationViews(
             RequirementRepository requirements,
             Documents documents,
-            com.avenra.verification.Verification verification) {
+            com.avenra.verification.Verification verification,
+            DocumentReadings readings) {
         this.requirements = requirements;
         this.documents = documents;
         this.verification = verification;
+        this.readings = readings;
     }
 
     /** Requirement rows with their current items and documents. */
@@ -55,7 +59,8 @@ public class InformationViews {
             List<RequirementRow> rows,
             Map<UUID, ItemRow> currentItems,
             Map<String, Documents.StoredVersion> versions,
-            Map<UUID, com.avenra.verification.Verification.Recorded> results) {
+            Map<UUID, com.avenra.verification.Verification.Recorded> results,
+            Map<String, DocumentReadings.Reading> readings) {
 
         @Nullable
         public ItemRow current(RequirementRow row) {
@@ -81,7 +86,18 @@ public class InformationViews {
                 .toList();
         var items =
                 requirements.itemsByIds(itemIds).stream().collect(Collectors.toMap(ItemRow::id, Function.identity()));
-        return new LoadedRequirements(rows, items, versionsOf(items.values()), verification.latest(items.keySet()));
+        var documentIds = items.values().stream()
+                .map(ItemRow::documentId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        // Invisible in a request link's scope: clients never see readings.
+        return new LoadedRequirements(
+                rows,
+                items,
+                versionsOf(items.values()),
+                verification.latest(items.keySet()),
+                readings.latest(documentIds));
     }
 
     Map<String, Documents.StoredVersion> versionsOf(Collection<ItemRow> items) {
@@ -114,10 +130,54 @@ public class InformationViews {
                 .instructions(row.instructions());
         ItemRow current = loaded.current(row);
         if (current != null) {
-            requirement.currentItem(
-                    item(current, loaded.versions(), loaded.results().get(current.id())));
+            var item = item(current, loaded.versions(), loaded.results().get(current.id()));
+            if (current.documentId() != null && current.documentVersion() != null) {
+                var reading = loaded.readings().get(key(current.documentId(), current.documentVersion()));
+                if (reading != null) {
+                    item.reading(reading(reading));
+                }
+            }
+            requirement.currentItem(item);
         }
         return requirement;
+    }
+
+    /** A reading as people see it: what was found and where, never a decision (ADR-031). */
+    static com.avenra.contract.v1.model.DocumentReading reading(DocumentReadings.Reading reading) {
+        var api = new com.avenra.contract.v1.model.DocumentReading(
+                        com.avenra.contract.v1.model.DocumentReading.StatusEnum.fromValue(
+                                reading.status().name()),
+                        new ArrayList<>(),
+                        false,
+                        new ArrayList<>())
+                .reason(reading.reason())
+                .readAt(reading.readAt());
+        var result = reading.result();
+        if (result == null) {
+            return api;
+        }
+        if (result.kind() != null) {
+            api.kind(new com.avenra.contract.v1.model.DocumentReadingKind(
+                    result.kind().label(), result.kind().confidence()));
+        }
+        return api.instructionsDetected(result.instructionsDetected())
+                .model(result.model())
+                .fields(result.fields().stream()
+                        .map(field -> new com.avenra.contract.v1.model.DocumentField(
+                                        field.name(),
+                                        com.avenra.contract.v1.model.FieldKind.fromValue(field.kind()),
+                                        field.found())
+                                .value(field.value())
+                                .quote(field.quote())
+                                .page(field.page())
+                                .located(field.located()))
+                        .collect(Collectors.toCollection(ArrayList::new)))
+                .proposals(result.proposals().stream()
+                        .map(proposal -> new com.avenra.contract.v1.model.AiProposal(
+                                com.avenra.contract.v1.model.AiProposal.ToolEnum.fromValue(proposal.tool()),
+                                com.avenra.contract.v1.model.AiProposal.RiskEnum.fromValue(proposal.risk()),
+                                proposal.reason()))
+                        .collect(Collectors.toCollection(ArrayList::new)));
     }
 
     static InformationItem item(ItemRow row, Map<String, Documents.StoredVersion> versions) {
@@ -212,7 +272,8 @@ public class InformationViews {
                                                         check.outcome().name()),
                                                 com.avenra.contract.v1.model.RuleSeverity.fromValue(
                                                         check.severity().name()),
-                                                check.message())
+                                                check.message(),
+                                                check.rule().aiDerived())
                                         .ruleId(check.ruleId())
                                         .detail(check.detail()))
                                 .toList(),
