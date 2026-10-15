@@ -45,7 +45,7 @@ naming the phase that will close it. A deferral is never silent.
 | 2 | [Identity](phase-02-identity.md) | Complete (2026-10-13) |
 | 3 | [Core business objects](phase-03-core-objects.md) | Complete (2026-10-14) |
 | 4 | [Work execution](phase-04-execution.md) | Complete (2026-10-14) |
-| 5 | [Verification](phase-05-verification.md) | In progress |
+| 5 | [Verification](phase-05-verification.md) | Complete (2026-10-15) |
 | 6 | AI foundation | Not started |
 | 7 | Agent execution | Not started |
 | 8 | Integrations | Not started |

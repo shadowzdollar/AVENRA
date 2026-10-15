@@ -1,6 +1,6 @@
 # Phase 5: Verification
 
-**Status:** In progress
+**Status:** Complete (2026-10-15)
 **Guidelines:** §21–§25, §50, §59, §101, §121 (Phase 5), §128, §136–§137
 **Master Project:** §12 steps 7 and 10–11, §14.4, §16.4
 
@@ -60,7 +60,7 @@ an immutable, hashed evidence manifest: verified completed work.
 | 5.10 | Completion criteria are computed server-side, shown, and enforced | `WorkFlowIT` (`COMPLETION_CRITERIA_UNMET` with the unmet criteria), `VerificationIT.completionIsGuarded…`, `…anAcceptedAnswerThatStopsMatching…` | ☑ |
 | 5.11 | New tables have row-level security and isolation tests | `WorkRowLevelSecurityIT` (verification tables, link decision policy); mutation check: 3 of 3 broken guards caught; `VerificationIT.anotherTenantSeesNoneOfIt` | ☑ |
 | 5.12 | Web: rules, check results, client feedback, criteria and evidence work end to end | `e2e/verification.spec.ts` (checks defined in the browser, immediate client feedback, automatic acceptance, proof intact), `rule-editor.test.tsx` | ☑ |
-| 5.13 | Metrics, threat model, CI green, hardening pass recorded | `docs/security/`, CI, this file | ☐ |
+| 5.13 | Metrics, threat model, CI green, hardening pass recorded | `avenra.verification.completed` (`VerificationIT`); [threat-model-verification.md](../security/threat-model-verification.md) (11 threats); [verification.md](../subsystems/verification.md); CI run 38680343397 on PR #22: all 10 jobs green (69 unit + 135 integration tests, three browser journeys against the built images, clean image scans); hardening record below | ☑ |
 
 ## Declared deferrals
 
@@ -104,3 +104,8 @@ Findings fixed during the phase, before merge:
   be replaced or reconfirmed with an override.
 - The textbook catastrophic patterns finish instantly on Java 25, so the test
   did not prove the time budget; it now uses a measured 35-second pattern.
+- The breaking-change gate flagged the new exception type. Rather than weaken
+  the gate, intentional pre-release changes are listed with their full
+  oasdiff message and a reason (ADR-008 amended); the exception type is
+  documented as open-ended. Verified locally with the same oasdiff version
+  before CI.
