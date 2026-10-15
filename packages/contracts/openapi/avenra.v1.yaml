@@ -3384,6 +3384,8 @@ components:
           - MALWARE_FOUND
           - HUMAN_REQUIRED
           - INCONSISTENT_INFORMATION
+          description: 'What raised the exception. New types are added over time: treat a type you do
+            not know as a generic exception.'
         severity:
           type: string
           enum:

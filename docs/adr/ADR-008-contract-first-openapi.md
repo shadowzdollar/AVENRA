@@ -33,3 +33,14 @@ structured errors, and contract tests to prevent frontend/backend drift
 - Slightly more upfront work per endpoint; in exchange the frontend and
   backend cannot silently disagree.
 - Generator versions are pinned; generated code is not committed.
+
+## Amendment (Phase 5, 2026-10-15)
+
+The CI gate compares with `main`, which is stricter than "the last released
+contract". Until the first release, an intentional breaking change may be
+accepted by listing its oasdiff message in
+`packages/contracts/accepted-breaking-changes.txt` with the reason in the
+contracts README; the list is reviewed like code. Enums in responses that are
+expected to grow (such as exception types) are documented as open: clients
+must handle unknown values.
+
