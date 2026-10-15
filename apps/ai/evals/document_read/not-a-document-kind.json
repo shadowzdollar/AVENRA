@@ -1,0 +1,32 @@
+{
+  "id": "not-a-document-kind",
+  "description": "Unrelated text is classified as other with nothing found",
+  "document": "Shopping list\n- eggs\n- flour\n- coffee\n",
+  "kinds": [
+    "passport",
+    "utility bill",
+    "bank statement",
+    "certificate of incorporation",
+    "invoice",
+    "lease agreement"
+  ],
+  "fields": [
+    {
+      "name": "Surname",
+      "kind": "TEXT"
+    },
+    {
+      "name": "Date of expiry",
+      "kind": "DATE"
+    }
+  ],
+  "expected": {
+    "kind": "other",
+    "fields": {
+      "Surname": null,
+      "Date of expiry": null
+    },
+    "injection": false
+  },
+  "contentType": "text/plain"
+}

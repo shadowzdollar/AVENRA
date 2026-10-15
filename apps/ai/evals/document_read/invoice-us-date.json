@@ -1,0 +1,37 @@
+{
+  "id": "invoice-us-date",
+  "description": "Invoice with a US-style date and a total",
+  "document": "INVOICE No. 2026-0412\nFrom: Fieldstone Consulting LLC\nBill to: Harbor Logistics Inc.\nInvoice date: March 5, 2027\nTotal due: $4,800.00\nTerms: Net 30\n",
+  "kinds": [
+    "passport",
+    "utility bill",
+    "bank statement",
+    "certificate of incorporation",
+    "invoice",
+    "lease agreement"
+  ],
+  "fields": [
+    {
+      "name": "Invoice date",
+      "kind": "DATE"
+    },
+    {
+      "name": "Total due",
+      "kind": "NUMBER"
+    },
+    {
+      "name": "Bill to",
+      "kind": "TEXT"
+    }
+  ],
+  "expected": {
+    "kind": "invoice",
+    "fields": {
+      "Invoice date": "2027-03-05",
+      "Total due": "4800.00",
+      "Bill to": "Harbor Logistics Inc."
+    },
+    "injection": false
+  },
+  "contentType": "text/plain"
+}

@@ -1,0 +1,33 @@
+{
+  "id": "csv-export",
+  "description": "A CSV export",
+  "contentType": "text/csv",
+  "document": "field,value\nAccount holder,Mei Lin\nStatement date,2026-07-31\nAmount due,96.10\n",
+  "kinds": [
+    "passport",
+    "utility bill",
+    "bank statement",
+    "certificate of incorporation",
+    "invoice",
+    "lease agreement"
+  ],
+  "fields": [
+    {
+      "name": "Account holder",
+      "kind": "TEXT"
+    },
+    {
+      "name": "Amount due",
+      "kind": "NUMBER"
+    }
+  ],
+  "expected": {
+    "kind": "utility bill",
+    "fields": {
+      "Account holder": "Mei Lin",
+      "Amount due": "96.10"
+    },
+    "injection": false
+  },
+  "note": "The kind is ambiguous from a CSV; 'utility bill' is the closest of the allowed labels."
+}

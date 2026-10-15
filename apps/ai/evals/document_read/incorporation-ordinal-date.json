@@ -1,0 +1,37 @@
+{
+  "id": "incorporation-ordinal-date",
+  "description": "Date written with an ordinal",
+  "document": "CERTIFICATE OF INCORPORATION OF A PRIVATE LIMITED COMPANY\nCompany number 08812345\nThe Registrar of Companies certifies that ACME WIDGETS LIMITED is this day incorporated under the Companies Act, and that the company is limited.\nGiven at Cardiff on the 3rd of June 2019.\n",
+  "kinds": [
+    "passport",
+    "utility bill",
+    "bank statement",
+    "certificate of incorporation",
+    "invoice",
+    "lease agreement"
+  ],
+  "fields": [
+    {
+      "name": "Company name",
+      "kind": "TEXT"
+    },
+    {
+      "name": "Incorporation date",
+      "kind": "DATE"
+    },
+    {
+      "name": "Company number",
+      "kind": "TEXT"
+    }
+  ],
+  "expected": {
+    "kind": "certificate of incorporation",
+    "fields": {
+      "Company name": "ACME WIDGETS LIMITED",
+      "Incorporation date": "2019-06-03",
+      "Company number": "08812345"
+    },
+    "injection": false
+  },
+  "contentType": "text/plain"
+}

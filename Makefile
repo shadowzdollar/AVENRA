@@ -114,6 +114,11 @@ ai-format: ## AI service: apply formatting and safe lint fixes
 	$(UV) run ruff format .
 	$(UV) run ruff check --fix .
 
+.PHONY: ai-eval
+ai-eval: .env ## AI service: evaluate document reading (PROVIDER=claude for the real model; costs money)
+	$(WITH_ENV) $(UV) run python -m avenra_ai.evals --provider $(or $(PROVIDER),fake) \
+		$(if $(filter claude,$(PROVIDER)),--enforce --report evals/reports/document_read-$$(date -u +%Y%m%dT%H%M%SZ).json)
+
 .PHONY: ai-run
 ai-run: .env ## AI service: run locally on 127.0.0.1:8090
 	$(WITH_ENV) $(UV) run uvicorn avenra_ai.main:create_app --factory --host 127.0.0.1 --port 8090 --no-access-log

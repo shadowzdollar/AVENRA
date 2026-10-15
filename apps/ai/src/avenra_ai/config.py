@@ -6,7 +6,7 @@ Missing or invalid values stop the service at startup.
 from enum import StrEnum
 from typing import Literal, Self
 
-from pydantic import AliasChoices, Field, SecretStr, model_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     request_timeout_seconds: float = Field(default=120.0, gt=0, le=600)
     # Longest text sent in one reading; longer documents go through retrieval (ADR-031).
     max_document_chars: int = Field(default=120_000, ge=1_000, le=800_000)
+
+    @field_validator("anthropic_api_key", mode="before")
+    @classmethod
+    def _blank_key_is_no_key(cls, value: object) -> object:
+        # `ANTHROPIC_API_KEY=` in an env file means "not configured".
+        return None if isinstance(value, str) and not value.strip() else value
 
     @model_validator(mode="after")
     def _provider_is_usable(self) -> Self:

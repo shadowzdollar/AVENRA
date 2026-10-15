@@ -1,0 +1,37 @@
+{
+  "id": "utility-bill",
+  "description": "Electricity bill with amount due and statement date",
+  "document": "Brightwater Energy Ltd\nElectricity bill\nAccount holder: Samuel Okafor\nService address: 14 Harbour Road, Portview\nStatement date: 2026-08-31\nAmount due: 182.40\nPay by: 2026-09-21\n",
+  "kinds": [
+    "passport",
+    "utility bill",
+    "bank statement",
+    "certificate of incorporation",
+    "invoice",
+    "lease agreement"
+  ],
+  "fields": [
+    {
+      "name": "Account holder",
+      "kind": "TEXT"
+    },
+    {
+      "name": "Statement date",
+      "kind": "DATE"
+    },
+    {
+      "name": "Amount due",
+      "kind": "NUMBER"
+    }
+  ],
+  "expected": {
+    "kind": "utility bill",
+    "fields": {
+      "Account holder": "Samuel Okafor",
+      "Statement date": "2026-08-31",
+      "Amount due": "182.40"
+    },
+    "injection": false
+  },
+  "contentType": "text/plain"
+}

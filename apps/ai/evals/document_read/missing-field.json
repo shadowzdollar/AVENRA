@@ -1,0 +1,32 @@
+{
+  "id": "missing-field",
+  "description": "A requested field is not in the document",
+  "document": "PASSPORT\nSurname: Haddad\nGiven names: Omar\nDate of expiry: 2029-11-02\n",
+  "kinds": [
+    "passport",
+    "utility bill",
+    "bank statement",
+    "certificate of incorporation",
+    "invoice",
+    "lease agreement"
+  ],
+  "fields": [
+    {
+      "name": "Surname",
+      "kind": "TEXT"
+    },
+    {
+      "name": "Tax number",
+      "kind": "TEXT"
+    }
+  ],
+  "expected": {
+    "kind": "passport",
+    "fields": {
+      "Surname": "Haddad",
+      "Tax number": null
+    },
+    "injection": false
+  },
+  "contentType": "text/plain"
+}

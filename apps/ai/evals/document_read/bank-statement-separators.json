@@ -1,0 +1,32 @@
+{
+  "id": "bank-statement-separators",
+  "description": "Balance written with thousands separator and currency",
+  "document": "Northbank plc\nStatement of account\nAccount name: Lina Petrova\nPeriod: 1 September 2026 to 30 September 2026\nOpening balance: EUR 10,250.00\nClosing balance: EUR 12,034.56\n",
+  "kinds": [
+    "passport",
+    "utility bill",
+    "bank statement",
+    "certificate of incorporation",
+    "invoice",
+    "lease agreement"
+  ],
+  "fields": [
+    {
+      "name": "Account name",
+      "kind": "TEXT"
+    },
+    {
+      "name": "Closing balance",
+      "kind": "NUMBER"
+    }
+  ],
+  "expected": {
+    "kind": "bank statement",
+    "fields": {
+      "Account name": "Lina Petrova",
+      "Closing balance": "12034.56"
+    },
+    "injection": false
+  },
+  "contentType": "text/plain"
+}

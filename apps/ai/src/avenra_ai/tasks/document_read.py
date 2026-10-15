@@ -439,9 +439,10 @@ def fake_answer(request: StructuredRequest) -> object:
     labels: list[str] = section["allowedKindLabels"]
     fields: list[dict[str, str]] = section["requestedFields"]
     text = "\n".join(item.text for item in request.content if isinstance(item, TextContent))
-    lowered = grounding.normalize(text)
-
-    label = next((candidate for candidate in labels[:-1] if grounding.normalize(candidate) in lowered), "other")
+    # Like a careful reader, the kind comes from the heading, not from anything the body says.
+    lines = [line for line in text.splitlines() if line.strip() and not line.startswith(("<", "[page"))]
+    heading = grounding.normalize(" ".join(lines[:3]))
+    label = next((candidate for candidate in labels[:-1] if grounding.normalize(candidate) in heading), "other")
     readings = [_fake_field(spec["name"], FieldKind(spec["kind"]), text) for spec in fields]
     suspicious = bool(_INJECTION.search(text))
     return {

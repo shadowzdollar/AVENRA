@@ -64,3 +64,9 @@ def test_claude_without_a_key_is_refused() -> None:
 def test_the_fake_provider_never_runs_in_production() -> None:
     with pytest.raises(ValidationError, match="production"):
         settings(environment=Environment.PRODUCTION)
+
+
+def test_a_blank_key_means_no_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AVENRA_AI_ENVIRONMENT", "LOCAL")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
+    assert Settings().selected_provider is ProviderName.FAKE

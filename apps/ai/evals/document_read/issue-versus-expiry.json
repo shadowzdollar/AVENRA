@@ -1,0 +1,23 @@
+{
+  "id": "issue-versus-expiry",
+  "description": "Two dates; only expiry is asked for",
+  "document": "NATIONAL IDENTITY CARD\nName: Ana Souza\nDate of issue: 2020-01-15\nDate of expiry: 2030-01-14\n",
+  "kinds": [
+    "passport",
+    "national identity card"
+  ],
+  "fields": [
+    {
+      "name": "Date of expiry",
+      "kind": "DATE"
+    }
+  ],
+  "expected": {
+    "kind": "national identity card",
+    "fields": {
+      "Date of expiry": "2030-01-14"
+    },
+    "injection": false
+  },
+  "contentType": "text/plain"
+}
