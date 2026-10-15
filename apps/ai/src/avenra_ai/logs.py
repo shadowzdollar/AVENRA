@@ -8,6 +8,8 @@ from datetime import UTC, datetime
 from typing import Any, override
 
 request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
+# W3C trace id from the caller's `traceparent`, so a call is found from either service.
+trace_id_var: ContextVar[str | None] = ContextVar("trace_id", default=None)
 
 # Attributes every LogRecord has; anything else was passed through `extra=`.
 _STANDARD_ATTRIBUTES = frozenset(vars(logging.makeLogRecord({})).keys()) | {"message", "asctime"}
@@ -29,6 +31,9 @@ class JsonFormatter(logging.Formatter):
         request_id = request_id_var.get()
         if request_id is not None:
             entry["requestId"] = request_id
+        trace_id = trace_id_var.get()
+        if trace_id is not None:
+            entry["trace"] = {"id": trace_id}
         for key, value in vars(record).items():
             if key not in _STANDARD_ATTRIBUTES:
                 entry[key] = value

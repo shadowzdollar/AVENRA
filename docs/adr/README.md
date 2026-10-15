@@ -43,3 +43,7 @@ Statuses: `Proposed` → `Accepted` → (`Superseded by ADR-NNN` | `Deprecated`)
 | [026](ADR-026-information-and-verification-modules.md) | Information and verification modules | Accepted |
 | [027](ADR-027-verification-model.md) | Verification model | Accepted |
 | [028](ADR-028-evidence-and-completion.md) | Evidence and completion | Accepted |
+| [029](ADR-029-ai-service-and-providers.md) | AI service and model providers | Accepted |
+| [030](ADR-030-ai-opt-in-and-invocation-records.md) | AI processing opt-in and invocation records | Accepted |
+| [031](ADR-031-document-reading-and-advisory-checks.md) | Document reading and advisory AI checks | Accepted |
+| [032](ADR-032-ai-evaluation.md) | AI evaluation | Accepted |

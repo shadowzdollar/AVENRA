@@ -1,6 +1,6 @@
 # ADR-003: AI provider abstraction
 
-**Status:** Accepted (implemented in Phase 6)
+**Status:** Accepted (implemented in Phase 6, ADR-029)
 
 ## Context
 
