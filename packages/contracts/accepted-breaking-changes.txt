@@ -1,4 +1,4 @@
-GET /api/v1/organizations/{organizationId}/exceptions added the new 'INCONSISTENT_INFORMATION' enum value to the 'items/type' response property
-GET /api/v1/organizations/{organizationId}/exceptions/{exceptionId} added the new 'INCONSISTENT_INFORMATION' enum value to the 'type' response property
-PATCH /api/v1/organizations/{organizationId}/exceptions/{exceptionId} added the new 'INCONSISTENT_INFORMATION' enum value to the 'type' response property
-POST /api/v1/organizations/{organizationId}/exceptions/{exceptionId}/transitions added the new 'INCONSISTENT_INFORMATION' enum value to the 'type' response property
+GET /api/v1/organizations/{organizationId}/exceptions added the new `INCONSISTENT_INFORMATION` enum value to the `items/type` response property for the response status `200`
+GET /api/v1/organizations/{organizationId}/exceptions/{exceptionId} added the new `INCONSISTENT_INFORMATION` enum value to the `type` response property for the response status `200`
+PATCH /api/v1/organizations/{organizationId}/exceptions/{exceptionId} added the new `INCONSISTENT_INFORMATION` enum value to the `type` response property for the response status `200`
+POST /api/v1/organizations/{organizationId}/exceptions/{exceptionId}/transitions added the new `INCONSISTENT_INFORMATION` enum value to the `type` response property for the response status `200`
