@@ -42,7 +42,7 @@
         <datasource-micrometer.version>2.3.0</datasource-micrometer.version>
         <bouncycastle.version>1.86</bouncycastle.version>
         <!-- S3 client for document storage (ADR-019). -->
-        <aws-sdk.version>2.55.10</aws-sdk.version>
+        <aws-sdk.version>2.55.15</aws-sdk.version>
         <!-- The API contract is the source of truth (ADR-008). -->
         <avenra.contract>${project.basedir}/../../packages/contracts/openapi/avenra.v1.yaml</avenra.contract>
     </properties>
