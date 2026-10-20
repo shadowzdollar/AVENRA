@@ -18,7 +18,8 @@ help: ## List available commands
 .env:
 	cp .env.example .env
 	sed -i "s|^AVENRA_CRYPTO_KEYS_LOCAL1=.*|AVENRA_CRYPTO_KEYS_LOCAL1=$$(openssl rand -base64 32)|" .env
-	@echo "Created .env from .env.example with a new local encryption key (local-only values)."
+	sed -i "s|^AVENRA_AI_SERVICE_TOKEN=.*|AVENRA_AI_SERVICE_TOKEN=$$(openssl rand -hex 32)|" .env
+	@echo "Created .env from .env.example with a new local encryption key and AI service token (local-only values)."
 
 .PHONY: setup
 setup: .env js-install ## Prepare a fresh clone for local development

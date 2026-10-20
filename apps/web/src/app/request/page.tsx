@@ -86,6 +86,12 @@ function Request({ token }: { token: string }) {
       <p className="text-xs text-text-secondary">
         Files are checked for viruses before they are accepted. Do not forward this link: anyone with it can answer.
       </p>
+      {data.documentsReadAutomatically ? (
+        <p className="text-xs text-text-secondary" data-testid="reading-notice">
+          {data.organizationName} has documents read automatically to check them, using an AI service. People at{" "}
+          {data.organizationName} make every decision about what you send.
+        </p>
+      ) : null}
     </div>
   );
 }

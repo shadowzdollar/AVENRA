@@ -24,15 +24,20 @@ export function ChecksView({ result }: { result: VerificationResult }) {
     <div className="text-sm" data-testid="checks">
       <p className={`font-medium ${status.tone}`} data-testid="checks-status">
         {status.label}
-        {result.confidence !== undefined ? <span className="font-normal text-text-secondary"> · confidence {Math.round(result.confidence * 100)}%</span> : null}
+        {result.confidence !== undefined && result.confidence !== null ? <span className="font-normal text-text-secondary"> · confidence {Math.round(result.confidence * 100)}%</span> : null}
       </p>
       <ul className="mt-1 flex flex-col gap-0.5">
         {result.checks.map((check, index) => (
           <li key={index} className={check.outcome === "FAILED" ? "text-error" : check.outcome === "SKIPPED" ? "text-text-secondary" : ""}>
             <span aria-hidden>{OUTCOME[check.outcome]} </span>
             {check.outcome === "PASSED" ? `${check.message} — ok` : check.message}
-            {check.outcome === "SKIPPED" ? " (waiting for the related answer)" : ""}
-            {check.severity === "ADVISORY" ? <span className="text-text-secondary"> · advisory</span> : null}
+            {check.outcome === "SKIPPED" ? ` (${check.detail ?? "waiting for the related answer"})` : ""}
+            {check.aiDerived && check.outcome !== "SKIPPED" && check.detail ? <span className="text-text-secondary"> — {check.detail}</span> : null}
+            {check.aiDerived ? (
+              <span className="text-text-secondary"> · read automatically, advisory</span>
+            ) : check.severity === "ADVISORY" ? (
+              <span className="text-text-secondary"> · advisory</span>
+            ) : null}
           </li>
         ))}
       </ul>
