@@ -203,7 +203,12 @@ class FollowUps {
             if (missing > 0) {
                 // The work module raises the exception in this transaction.
                 events.publishEvent(new InformationEvents.RequestExpiredIncomplete(
-                        org, link.workId(), linkId, ClientRequestService.mask(link.recipientEmail()), missing));
+                        org,
+                        link.workId(),
+                        linkId,
+                        ClientRequestService.mask(link.recipientEmail()),
+                        missing,
+                        link.createdBy()));
             }
         });
     }

@@ -63,6 +63,39 @@ public class OrganizationAccess {
                 .name();
     }
 
+    /**
+     * The people of the organization whose role grants a permission, for deciding who is told about
+     * something (notifications). Must run in that organization's scope.
+     */
+    public java.util.List<UUID> usersWithPermission(UUID organizationId, Permission permission) {
+        return organizations.listMembers(organizationId).stream()
+                .filter(member -> member.role().grants(permission))
+                .map(member -> member.userId())
+                .toList();
+    }
+
+    /** The person behind a membership of the organization, if it still exists. */
+    public java.util.Optional<UUID> userOfMembership(UUID organizationId, UUID membershipId) {
+        return organizations.listMembers(organizationId).stream()
+                .filter(member -> member.id().equals(membershipId))
+                .map(member -> member.userId())
+                .findFirst();
+    }
+
+    /** The organization's owners, who receive escalations (ADR-035). */
+    public java.util.List<UUID> owners(UUID organizationId) {
+        return organizations.listMembers(organizationId).stream()
+                .filter(member -> member.role() == Role.OWNER)
+                .map(member -> member.userId())
+                .toList();
+    }
+
+    /** Whether the person is still a member of the organization. */
+    public boolean isMember(UUID organizationId, UUID userId) {
+        return organizations.listMembers(organizationId).stream()
+                .anyMatch(member -> member.userId().equals(userId));
+    }
+
     public void runWithoutResult(
             UUID userId, UUID organizationId, Permission permission, java.util.function.Consumer<Access> work) {
         run(userId, organizationId, permission, access -> {
