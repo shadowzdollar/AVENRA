@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { highRiskWaiting, isActive, planNeedsApproval, RUN_STATUS } from "./agent-run";
 import { formatCost } from "./ai-settings";
 import { ChecksView } from "./checks-view";
 import { ReadingView } from "./reading-view";
@@ -180,5 +181,55 @@ describe("formatCost", () => {
   it("shows small amounts precisely", () => {
     expect(formatCost(540)).toBe("$0.0005");
     expect(formatCost(2_500_000)).toBe("$2.50");
+  });
+});
+
+describe("agent runs", () => {
+  const step = (position: number, risk: "MEDIUM" | "HIGH", status: "PROPOSED" | "SUCCEEDED" = "PROPOSED") => ({
+    id: `s${position}`,
+    position,
+    tool: risk === "HIGH" ? ("send_information_request" as const) : ("create_requirement" as const),
+    risk,
+    input: {},
+    status,
+    needsOwnApproval: risk === "HIGH",
+    attempts: 0,
+  });
+  const run = (status: "AWAITING_APPROVAL" | "RUNNING" | "COMPLETED", steps: ReturnType<typeof step>[]) => ({
+    id: "r",
+    workId: "w",
+    capability: "information.plan" as const,
+    status,
+    startedByUserId: "u",
+    budget: {
+      maxModelCalls: 1,
+      maxToolCalls: 20,
+      maxSideEffects: 1,
+      maxCostMicros: 200000,
+      deadline: "2026-10-20T10:00:00Z",
+      modelCalls: 1,
+      toolCalls: 0,
+      sideEffects: 0,
+      costMicros: 0,
+    },
+    steps,
+    createdAt: "2026-10-20T09:00:00Z",
+  });
+
+  it("asks for the plan's approval first, then for each high-risk step", () => {
+    const fresh = run("AWAITING_APPROVAL", [step(1, "MEDIUM"), step(2, "HIGH")]);
+    expect(planNeedsApproval(fresh)).toBe(true);
+    expect(highRiskWaiting(fresh).map((s) => s.id)).toEqual(["s2"]);
+    const atTheEmail = run("AWAITING_APPROVAL", [step(1, "MEDIUM", "SUCCEEDED"), step(2, "HIGH")]);
+    expect(planNeedsApproval(atTheEmail)).toBe(false);
+    expect(highRiskWaiting(atTheEmail)).toHaveLength(1);
+  });
+
+  it("keeps polling only while the run moves on its own", () => {
+    expect(isActive(run("RUNNING", []))).toBe(true);
+    expect(isActive(run("AWAITING_APPROVAL", []))).toBe(false);
+    expect(isActive(run("COMPLETED", []))).toBe(false);
+    expect(isActive(undefined)).toBe(false);
+    expect(RUN_STATUS.AWAITING_APPROVAL).toBe("Waiting for your decision");
   });
 });

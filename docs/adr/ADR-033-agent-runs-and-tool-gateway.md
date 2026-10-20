@@ -53,7 +53,9 @@ applies them to the first agent capability: planning a work item.
   and compares it with what the step meant to do (the requirement exists on
   the work; the task exists; an active request link to the client exists).
   A step succeeds only when verified.
-- **Budgets (§131), product defaults:** 1 model call, 20 tool calls,
+- **Budgets (§131), product defaults:** 1 plan (one model call that produced
+  an answer; a transient provider failure is retried up to 3 times and each
+  attempt is recorded as an invocation), 20 tool calls,
   1 external side effect, 200,000 micro-dollars (0.20 USD), 1 hour; 3 attempts
   per step. Exceeding any of them stops the run (`STOPPED`, reason recorded),
   raises a `HUMAN_REQUIRED` exception on the work and so a review task. A
@@ -65,9 +67,13 @@ applies them to the first agent capability: planning a work item.
 - **Planning opt-in (amends ADR-030).** Planning sends work details to the
   model provider, so `ai_settings` gains `work_planning`, off by default,
   owner-only, audited, and counted against the same daily call limit.
-- **Records.** Runs and steps are tenant-owned with row-level security; the
-  planning call is an AI invocation (purpose `work.plan`); every executed step
-  is also an execution record (§29) and an audit event (`agent.*`).
+- **Records.** Runs and steps are tenant-owned with row-level security and are
+  the execution record of the agent (§29): who started and approved each step,
+  each attempt, its result or error and its verification. The planning call is
+  an AI invocation (purpose `work.plan`); starts, approvals, every executed step
+  and every end are audit events (`agent.*`). The tool and input of a step
+  cannot change after planning, and the database refuses a step that runs
+  without a recorded approval.
 
 ## Alternatives
 

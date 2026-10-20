@@ -7,6 +7,7 @@ import { useState, type FormEvent } from "react";
 import type { components } from "@avenra/contracts";
 import { AppShell } from "@/components/app-shell";
 import { Alert, Button, Card, Field } from "@/components/ui";
+import { AgentRuns } from "@/components/agent-run";
 import { useAiSettings } from "@/components/ai-settings";
 import { ChecksView } from "@/components/checks-view";
 import { ReadingView } from "@/components/reading-view";
@@ -911,6 +912,7 @@ function History({ ids }: { ids: Ids }) {
 
 function Work({ ids }: { ids: Ids }) {
   const permissions = usePermissions(ids.organizationId);
+  const aiSettings = useAiSettings(ids.organizationId);
   const work = useQuery({
     queryKey: ["organization", ids.organizationId, "work", ids.workId],
     queryFn: async () => unwrap(await api.GET("/api/v1/organizations/{organizationId}/work/{workId}", { params: { path: ids } })),
@@ -946,6 +948,14 @@ function Work({ ids }: { ids: Ids }) {
         owner={members.data?.find((member) => member.membershipId === data.ownerMembershipId)?.displayName}
       />
       <Exceptions ids={ids} canUpdate={permissions.has("work.update")} />
+      {!closed ? (
+        <AgentRuns
+          ids={ids}
+          canStart={permissions.has("work.update")}
+          canApprove={permissions.has("work.approve")}
+          planningEnabled={aiSettings.data?.workPlanning ?? false}
+        />
+      ) : null}
       <Card title="What is required">
         {data.requirements.length === 0 ? <p className="text-sm text-text-secondary">Nothing is required yet.</p> : null}
         <ul className="divide-y divide-border">

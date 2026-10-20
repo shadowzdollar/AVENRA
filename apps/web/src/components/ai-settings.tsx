@@ -34,11 +34,14 @@ export function AiSettingsCard({ organizationId, permissions }: { organizationId
       unwrap(await api.GET("/api/v1/organizations/{organizationId}/ai/usage", { params: { path: { organizationId } } })),
   });
   const update = useMutation({
-    mutationFn: async (documentReading: boolean) =>
+    mutationFn: async (change: { documentReading?: boolean; workPlanning?: boolean }) =>
       unwrap(
         await api.PUT("/api/v1/organizations/{organizationId}/ai/settings", {
           params: { path: { organizationId } },
-          body: { documentReading },
+          body: {
+            documentReading: change.documentReading ?? settings.data?.documentReading ?? false,
+            workPlanning: change.workPlanning ?? settings.data?.workPlanning ?? false,
+          },
         }),
       ),
     onSettled: () => void queries.invalidateQueries({ queryKey: ["organization", organizationId, "ai"] }),
@@ -46,7 +49,7 @@ export function AiSettingsCard({ organizationId, permissions }: { organizationId
   const on = settings.data?.documentReading ?? false;
 
   return (
-    <Card title="Automatic document reading">
+    <Card title="AI assistance">
       <div className="flex flex-col gap-3 text-sm" data-testid="ai-settings">
         <p>
           When this is on, documents your clients upload are read automatically to check them against the checks you define: what
@@ -58,13 +61,31 @@ export function AiSettingsCard({ organizationId, permissions }: { organizationId
         </p>
         {canManage ? (
           <div>
-            <Button variant={on ? "secondary" : "primary"} busy={update.isPending} onClick={() => update.mutate(!on)}>
+            <Button variant={on ? "secondary" : "primary"} busy={update.isPending} onClick={() => update.mutate({ documentReading: !on })}>
               {on ? "Switch reading off" : "Switch reading on"}
             </Button>
           </div>
         ) : (
           <p className="text-text-secondary">Only an owner can change this.</p>
         )}
+        <p>
+          The assistant can also plan a work item: it reads the title and description of the work and proposes what to ask the client for.
+          Nothing happens until a person approves the plan. Work details are sent to the AI provider.
+        </p>
+        <p className="font-medium" data-testid="planning-status">
+          Planning is {settings.data?.workPlanning ? "on" : "off"}.
+        </p>
+        {canManage ? (
+          <div>
+            <Button
+              variant={settings.data?.workPlanning ? "secondary" : "primary"}
+              busy={update.isPending}
+              onClick={() => update.mutate({ workPlanning: !(settings.data?.workPlanning ?? false) })}
+            >
+              {settings.data?.workPlanning ? "Switch planning off" : "Switch planning on"}
+            </Button>
+          </div>
+        ) : null}
         {update.error ? <Alert tone="error">{update.error instanceof ApiError ? update.error.message : "Something went wrong."}</Alert> : null}
         {usage.data ? (
           <div data-testid="ai-usage">
