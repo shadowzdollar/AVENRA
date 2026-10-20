@@ -63,6 +63,14 @@ public class OrganizationAccess {
                 .name();
     }
 
+    /** How long the organization's request links stay valid unless the sender chooses (ADR-036). */
+    public int requestLinkDays(UUID organizationId) {
+        return organizations
+                .findOrganization(organizationId)
+                .orElseThrow(ApiException::notFound)
+                .requestLinkDays();
+    }
+
     /**
      * The people of the organization whose role grants a permission, for deciding who is told about
      * something (notifications). Must run in that organization's scope.

@@ -57,7 +57,8 @@ class OrganizationsController implements OrganizationsApi {
 
     @Override
     public ResponseEntity<Organization> updateOrganization(UUID organizationId, UpdateOrganizationRequest body) {
-        return ResponseEntity.ok(organizations.rename(userId(), organizationId, body.getName()));
+        return ResponseEntity.ok(
+                organizations.update(userId(), organizationId, body.getName(), body.getRequestLinkDays()));
     }
 
     @Override

@@ -50,3 +50,4 @@ Statuses: `Proposed` → `Accepted` → (`Superseded by ADR-NNN` | `Deprecated`)
 | [033](ADR-033-agent-runs-and-tool-gateway.md) | Agent runs, the tool gateway and approval gates | Accepted |
 | [034](ADR-034-integrations.md) | Integration model, webhooks and storage export | Accepted |
 | [035](ADR-035-notifications.md) | Notifications | Accepted |
+| [036](ADR-036-administration.md) | Administration, usage and health | Accepted |

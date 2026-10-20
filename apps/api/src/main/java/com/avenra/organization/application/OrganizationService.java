@@ -19,6 +19,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 /** Creating, listing and renaming organizations; also serves the identity module's directory. */
@@ -61,7 +62,7 @@ public class OrganizationService implements MembershipDirectory {
                             organizations.insertMembership(membershipId, id, userId, Role.OWNER, now);
                             audit.record(AuditLog.Event.of("organization.created", id, userId)
                                     .resource("organization", id));
-                            return toApi(new OrganizationRow(id, name, now));
+                            return toApi(new OrganizationRow(id, name, now, DEFAULT_REQUEST_LINK_DAYS));
                         }));
     }
 
@@ -85,12 +86,34 @@ public class OrganizationService implements MembershipDirectory {
                         .orElseThrow(ApiException::notFound));
     }
 
-    public Organization rename(UUID userId, UUID organizationId, String rawName) {
-        String name = requireName(rawName);
+    /** Request links are valid this long unless the organization chooses otherwise (ADR-036). */
+    public static final int DEFAULT_REQUEST_LINK_DAYS = 14;
+
+    /**
+     * Changes the organization's name and defaults (ADR-036).
+     *
+     * @param rawName the new name, or {@code null} to keep it
+     * @param requestLinkDays the new request-link validity, or {@code null} to keep it
+     */
+    public Organization update(
+            UUID userId, UUID organizationId, @Nullable String rawName, @Nullable Integer requestLinkDays) {
         return access.run(userId, organizationId, Permission.ORGANIZATION_MANAGE, granted -> {
-            organizations.renameOrganization(organizationId, name, OffsetDateTime.now(clock));
-            audit.record(AuditLog.Event.of("organization.renamed", organizationId, userId)
-                    .resource("organization", organizationId));
+            var current = organizations.findOrganization(organizationId).orElseThrow(ApiException::notFound);
+            String name = rawName == null ? current.name() : requireName(rawName);
+            int days = requestLinkDays == null ? current.requestLinkDays() : requestLinkDays;
+            if (days < 1 || days > 30) {
+                throw ApiException.invalid("requestLinkDays", "must be between 1 and 30");
+            }
+            organizations.updateOrganization(organizationId, name, days, OffsetDateTime.now(clock));
+            if (!name.equals(current.name())) {
+                audit.record(AuditLog.Event.of("organization.renamed", organizationId, userId)
+                        .resource("organization", organizationId));
+            }
+            if (days != current.requestLinkDays()) {
+                audit.record(AuditLog.Event.of("organization.settings_changed", organizationId, userId)
+                        .resource("organization", organizationId)
+                        .detail("requestLinkDays", days));
+            }
             return organizations
                     .findOrganization(organizationId)
                     .map(OrganizationService::toApi)
@@ -99,7 +122,8 @@ public class OrganizationService implements MembershipDirectory {
     }
 
     static Organization toApi(OrganizationRow row) {
-        return new Organization(row.id(), row.name(), row.createdAt().withOffsetSameInstant(ZoneOffset.UTC));
+        return new Organization(
+                row.id(), row.name(), row.createdAt().withOffsetSameInstant(ZoneOffset.UTC), row.requestLinkDays());
     }
 
     static OrganizationMembership toApi(MembershipWithOrganization membership) {

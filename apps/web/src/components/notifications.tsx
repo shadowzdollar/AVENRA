@@ -107,6 +107,8 @@ export function NotificationPreferences() {
       unwrap(await api.PUT("/api/v1/account/notification-preferences", { body: { preferences: [change] } })),
     // The box changes at once; the server's answer then confirms or corrects it.
     onMutate: (change) => {
+      // A load still on its way would put back the old value.
+      void queries.cancelQueries({ queryKey: key });
       queries.setQueryData<Preferences>(key, (current) =>
         current
           ? { preferences: current.preferences.map((p) => (p.category === change.category ? { ...p, email: change.email } : p)) }
