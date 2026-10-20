@@ -35,7 +35,9 @@ export function watchProblems(page: Page): string[] {
     const text = message.text();
     const expectedSignedOut = /Failed to load resource: .*status of 401/.test(text);
     if (message.type() === "error" && !expectedSignedOut) {
-      problems.push(text);
+      // The resource's address makes an unexpected failure diagnosable from the CI log.
+      const where = message.location().url;
+      problems.push(where ? `${text} (${where})` : text);
     }
   });
   page.on("pageerror", (error) => problems.push(error.message));
