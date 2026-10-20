@@ -241,7 +241,8 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
                 "insert into document_readings (id, organization_id, document_id, version, spec_hash, spec, status,"
                         + " result, invocation_id, created_at, completed_at) values ('" + UUID.randomUUID() + "', '"
                         + org + "', '" + document + "', 1, '" + "0".repeat(64)
-                        + "', '{}', 'DONE', '{}', '" + invocation + "', now(), now())");
+                        + "', '{}', 'DONE', '{\"fields\":[],\"instructionsDetected\":false,\"proposals\":[],"
+                        + "\"source\":\"TEXT\"}', '" + invocation + "', now(), now())");
     }
 
     private void insertLink(Connection owner, UUID id, byte[] token, String expires, String revoked)

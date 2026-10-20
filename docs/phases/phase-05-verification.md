@@ -66,7 +66,7 @@ an immutable, hashed evidence manifest: verified completed work.
 
 | Item | Why | Closes in |
 |---|---|---|
-| Checks that read document contents (fields, dates in a PDF) | Need extraction | Phase 6 |
+| Checks that read document contents (fields, dates in a PDF) | Need extraction | Phase 6 — closed by ADR-031 |
 | AI-assisted verification and AI confidence | Need the AI foundation; AI output stays unverified until deterministic checks and people confirm it (§50) | Phases 6–7 |
 | Verifying outcomes of actions in external systems (Phase 4 deferral) | The only external action is email; delivery confirmation needs a provider with delivery events | Phase 8 |
 | Approvals before execution | Approval gates | Phase 7 |

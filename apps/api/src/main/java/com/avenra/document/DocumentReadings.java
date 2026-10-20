@@ -25,6 +25,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -34,6 +35,8 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @Component
 public class DocumentReadings {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DocumentReadings.class);
 
     public static final String READ = "document.read";
 
@@ -175,9 +178,21 @@ public class DocumentReadings {
     }
 
     private Reading toReading(ReadingRow row) {
-        DocumentReading result = row.result() == null ? null : json.readValue(row.result(), DocumentReading.class);
         OffsetDateTime readAt =
                 row.completedAt() == null ? null : row.completedAt().withOffsetSameInstant(ZoneOffset.UTC);
-        return new Reading(Status.valueOf(row.status()), row.reason(), result, readAt);
+        if (row.result() == null) {
+            return new Reading(Status.valueOf(row.status()), row.reason(), null, readAt);
+        }
+        try {
+            return new Reading(
+                    Status.valueOf(row.status()),
+                    row.reason(),
+                    json.readValue(row.result(), DocumentReading.class),
+                    readAt);
+        } catch (JacksonException unreadable) {
+            // A stored reading that no longer parses must not break every view of the work.
+            log.warn("Stored document reading could not be read", unreadable);
+            return new Reading(Status.FAILED, "The stored reading could not be read.", null, readAt);
+        }
     }
 }
