@@ -109,6 +109,11 @@ function Organization({ id }: { id: string }) {
           <Link href={`/organizations/${id}/clients`} className="text-brand hover:underline">
             Clients and projects
           </Link>
+          {permissions.has("integration.read") ? (
+            <Link href={`/organizations/${id}/integrations`} className="text-brand hover:underline">
+              Integrations
+            </Link>
+          ) : null}
         </nav>
       </div>
       {actionError ? <Alert tone="error">{actionError}</Alert> : null}

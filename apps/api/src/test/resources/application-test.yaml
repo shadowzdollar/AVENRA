@@ -26,6 +26,15 @@ avenra:
       uploads: { capacity: 100000, refill: 1m }
       client-uploads: { capacity: 100000, refill: 1m }
 
+  # Integrations (ADR-034): tests deliver to receivers on loopback, with fast
+  # retries and an early pause.
+  integrations:
+    allow-loopback-http: true
+    first-retry: 200ms
+    max-retry: 1s
+    max-attempts: 3
+    pause-after: 2
+
   # Fast jobs for tests (ADR-022). Schedules fire once at start; tests fire
   # them explicitly when they need to.
   jobs:

@@ -44,6 +44,8 @@ tags:
 - name: agents
   description: 'Agent runs: plans proposed by the assistant, approved by people, run through the tool
     gateway.'
+- name: integrations
+  description: 'Connections to other systems: signed webhooks and storage export (ADR-034).'
 paths:
   /api/v1/meta:
     get:
@@ -2278,6 +2280,240 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AgentStopRequest'
+  /api/v1/organizations/{organizationId}/integrations:
+    get:
+      operationId: listIntegrations
+      summary: Connections of the organization
+      tags:
+      - integrations
+      x-avenra-permission: integration.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: Connections.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IntegrationConnection'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    post:
+      operationId: createIntegration
+      summary: Connect another system
+      tags:
+      - integrations
+      x-avenra-permission: integration.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: key-required
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '201':
+          description: Created; the webhook secret is shown once.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationSecret'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+      description: Targets must be public HTTPS addresses (`INTEGRATION_ADDRESS_REFUSED` otherwise). Credentials
+        are encrypted and never returned.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIntegrationRequest'
+  /api/v1/organizations/{organizationId}/integrations/{connectionId}:
+    patch:
+      operationId: updateIntegration
+      summary: Rename, change events, pause or resume
+      tags:
+      - integrations
+      x-avenra-permission: integration.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ConnectionId'
+      responses:
+        '200':
+          description: Updated.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationConnection'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIntegrationRequest'
+    delete:
+      operationId: revokeIntegration
+      summary: Revoke a connection
+      tags:
+      - integrations
+      x-avenra-permission: integration.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ConnectionId'
+      responses:
+        '204':
+          description: Revoked; its credentials are deleted.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/integrations/{connectionId}/rotation:
+    post:
+      operationId: rotateIntegrationCredentials
+      summary: Replace a connection's credentials
+      tags:
+      - integrations
+      x-avenra-permission: integration.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ConnectionId'
+      responses:
+        '200':
+          description: Rotated; a new webhook secret is shown once.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationSecret'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationCredentialsInput'
+  /api/v1/organizations/{organizationId}/integrations/{connectionId}/test:
+    post:
+      operationId: testIntegration
+      summary: Send a test event or write a test object now
+      tags:
+      - integrations
+      x-avenra-permission: integration.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ConnectionId'
+      responses:
+        '200':
+          description: The delivery of the test.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationDelivery'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/integrations/{connectionId}/deliveries:
+    get:
+      operationId: listIntegrationDeliveries
+      summary: Recent deliveries of a connection
+      tags:
+      - integrations
+      x-avenra-permission: integration.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ConnectionId'
+      responses:
+        '200':
+          description: Newest first, at most 100.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IntegrationDelivery'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/integrations/{connectionId}/deliveries/{deliveryId}/redelivery:
+    post:
+      operationId: redeliverIntegrationDelivery
+      summary: Deliver an event again
+      tags:
+      - integrations
+      x-avenra-permission: integration.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/ConnectionId'
+      - $ref: '#/components/parameters/DeliveryId'
+      responses:
+        '200':
+          description: Queued again.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationDelivery'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
 components:
   headers:
     RequestId:
@@ -4703,6 +4939,214 @@ components:
           type: string
           minLength: 1
           maxLength: 1000
+    IntegrationProvider:
+      type: string
+      enum:
+      - WEBHOOK
+      - S3_EXPORT
+    IntegrationStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - PAUSED
+      - REVOKED
+      description: '`PAUSED`: nothing is delivered until resumed (also set after repeated failures).'
+    IntegrationEventType:
+      type: string
+      enum:
+      - work.completed
+      - information.answer_received
+      - request.expired
+      description: Event types connections can subscribe to. New types are added over time.
+    IntegrationCapability:
+      type: string
+      enum:
+      - events.deliver
+      - storage.export_completion
+    IntegrationSettings:
+      type: object
+      additionalProperties: false
+      description: Non-secret settings of a connection.
+      properties:
+        url:
+          type: string
+          maxLength: 2000
+          description: '`WEBHOOK`: where events are sent (HTTPS).'
+          pattern: ^https?://\S+$
+        endpoint:
+          type: string
+          maxLength: 2000
+          description: '`S3_EXPORT`: the S3-compatible endpoint (HTTPS); empty for AWS.'
+          pattern: ^https?://\S+$
+        region:
+          type: string
+          maxLength: 64
+        bucket:
+          type: string
+          minLength: 3
+          maxLength: 63
+        prefix:
+          type: string
+          maxLength: 200
+          description: '`S3_EXPORT`: folder for exports, e.g. `avenra/`.'
+        pathStyle:
+          type: boolean
+    IntegrationConnection:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - provider
+      - name
+      - status
+      - capabilities
+      - events
+      - settings
+      - consecutiveFailures
+      - createdAt
+      - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        provider:
+          $ref: '#/components/schemas/IntegrationProvider'
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/IntegrationStatus'
+        capabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntegrationCapability'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntegrationEventType'
+        settings:
+          $ref: '#/components/schemas/IntegrationSettings'
+        credentialHint:
+          type: string
+          description: Enough to recognise the credential (e.g. the last characters of an access key),
+            never the secret.
+        consecutiveFailures:
+          type: integer
+          minimum: 0
+        lastDeliveryAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    IntegrationCredentialsInput:
+      type: object
+      additionalProperties: false
+      description: '`S3_EXPORT` only; webhooks get a secret generated by Avenra.'
+      properties:
+        accessKey:
+          type: string
+          minLength: 1
+          maxLength: 200
+        secretKey:
+          type: string
+          minLength: 1
+          maxLength: 200
+          writeOnly: true
+    CreateIntegrationRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - provider
+      - name
+      - settings
+      properties:
+        provider:
+          $ref: '#/components/schemas/IntegrationProvider'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        events:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/IntegrationEventType'
+          description: '`WEBHOOK`: the events to send.'
+        settings:
+          $ref: '#/components/schemas/IntegrationSettings'
+        credentials:
+          $ref: '#/components/schemas/IntegrationCredentialsInput'
+    UpdateIntegrationRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        events:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/IntegrationEventType'
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - PAUSED
+    IntegrationSecret:
+      type: object
+      additionalProperties: false
+      required:
+      - connection
+      description: Returned only when a connection is created or its credentials rotated.
+      properties:
+        connection:
+          $ref: '#/components/schemas/IntegrationConnection'
+        signingSecret:
+          type: string
+          description: '`WEBHOOK`: the secret to verify signatures. Shown once; store it now.'
+    IntegrationDelivery:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - eventId
+      - eventType
+      - status
+      - attempts
+      - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+        status:
+          type: string
+          enum:
+          - PENDING
+          - DELIVERED
+          - FAILED
+        attempts:
+          type: integer
+          minimum: 0
+        lastStatusCode:
+          type: integer
+        lastError:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        deliveredAt:
+          type: string
+          format: date-time
   securitySchemes:
     sessionCookie:
       type: apiKey
@@ -4826,6 +5270,20 @@ components:
         format: uuid
     AgentRunId:
       name: runId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ConnectionId:
+      name: connectionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DeliveryId:
+      name: deliveryId
       in: path
       required: true
       schema:

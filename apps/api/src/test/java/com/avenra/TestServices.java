@@ -86,6 +86,15 @@ public final class TestServices {
         return CLAMAV.getMappedPort(3310);
     }
 
+    /** Credentials of the test S3 service, for connections that export to it. */
+    public static String s3AccessKey() {
+        return S3_ACCESS_KEY;
+    }
+
+    public static String s3SecretKey() {
+        return S3_SECRET_KEY;
+    }
+
     /** A client for the test bucket, to inspect what the application stored. */
     public static S3Client s3Client() {
         return s3Client(s3Endpoint());
