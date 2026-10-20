@@ -1,0 +1,37 @@
+{
+  "id": "lease-prose",
+  "description": "Fields stated in prose, not labelled lines",
+  "document": "RESIDENTIAL LEASE AGREEMENT\nThis agreement is made between Greenfield Properties Ltd (the Landlord) and Mr. Tomasz Wieczorek (the Tenant). The tenancy begins on 1 October 2026 and runs for twelve months. The monthly rent is 1,150 pounds.\n",
+  "kinds": [
+    "passport",
+    "utility bill",
+    "bank statement",
+    "certificate of incorporation",
+    "invoice",
+    "lease agreement"
+  ],
+  "fields": [
+    {
+      "name": "Tenant name",
+      "kind": "TEXT"
+    },
+    {
+      "name": "Start date",
+      "kind": "DATE"
+    },
+    {
+      "name": "Monthly rent",
+      "kind": "NUMBER"
+    }
+  ],
+  "expected": {
+    "kind": "lease agreement",
+    "fields": {
+      "Tenant name": "Tomasz Wieczorek",
+      "Start date": "2026-10-01",
+      "Monthly rent": "1150"
+    },
+    "injection": false
+  },
+  "contentType": "text/plain"
+}

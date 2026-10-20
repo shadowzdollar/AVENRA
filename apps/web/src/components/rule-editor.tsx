@@ -25,8 +25,13 @@ export const RULES_FOR_KIND: Record<RequirementKind, RuleType[]> = {
   NUMBER: ["RANGE", "ONE_OF", "EQUALS_REQUIREMENT"],
   DATE: ["DATE_RANGE", "DATE_ORDER", "EQUALS_REQUIREMENT"],
   BOOLEAN: [],
-  DOCUMENT: ["FILE_TYPE", "FILE_SIZE"],
+  DOCUMENT: ["FILE_TYPE", "FILE_SIZE", "DOCUMENT_KIND", "DOCUMENT_FIELD"],
 };
+
+/** Checks based on reading the document automatically: advisory only (ADR-031). */
+export function readsDocument(type: RuleType): boolean {
+  return type === "DOCUMENT_KIND" || type === "DOCUMENT_FIELD";
+}
 
 export const RULE_LABELS: Record<RuleType, string> = {
   PATTERN: "Matches a pattern",
@@ -38,6 +43,8 @@ export const RULE_LABELS: Record<RuleType, string> = {
   DATE_ORDER: "Before or after another date",
   FILE_TYPE: "File type",
   FILE_SIZE: "File size",
+  DOCUMENT_KIND: "Kind of document (read automatically)",
+  DOCUMENT_FIELD: "A field in the document (read automatically)",
 };
 
 const FILE_TYPES: { value: string; label: string }[] = [
@@ -50,12 +57,14 @@ const FILE_TYPES: { value: string; label: string }[] = [
 ];
 
 export function newRule(type: RuleType): RuleInput {
-  return { type, severity: "BLOCKING", message: "" };
+  if (type === "DOCUMENT_FIELD") return { type, severity: "ADVISORY", message: "", fieldKind: "TEXT" };
+  return { type, severity: readsDocument(type) ? "ADVISORY" : "BLOCKING", message: "" };
 }
 
 /** Keeps only the fields of the rule's own type, as the server requires. */
 export function cleanRule(rule: RuleInput): RuleInput {
-  const base: RuleInput = { type: rule.type, severity: rule.severity, message: rule.message.trim() };
+  const severity = readsDocument(rule.type) ? "ADVISORY" : rule.severity;
+  const base: RuleInput = { type: rule.type, severity, message: rule.message.trim() };
   const keep: Record<RuleType, (keyof RuleInput)[]> = {
     PATTERN: ["pattern"],
     LENGTH: ["minLength", "maxLength"],
@@ -66,6 +75,8 @@ export function cleanRule(rule: RuleInput): RuleInput {
     DATE_ORDER: ["otherRequirementId", "order"],
     FILE_TYPE: ["contentTypes"],
     FILE_SIZE: ["maxBytes"],
+    DOCUMENT_KIND: ["values"],
+    DOCUMENT_FIELD: ["field", "fieldKind", "otherRequirementId", "minDaysFromToday"],
   };
   const out: Record<string, unknown> = { ...base };
   for (const key of keep[rule.type]) {
@@ -86,11 +97,14 @@ export function RuleEditor({
   rules,
   onChange,
   others,
+  readingEnabled,
 }: {
   kind: RequirementKind;
   rules: RuleInput[];
   onChange: (rules: RuleInput[]) => void;
   others: { id: string; title: string; kind: RequirementKind }[];
+  /** Whether the organization lets documents be read automatically; unknown when undefined. */
+  readingEnabled?: boolean | undefined;
 }) {
   const available = RULES_FOR_KIND[kind];
   const update = (index: number, patch: RulePatch) => onChange(rules.map((rule, i) => (i === index ? applyPatch(rule, patch) : rule)));
@@ -112,7 +126,10 @@ export function RuleEditor({
               <select
                 className={SELECT}
                 value={rule.type}
-                onChange={(event) => onChange(rules.map((r, i) => (i === index ? { ...newRule(event.target.value as RuleType), message: r.message, severity: r.severity } : r)))}
+                onChange={(event) => {
+                  const type = event.target.value as RuleType;
+                  onChange(rules.map((r, i) => (i === index ? { ...newRule(type), message: r.message, severity: readsDocument(type) ? "ADVISORY" : r.severity } : r)));
+                }}
               >
                 {available.map((type) => (
                   <option key={type} value={type}>
@@ -123,16 +140,28 @@ export function RuleEditor({
             </label>
             <label className="flex flex-col gap-1">
               If it fails
-              <select className={SELECT} value={rule.severity} onChange={(event) => update(index, { severity: event.target.value as RuleInput["severity"] })}>
-                <option value="BLOCKING">Reject the answer</option>
-                <option value="ADVISORY">Flag for review</option>
-              </select>
+              {readsDocument(rule.type) ? (
+                <select className={SELECT} value="ADVISORY" disabled aria-describedby={`ai-note-${index}`}>
+                  <option value="ADVISORY">Flag for review</option>
+                </select>
+              ) : (
+                <select className={SELECT} value={rule.severity} onChange={(event) => update(index, { severity: event.target.value as RuleInput["severity"] })}>
+                  <option value="BLOCKING">Reject the answer</option>
+                  <option value="ADVISORY">Flag for review</option>
+                </select>
+              )}
             </label>
             <Button type="button" variant="secondary" onClick={() => remove(index)}>
               Remove
             </Button>
           </div>
-          <RuleParameters rule={rule} index={index} update={update} others={sameKind} />
+          {readsDocument(rule.type) ? (
+            <p id={`ai-note-${index}`} className="text-text-secondary" data-testid="ai-rule-note">
+              The document is read automatically. This check only flags the answer for a person; it never rejects or accepts it.
+              {readingEnabled === false ? " Automatic reading is switched off for this organization, so the check waits until an owner switches it on." : ""}
+            </p>
+          ) : null}
+          <RuleParameters rule={rule} index={index} update={update} others={readsDocument(rule.type) ? others : sameKind} />
           <Field
             label="Message when it fails (the client sees it for rejected answers)"
             required
@@ -160,7 +189,7 @@ function RuleParameters({
   rule: RuleInput;
   index: number;
   update: (index: number, patch: RulePatch) => void;
-  others: { id: string; title: string }[];
+  others: { id: string; title: string; kind?: RequirementKind }[];
 }) {
   switch (rule.type) {
     case "PATTERN":
@@ -259,5 +288,67 @@ function RuleParameters({
           onChange={(e) => update(index, { maxBytes: e.target.value ? Math.round(Number(e.target.value) * 1024 * 1024) : undefined })}
         />
       );
+    case "DOCUMENT_KIND":
+      return (
+        <Field
+          label="Acceptable kinds of document (comma-separated, e.g. passport, national identity card)"
+          required
+          value={(rule.values ?? []).join(", ")}
+          onChange={(e) => update(index, { values: e.target.value.split(",").map((value) => value.trim()).filter(Boolean) })}
+        />
+      );
+    case "DOCUMENT_FIELD": {
+      const fieldKind = rule.fieldKind ?? "TEXT";
+      const comparable = others.filter((other) => other.kind === fieldKind);
+      return (
+        <div className="flex flex-wrap items-end gap-3">
+          <Field
+            label="Field, as labelled in the document"
+            required
+            maxLength={60}
+            pattern="[A-Za-z][A-Za-z0-9 _\\-]*"
+            value={rule.field ?? ""}
+            onChange={(e) => update(index, { field: e.target.value || undefined })}
+          />
+          <label className="flex flex-col gap-1">
+            Kind of value
+            <select
+              className={SELECT}
+              value={fieldKind}
+              onChange={(e) =>
+                update(index, {
+                  fieldKind: e.target.value as "TEXT" | "NUMBER" | "DATE",
+                  otherRequirementId: undefined,
+                  minDaysFromToday: e.target.value === "DATE" ? rule.minDaysFromToday : undefined,
+                })
+              }
+            >
+              <option value="TEXT">Text</option>
+              <option value="NUMBER">Number</option>
+              <option value="DATE">Date</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            Must match the answer to (optional)
+            <select className={SELECT} value={rule.otherRequirementId ?? ""} onChange={(e) => update(index, { otherRequirementId: e.target.value || undefined })}>
+              <option value="">Nothing; just be present</option>
+              {comparable.map((other) => (
+                <option key={other.id} value={other.id}>
+                  {other.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          {fieldKind === "DATE" ? (
+            <Field
+              label="At least this many days from today"
+              type="number"
+              value={rule.minDaysFromToday ?? ""}
+              onChange={(e) => update(index, { minDaysFromToday: numberOrUndefined(e.target.value) })}
+            />
+          ) : null}
+        </div>
+      );
+    }
   }
 }

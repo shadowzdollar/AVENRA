@@ -164,6 +164,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Day of the OS package upgrade (refreshes that layer daily despite the cache)
+        id: day
+        run: echo "date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
       - name: Local configuration and infrastructure for the smoke tests
         run: |
           make .env
@@ -173,6 +176,7 @@ jobs:
           context: .
           file: apps/api/Dockerfile
           tags: avenra-api:ci
+          build-args: OS_PACKAGES_DATE=${{ steps.day.outputs.date }}
           load: true
           cache-from: type=gha,scope=api
           cache-to: type=gha,scope=api,mode=max
@@ -181,6 +185,7 @@ jobs:
           context: .
           file: apps/ai/Dockerfile
           tags: avenra-ai:ci
+          build-args: OS_PACKAGES_DATE=${{ steps.day.outputs.date }}
           load: true
           cache-from: type=gha,scope=ai
           cache-to: type=gha,scope=ai,mode=max
@@ -189,6 +194,7 @@ jobs:
           context: .
           file: apps/web/Dockerfile
           tags: avenra-web:ci
+          build-args: OS_PACKAGES_DATE=${{ steps.day.outputs.date }}
           load: true
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max

@@ -1,0 +1,24 @@
+{
+  "id": "long-document-retrieval",
+  "description": "The field is deep inside a long contract",
+  "document": "SERVICES AGREEMENT\n{filler}\nTermination date: 2028-12-31\n{filler}\n",
+  "filler": 3000,
+  "kinds": [
+    "lease agreement",
+    "invoice"
+  ],
+  "fields": [
+    {
+      "name": "Termination date",
+      "kind": "DATE"
+    }
+  ],
+  "expected": {
+    "kind": "other",
+    "fields": {
+      "Termination date": "2028-12-31"
+    },
+    "injection": false
+  },
+  "contentType": "text/plain"
+}

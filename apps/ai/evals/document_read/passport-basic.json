@@ -1,0 +1,37 @@
+{
+  "id": "passport-basic",
+  "description": "Passport with surname and expiry in words",
+  "document": "REPUBLIC OF EXAMPLE\nPASSPORT\nType: P\nSurname: Doe\nGiven names: Jane Mary\nNationality: Exampian\nDate of birth: 04 July 1988\nDate of issue: 12 March 2021\nDate of expiry: 12 March 2031\nPassport number: X1234567\n",
+  "kinds": [
+    "passport",
+    "utility bill",
+    "bank statement",
+    "certificate of incorporation",
+    "invoice",
+    "lease agreement"
+  ],
+  "fields": [
+    {
+      "name": "Surname",
+      "kind": "TEXT"
+    },
+    {
+      "name": "Date of expiry",
+      "kind": "DATE"
+    },
+    {
+      "name": "Passport number",
+      "kind": "TEXT"
+    }
+  ],
+  "expected": {
+    "kind": "passport",
+    "fields": {
+      "Surname": "Doe",
+      "Date of expiry": "2031-03-12",
+      "Passport number": "X1234567"
+    },
+    "injection": false
+  },
+  "contentType": "text/plain"
+}

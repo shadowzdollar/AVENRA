@@ -96,6 +96,7 @@ docker run -d --name avenra-api-smoke --network host \
   -e AVENRA_CLAMD_HOST -e AVENRA_CLAMD_PORT \
   -e SPRING_MAIL_HOST=127.0.0.1 -e SPRING_MAIL_PORT=11025 \
   -e AVENRA_WEB_PUBLIC_BASE_URL=http://127.0.0.1:13000 \
+  -e AVENRA_AI_SERVICE_TOKEN -e AVENRA_AI_URL=http://127.0.0.1:18090 \
   "avenra-api:$TAG" >/dev/null
 wait_healthy avenra-api-smoke
 expect_uid avenra-api-smoke 10001
@@ -108,11 +109,14 @@ expect_non_root_image "avenra-ai:$TAG"
 expect_refuses_to_start avenra-ai-smoke-noconfig "avenra-ai:$TAG"
 CONTAINERS+=(avenra-ai-smoke)
 docker run -d --name avenra-ai-smoke -p 127.0.0.1:18090:8090 \
-  -e AVENRA_AI_ENVIRONMENT=DEVELOPMENT "avenra-ai:$TAG" >/dev/null
+  -e AVENRA_AI_ENVIRONMENT=DEVELOPMENT -e AVENRA_AI_SERVICE_TOKEN "avenra-ai:$TAG" >/dev/null
 wait_healthy avenra-ai-smoke
 expect_uid avenra-ai-smoke 10001
 expect_http http://127.0.0.1:18090/health/readiness 200
 expect_http http://127.0.0.1:18090/docs 404
+status=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' \
+  http://127.0.0.1:18090/v1/tasks/document-read)
+if [[ "$status" == "401" ]]; then pass "AI tasks refuse callers without the service token"; else fail "AI task without token -> $status"; fi
 
 echo "Web (avenra-web:$TAG)"
 expect_non_root_image "avenra-web:$TAG"

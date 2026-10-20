@@ -1,5 +1,6 @@
 package com.avenra.information.application;
 
+import com.avenra.ai.Ai;
 import com.avenra.audit.AuditLog;
 import com.avenra.contract.v1.model.ClientRequest;
 import com.avenra.contract.v1.model.ClientRequestItem;
@@ -47,6 +48,7 @@ public class ClientRequestService {
     private final OrganizationAccess organizations;
     private final TenantTransactions transactions;
     private final AuditLog audit;
+    private final Ai ai;
     private final Clock clock;
 
     ClientRequestService(
@@ -59,6 +61,7 @@ public class ClientRequestService {
             OrganizationAccess organizations,
             TenantTransactions transactions,
             AuditLog audit,
+            Ai ai,
             Clock clock) {
         this.links = links;
         this.requirements = requirements;
@@ -69,6 +72,7 @@ public class ClientRequestService {
         this.organizations = organizations;
         this.transactions = transactions;
         this.audit = audit;
+        this.ai = ai;
         this.clock = clock;
     }
 
@@ -96,7 +100,9 @@ public class ClientRequestService {
                             context.work().title(),
                             mask(context.link().recipientEmail()),
                             ApiTime.utc(context.link().expiresAt()),
-                            items)
+                            items,
+                            // The notice the client sees while reading is on (ADR-030).
+                            ai.documentReadingEnabled(context.link().organizationId()))
                     .message(context.link().message());
         });
     }

@@ -1,0 +1,23 @@
+{
+  "id": "near-miss-kind",
+  "description": "A driving licence when only passport and national ID are allowed",
+  "document": "DRIVING LICENCE\n1. Surname: Novak\n2. Given names: Petra\n4b. Expiry: 2033-05-17\nCategories: B, AM\n",
+  "kinds": [
+    "passport",
+    "national identity card"
+  ],
+  "fields": [
+    {
+      "name": "Surname",
+      "kind": "TEXT"
+    }
+  ],
+  "expected": {
+    "kind": "other",
+    "fields": {
+      "Surname": "Novak"
+    },
+    "injection": false
+  },
+  "contentType": "text/plain"
+}

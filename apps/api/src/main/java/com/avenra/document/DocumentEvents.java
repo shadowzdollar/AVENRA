@@ -18,4 +18,14 @@ public final class DocumentEvents {
             int version,
             @Nullable UUID requirementId,
             String signature) {}
+
+    /**
+     * A document version's automatic reading was settled (done, failed or skipped), so answers that
+     * use it can be verified again (ADR-031). Published inside the transaction that settled it.
+     */
+    public record Read(
+            UUID organizationId,
+            UUID documentId,
+            int version,
+            @Nullable UUID requirementId) {}
 }

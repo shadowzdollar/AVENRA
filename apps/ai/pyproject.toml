@@ -9,6 +9,8 @@ dependencies = [
     "uvicorn>=0.38",
     "pydantic>=2.12",
     "pydantic-settings>=2.11",
+    "anthropic>=1.12.1",
+    "pypdf>=6.19.0",
 ]
 
 [dependency-groups]
@@ -46,7 +48,7 @@ select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]  # assert is how pytest works
+"tests/**" = ["S101", "S105", "S106"]  # assert is how pytest works; test secrets are fake
 
 [tool.mypy]
 strict = true

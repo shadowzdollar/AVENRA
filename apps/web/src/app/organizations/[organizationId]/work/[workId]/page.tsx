@@ -7,7 +7,9 @@ import { useState, type FormEvent } from "react";
 import type { components } from "@avenra/contracts";
 import { AppShell } from "@/components/app-shell";
 import { Alert, Button, Card, Field } from "@/components/ui";
+import { useAiSettings } from "@/components/ai-settings";
 import { ChecksView } from "@/components/checks-view";
+import { ReadingView } from "@/components/reading-view";
 import { ExceptionRow } from "@/components/exception-row";
 import { cleanRule, RuleEditor } from "@/components/rule-editor";
 import { ValueInput } from "@/components/value-input";
@@ -300,6 +302,11 @@ function RequirementRow({
               <ChecksView result={item.checks} />
             </div>
           ) : null}
+          {item.reading ? (
+            <div className="mt-2">
+              <ReadingView reading={item.reading} />
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -403,6 +410,7 @@ function RuleSettings({
   onDone: () => void;
 }) {
   const refresh = useRefresh(ids);
+  const reading = useAiSettings(ids.organizationId);
   const [rules, setRules] = useState<RuleInput[]>(requirement.rules.map((rule) => cleanRule(rule)));
   const [acceptance, setAcceptance] = useState(requirement.acceptance);
   const [risk, setRisk] = useState(requirement.risk);
@@ -427,7 +435,7 @@ function RuleSettings({
         save.mutate();
       }}
     >
-      <RuleEditor kind={requirement.kind} rules={rules} onChange={setRules} others={others} />
+      <RuleEditor kind={requirement.kind} rules={rules} onChange={setRules} others={others} readingEnabled={reading.data?.documentReading} />
       <AcceptanceChoice acceptance={acceptance} risk={risk} onAcceptance={setAcceptance} onRisk={setRisk} />
       <div className="flex gap-2">
         <Button type="submit" busy={save.isPending}>
@@ -483,6 +491,7 @@ function AcceptanceChoice({
 
 function AddRequirement({ ids, others }: { ids: Ids; others: { id: string; title: string; kind: RequirementKind }[] }) {
   const refresh = useRefresh(ids);
+  const reading = useAiSettings(ids.organizationId);
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<RequirementKind>("DOCUMENT");
   const [required, setRequired] = useState(true);
@@ -553,7 +562,7 @@ function AddRequirement({ ids, others }: { ids: Ids; others: { id: string; title
         </label>
       </div>
       <Field label="Instructions for the client (optional)" maxLength={2000} value={instructions} onChange={(e) => setInstructions(e.target.value)} />
-      <RuleEditor kind={kind} rules={rules} onChange={setRules} others={others} />
+      <RuleEditor kind={kind} rules={rules} onChange={setRules} others={others} readingEnabled={reading.data?.documentReading} />
       <AcceptanceChoice acceptance={acceptance} risk={risk} onAcceptance={setAcceptance} onRisk={setRisk} />
       <div>
         <Button type="submit" busy={create.isPending}>

@@ -45,6 +45,12 @@ manifests (ADR-026 to ADR-028). Code: `apps/api/.../verification`
    without override, no open high exception, no open task) and seals the
    manifest in the completing transaction.
 
+## Checks that read documents
+
+`DOCUMENT_KIND` and `DOCUMENT_FIELD` use an automatic reading of the document
+(ADR-031, `docs/subsystems/ai.md`). They are always advisory, are excluded from
+the confidence, and are skipped with the reason until a reading exists.
+
 ## Dependencies
 
 None at runtime besides PostgreSQL; the module never reads other modules'

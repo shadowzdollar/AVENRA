@@ -39,6 +39,8 @@ tags:
   description: Request links that ask clients for information.
 - name: client-requests
   description: Public operations used by clients holding a request link.
+- name: ai
+  description: 'AI document reading: the organization setting and usage records.'
 paths:
   /api/v1/meta:
     get:
@@ -2033,6 +2035,92 @@ paths:
           $ref: '#/components/responses/ClientError'
         5XX:
           $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/ai/settings:
+    get:
+      operationId: getAiSettings
+      summary: AI settings of the organization
+      tags:
+      - ai
+      x-avenra-permission: organization.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: The settings.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiSettings'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    put:
+      operationId: updateAiSettings
+      summary: Switch AI document reading on or off
+      description: Only owners (`ai.manage`). While off, no document of the organization is sent to the
+        AI service (ADR-030).
+      tags:
+      - ai
+      x-avenra-permission: ai.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiSettingsInput'
+      responses:
+        '200':
+          description: Updated.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiSettings'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/ai/usage:
+    get:
+      operationId: getAiUsage
+      summary: AI calls made for the organization
+      description: Today's totals and the latest calls (Guidelines §53).
+      tags:
+      - ai
+      x-avenra-permission: ai.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: Usage.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiUsage'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
 components:
   headers:
     RequestId:
@@ -3105,6 +3193,8 @@ components:
           $ref: '#/components/schemas/Verification'
         checks:
           $ref: '#/components/schemas/VerificationResult'
+        reading:
+          $ref: '#/components/schemas/DocumentReading'
     Verification:
       type: object
       additionalProperties: false
@@ -3293,6 +3383,7 @@ components:
       - recipient
       - expiresAt
       - items
+      - documentsReadAutomatically
       properties:
         organizationName:
           type: string
@@ -3310,6 +3401,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ClientRequestItem'
+        documentsReadAutomatically:
+          type: boolean
+          description: The organization lets documents be read automatically to check them; people make
+            the decisions.
     ClientRequestItem:
       type: object
       additionalProperties: false
@@ -3579,6 +3674,10 @@ components:
       - DATE_ORDER
       - FILE_TYPE
       - FILE_SIZE
+      - DOCUMENT_KIND
+      - DOCUMENT_FIELD
+      description: '`DOCUMENT_KIND` and `DOCUMENT_FIELD` read the document with AI (ADR-031); they are
+        always `ADVISORY` and only run while the organization has document reading switched on.'
     RuleSeverity:
       type: string
       enum:
@@ -3623,8 +3722,9 @@ components:
             type: string
             minLength: 1
             maxLength: 200
-          description: '`ONE_OF`: allowed values (text compares ignoring case). Required (non-empty) for
-            its rule type; checked when the rule is defined.'
+          description: '`ONE_OF`: allowed values (text compares ignoring case). `DOCUMENT_KIND`: the kinds
+            of document that are acceptable, e.g. "passport". Required (non-empty) for these rule types;
+            checked when the rule is defined.'
         min:
           type: string
           pattern: ^-?[0-9]+(\.[0-9]+)?$
@@ -3643,16 +3743,26 @@ components:
           type: integer
           minimum: -36500
           maximum: 36500
-          description: '`DATE_RANGE`: at least this many days from the day of the check (e.g. 30: not
-            expiring within a month).'
+          description: '`DATE_RANGE`, and `DOCUMENT_FIELD` with a date field: at least this many days
+            from the day of the check (e.g. 30: not expiring within a month).'
         maxDaysFromToday:
           type: integer
           minimum: -36500
           maximum: 36500
+        field:
+          type: string
+          minLength: 1
+          maxLength: 60
+          pattern: ^[A-Za-z][A-Za-z0-9 _-]*$
+          description: '`DOCUMENT_FIELD`: the field to read, as it is labelled in the document, e.g. "Date
+            of expiry".'
+        fieldKind:
+          $ref: '#/components/schemas/FieldKind'
         otherRequirementId:
           type: string
           format: uuid
-          description: '`EQUALS_REQUIREMENT`, `DATE_ORDER`: a requirement of the same work.'
+          description: '`EQUALS_REQUIREMENT`, `DATE_ORDER`: a requirement of the same work. `DOCUMENT_FIELD`:
+            the field must equal that requirement''s answer.'
         order:
           type: string
           enum:
@@ -3712,8 +3822,9 @@ components:
             type: string
             minLength: 1
             maxLength: 200
-          description: '`ONE_OF`: allowed values (text compares ignoring case). Required (non-empty) for
-            its rule type; checked when the rule is defined.'
+          description: '`ONE_OF`: allowed values (text compares ignoring case). `DOCUMENT_KIND`: the kinds
+            of document that are acceptable, e.g. "passport". Required (non-empty) for these rule types;
+            checked when the rule is defined.'
         min:
           type: string
           pattern: ^-?[0-9]+(\.[0-9]+)?$
@@ -3732,16 +3843,26 @@ components:
           type: integer
           minimum: -36500
           maximum: 36500
-          description: '`DATE_RANGE`: at least this many days from the day of the check (e.g. 30: not
-            expiring within a month).'
+          description: '`DATE_RANGE`, and `DOCUMENT_FIELD` with a date field: at least this many days
+            from the day of the check (e.g. 30: not expiring within a month).'
         maxDaysFromToday:
           type: integer
           minimum: -36500
           maximum: 36500
+        field:
+          type: string
+          minLength: 1
+          maxLength: 60
+          pattern: ^[A-Za-z][A-Za-z0-9 _-]*$
+          description: '`DOCUMENT_FIELD`: the field to read, as it is labelled in the document, e.g. "Date
+            of expiry".'
+        fieldKind:
+          $ref: '#/components/schemas/FieldKind'
         otherRequirementId:
           type: string
           format: uuid
-          description: '`EQUALS_REQUIREMENT`, `DATE_ORDER`: a requirement of the same work.'
+          description: '`EQUALS_REQUIREMENT`, `DATE_ORDER`: a requirement of the same work. `DOCUMENT_FIELD`:
+            the field must equal that requirement''s answer.'
         order:
           type: string
           enum:
@@ -3798,6 +3919,7 @@ components:
       - outcome
       - severity
       - message
+      - aiDerived
       properties:
         ruleId:
           type: string
@@ -3817,6 +3939,10 @@ components:
           type: string
         detail:
           type: string
+        aiDerived:
+          type: boolean
+          description: 'The check is based on an automatic reading of the document: advisory, never a
+            decision (ADR-031).'
     VerificationResult:
       type: object
       additionalProperties: false
@@ -3950,6 +4076,261 @@ components:
         intact:
           type: boolean
           description: The stored manifest still matches its hash.
+    FieldKind:
+      type: string
+      enum:
+      - TEXT
+      - NUMBER
+      - DATE
+      description: How a field read from a document is compared.
+    DocumentReading:
+      type: object
+      additionalProperties: false
+      description: What an automatic reading found in a document (ADR-031). Untrusted until a person decides;
+        quotes point to the source.
+      required:
+      - status
+      - fields
+      - instructionsDetected
+      - proposals
+      properties:
+        status:
+          type: string
+          enum:
+          - PENDING
+          - DONE
+          - FAILED
+          - SKIPPED
+          description: '`SKIPPED`: not read, see `reason`.'
+        reason:
+          type: string
+          description: Why the document was not read, or why reading failed.
+        kind:
+          type: object
+          additionalProperties: false
+          required:
+          - label
+          - confidence
+          properties:
+            label:
+              type: string
+              description: One of the kinds the rules list, or `other`.
+            confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Reported by the model; not a verification.
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentField'
+        instructionsDetected:
+          type: boolean
+          description: The document contains text addressed to an automated reader.
+        proposals:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiProposal'
+        model:
+          type: string
+        readAt:
+          type: string
+          format: date-time
+    DocumentField:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - kind
+      - found
+      properties:
+        name:
+          type: string
+        kind:
+          $ref: '#/components/schemas/FieldKind'
+        found:
+          type: boolean
+        value:
+          type: string
+          description: 'Canonical form: YYYY-MM-DD, a decimal number, or text.'
+        quote:
+          type: string
+          description: The passage the value comes from.
+        page:
+          type: integer
+          minimum: 1
+        located:
+          type: boolean
+          description: Whether the quote was found in the document text; absent when the document has
+            no text (images, scans).
+    AiProposal:
+      type: object
+      additionalProperties: false
+      required:
+      - tool
+      - risk
+      - reason
+      description: An action the model suggests. Never carried out automatically; a person decides (ADR-029).
+      properties:
+        tool:
+          type: string
+          enum:
+          - request_clearer_copy
+          - flag_for_review
+        risk:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
+        reason:
+          type: string
+    AiSettings:
+      type: object
+      additionalProperties: false
+      required:
+      - documentReading
+      - dailyCallLimit
+      properties:
+        documentReading:
+          type: boolean
+          description: Whether clients' documents may be read automatically. Off by default.
+        dailyCallLimit:
+          type: integer
+          minimum: 0
+          description: Most AI calls per UTC day for the organization.
+        updatedAt:
+          type: string
+          format: date-time
+        updatedByUserId:
+          type: string
+          format: uuid
+    AiSettingsInput:
+      type: object
+      additionalProperties: false
+      required:
+      - documentReading
+      properties:
+        documentReading:
+          type: boolean
+    AiInvocation:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - purpose
+      - provider
+      - modelRequested
+      - promptName
+      - promptVersion
+      - inputTokens
+      - outputTokens
+      - cacheReadTokens
+      - latencyMs
+      - outcome
+      - attempt
+      - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        purpose:
+          type: string
+          enum:
+          - document.read
+        subjectId:
+          type: string
+          format: uuid
+          description: The document read.
+        subjectVersion:
+          type: integer
+          minimum: 1
+        provider:
+          type: string
+        modelRequested:
+          type: string
+        model:
+          type: string
+          description: The model that answered.
+        promptName:
+          type: string
+        promptVersion:
+          type: integer
+          minimum: 1
+        inputTokens:
+          type: integer
+          minimum: 0
+        outputTokens:
+          type: integer
+          minimum: 0
+        cacheReadTokens:
+          type: integer
+          minimum: 0
+        latencyMs:
+          type: integer
+          minimum: 0
+        estimatedCostMicros:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Estimated cost in millionths of a US dollar.
+        outcome:
+          type: string
+          enum:
+          - SUCCEEDED
+          - REFUSED
+          - INVALID_OUTPUT
+          - TRUNCATED
+          - FAILED
+        errorCode:
+          type: string
+        attempt:
+          type: integer
+          minimum: 1
+        createdAt:
+          type: string
+          format: date-time
+    AiUsage:
+      type: object
+      additionalProperties: false
+      required:
+      - today
+      - dailyCallLimit
+      - invocations
+      properties:
+        today:
+          type: object
+          additionalProperties: false
+          required:
+          - calls
+          - inputTokens
+          - outputTokens
+          - estimatedCostMicros
+          properties:
+            calls:
+              type: integer
+              minimum: 0
+            inputTokens:
+              type: integer
+              format: int64
+              minimum: 0
+            outputTokens:
+              type: integer
+              format: int64
+              minimum: 0
+            estimatedCostMicros:
+              type: integer
+              format: int64
+              minimum: 0
+        dailyCallLimit:
+          type: integer
+          minimum: 0
+        invocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiInvocation'
+          description: Newest first, at most 100.
   securitySchemes:
     sessionCookie:
       type: apiKey

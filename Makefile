@@ -18,7 +18,8 @@ help: ## List available commands
 .env:
 	cp .env.example .env
 	sed -i "s|^AVENRA_CRYPTO_KEYS_LOCAL1=.*|AVENRA_CRYPTO_KEYS_LOCAL1=$$(openssl rand -base64 32)|" .env
-	@echo "Created .env from .env.example with a new local encryption key (local-only values)."
+	sed -i "s|^AVENRA_AI_SERVICE_TOKEN=.*|AVENRA_AI_SERVICE_TOKEN=$$(openssl rand -hex 32)|" .env
+	@echo "Created .env from .env.example with a new local encryption key and AI service token (local-only values)."
 
 .PHONY: setup
 setup: .env js-install ## Prepare a fresh clone for local development
@@ -113,6 +114,11 @@ ai-check: ## AI service: lint, format check, strict types, tests
 ai-format: ## AI service: apply formatting and safe lint fixes
 	$(UV) run ruff format .
 	$(UV) run ruff check --fix .
+
+.PHONY: ai-eval
+ai-eval: .env ## AI service: evaluate document reading (PROVIDER=claude for the real model; costs money)
+	$(WITH_ENV) $(UV) run python -m avenra_ai.evals --provider $(or $(PROVIDER),fake) \
+		$(if $(filter claude,$(PROVIDER)),--enforce --report evals/reports/document_read-$$(date -u +%Y%m%dT%H%M%SZ).json)
 
 .PHONY: ai-run
 ai-run: .env ## AI service: run locally on 127.0.0.1:8090

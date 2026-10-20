@@ -60,7 +60,9 @@ public class VerificationStore {
             @Nullable UUID otherRequirementId,
             Rule.@Nullable Order order,
             @Nullable List<String> contentTypes,
-            @Nullable Long maxBytes) {}
+            @Nullable Long maxBytes,
+            @Nullable String field,
+            Rule.@Nullable FieldKind fieldKind) {}
 
     private static final TypeReference<List<Result.Check>> CHECKS = new TypeReference<>() {};
     private static final TypeReference<List<Map<String, String>>> REFS = new TypeReference<>() {};
@@ -96,7 +98,9 @@ public class VerificationStore {
                     rule.otherRequirementId(),
                     rule.order(),
                     rule.contentTypes().isEmpty() ? null : rule.contentTypes(),
-                    rule.maxBytes());
+                    rule.maxBytes(),
+                    rule.field(),
+                    rule.fieldKind());
             jdbc.sql("""
                             insert into verification_rules (id, organization_id, requirement_id, version, position, type,
                                                             severity, message, params, created_by, created_at)
@@ -145,7 +149,9 @@ public class VerificationStore {
                             p.otherRequirementId(),
                             p.order(),
                             p.contentTypes(),
-                            p.maxBytes());
+                            p.maxBytes(),
+                            p.field(),
+                            p.fieldKind());
                 })
                 .list();
     }

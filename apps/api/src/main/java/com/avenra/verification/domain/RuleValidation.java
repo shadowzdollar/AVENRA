@@ -29,6 +29,9 @@ public final class RuleValidation {
             "text/plain");
 
     private static final int MAX_PATTERN = 200;
+    private static final int MAX_LABEL = 60;
+    private static final Pattern FIELD_NAME = Pattern.compile("[A-Za-z][A-Za-z0-9 _-]{0,59}");
+    private static final Pattern LABEL = Pattern.compile("[\\p{L}\\p{N}][\\p{L}\\p{N} .,'()/-]*");
 
     private RuleValidation() {}
 
@@ -60,6 +63,9 @@ public final class RuleValidation {
         if (extra != null) {
             return extra;
         }
+        if (rule.type().aiDerived() && rule.severity() != Rule.Severity.ADVISORY) {
+            return rule.type() + " reads the document automatically and can only be ADVISORY";
+        }
         return switch (rule.type()) {
             case PATTERN -> pattern(rule.pattern());
             case LENGTH ->
@@ -88,7 +94,64 @@ public final class RuleValidation {
                 rule.maxBytes() == null
                         ? "needs maxBytes"
                         : rule.maxBytes() > maxUploadBytes ? "maxBytes is above the upload limit" : null;
+            case DOCUMENT_KIND -> labels(rule.values());
+            case DOCUMENT_FIELD -> documentField(rule, self, siblings);
         };
+    }
+
+    private static @Nullable String labels(List<String> values) {
+        if (values.isEmpty()) {
+            return "needs values: the kinds of document that are acceptable";
+        }
+        for (String value : values) {
+            String label = value.strip();
+            if (label.length() > MAX_LABEL || !LABEL.matcher(label).matches()) {
+                return "each kind must be a short label of letters, digits and spaces";
+            }
+            if (label.equalsIgnoreCase("other")) {
+                return "\"other\" is not a kind of document";
+            }
+        }
+        return null;
+    }
+
+    private static @Nullable String documentField(Rule rule, UUID self, Map<UUID, Kind> siblings) {
+        if (rule.field() == null || !FIELD_NAME.matcher(rule.field()).matches()) {
+            return "needs field: a name of letters, digits and spaces, starting with a letter";
+        }
+        if (rule.fieldKind() == null) {
+            return "needs fieldKind";
+        }
+        if (rule.notBefore() != null || rule.notAfter() != null) {
+            return "use minDaysFromToday or maxDaysFromToday for fields read from a document";
+        }
+        boolean relative = rule.minDaysFromToday() != null || rule.maxDaysFromToday() != null;
+        if (relative && rule.fieldKind() != Rule.FieldKind.DATE) {
+            return "days from today apply only to date fields";
+        }
+        if (rule.minDaysFromToday() != null
+                && rule.maxDaysFromToday() != null
+                && rule.minDaysFromToday() > rule.maxDaysFromToday()) {
+            return "minDaysFromToday is greater than maxDaysFromToday";
+        }
+        if (rule.order() != null) {
+            return "parameter order does not belong to DOCUMENT_FIELD";
+        }
+        UUID other = rule.otherRequirementId();
+        if (other == null) {
+            return null;
+        }
+        if (other.equals(self)) {
+            return "cannot refer to its own requirement";
+        }
+        Kind otherKind = siblings.get(other);
+        if (otherKind == null) {
+            return "otherRequirementId must be a requirement of the same work";
+        }
+        if (!otherKind.name().equals(rule.fieldKind().name())) {
+            return "the other requirement must be of the field's kind";
+        }
+        return null;
     }
 
     static boolean appliesTo(Rule.Type type, Kind kind) {
@@ -98,7 +161,7 @@ public final class RuleValidation {
             case RANGE -> kind == Kind.NUMBER;
             case DATE_RANGE, DATE_ORDER -> kind == Kind.DATE;
             case EQUALS_REQUIREMENT -> kind == Kind.TEXT || kind == Kind.NUMBER || kind == Kind.DATE;
-            case FILE_TYPE, FILE_SIZE -> kind == Kind.DOCUMENT;
+            case FILE_TYPE, FILE_SIZE, DOCUMENT_KIND, DOCUMENT_FIELD -> kind == Kind.DOCUMENT;
         };
     }
 
@@ -118,6 +181,7 @@ public final class RuleValidation {
         if (rule.otherRequirementId() != null || rule.order() != null) present.add("other");
         if (!rule.contentTypes().isEmpty()) present.add("contentTypes");
         if (rule.maxBytes() != null) present.add("maxBytes");
+        if (rule.field() != null || rule.fieldKind() != null) present.add("field");
         Set<String> allowed = switch (rule.type()) {
             case PATTERN -> Set.of("pattern");
             case LENGTH -> Set.of("length");
@@ -127,6 +191,8 @@ public final class RuleValidation {
             case EQUALS_REQUIREMENT, DATE_ORDER -> Set.of("other");
             case FILE_TYPE -> Set.of("contentTypes");
             case FILE_SIZE -> Set.of("maxBytes");
+            case DOCUMENT_KIND -> Set.of("values");
+            case DOCUMENT_FIELD -> Set.of("field", "dates", "other");
         };
         return present.stream()
                 .filter(name -> !allowed.contains(name))

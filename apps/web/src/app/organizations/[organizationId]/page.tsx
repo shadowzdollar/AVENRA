@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import type { components } from "@avenra/contracts";
+import { AiSettingsCard } from "@/components/ai-settings";
 import { AppShell } from "@/components/app-shell";
 import { Alert, Button, Card, Field } from "@/components/ui";
 import { api, ApiError, idempotencyKey, unwrap } from "@/lib/api";
@@ -206,6 +207,8 @@ function Organization({ id }: { id: string }) {
           ) : null}
         </Card>
       ) : null}
+
+      <AiSettingsCard organizationId={id} permissions={permissions} />
     </div>
   );
 }

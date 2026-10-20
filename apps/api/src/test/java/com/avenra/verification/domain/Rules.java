@@ -29,6 +29,8 @@ final class Rules {
                 null,
                 null,
                 List.of(),
+                null,
+                null,
                 null);
     }
 
@@ -52,6 +54,8 @@ final class Rules {
                 null,
                 null,
                 List.of(),
+                null,
+                null,
                 null);
     }
 
@@ -74,6 +78,8 @@ final class Rules {
                 null,
                 null,
                 List.of(),
+                null,
+                null,
                 null);
     }
 
@@ -96,6 +102,8 @@ final class Rules {
                 null,
                 null,
                 List.of(),
+                null,
+                null,
                 null);
     }
 
@@ -118,6 +126,8 @@ final class Rules {
                 null,
                 null,
                 List.of(),
+                null,
+                null,
                 null);
     }
 
@@ -140,6 +150,8 @@ final class Rules {
                 null,
                 null,
                 List.of(),
+                null,
+                null,
                 null);
     }
 
@@ -162,6 +174,8 @@ final class Rules {
                 null,
                 null,
                 List.of(),
+                null,
+                null,
                 null);
     }
 
@@ -184,6 +198,8 @@ final class Rules {
                 other,
                 null,
                 List.of(),
+                null,
+                null,
                 null);
     }
 
@@ -206,6 +222,8 @@ final class Rules {
                 other,
                 order,
                 List.of(),
+                null,
+                null,
                 null);
     }
 
@@ -228,6 +246,8 @@ final class Rules {
                 null,
                 null,
                 List.of(types),
+                null,
+                null,
                 null);
     }
 
@@ -250,6 +270,57 @@ final class Rules {
                 null,
                 null,
                 List.of(),
-                max);
+                max,
+                null,
+                null);
+    }
+
+    static Rule documentKind(Rule.Severity severity, String... labels) {
+        return new Rule(
+                null,
+                Rule.Type.DOCUMENT_KIND,
+                severity,
+                "Not the expected kind of document",
+                null,
+                null,
+                null,
+                List.of(labels),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                List.of(),
+                null,
+                null,
+                null);
+    }
+
+    static Rule documentField(
+            String field, Rule.FieldKind kind, Integer minDaysFromToday, UUID other, Rule.Severity severity) {
+        return new Rule(
+                null,
+                Rule.Type.DOCUMENT_FIELD,
+                severity,
+                field + " does not match",
+                null,
+                null,
+                null,
+                List.of(),
+                null,
+                null,
+                null,
+                null,
+                minDaysFromToday,
+                null,
+                other,
+                null,
+                List.of(),
+                null,
+                field,
+                kind);
     }
 }
