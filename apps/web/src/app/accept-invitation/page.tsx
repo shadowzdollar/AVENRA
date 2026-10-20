@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -9,6 +10,7 @@ import { api, ApiError, unwrap } from "@/lib/api";
 function Accept() {
   const token = useSearchParams().get("token") ?? "";
   const router = useRouter();
+  const queries = useQueryClient();
   const [error, setError] = useState<ApiError | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -17,6 +19,8 @@ function Accept() {
     setError(null);
     try {
       const membership = unwrap(await api.POST("/api/v1/invitations/acceptance", { body: { token } }));
+      // The cached session predates the membership; its permissions must be read again.
+      await queries.invalidateQueries({ queryKey: ["auth", "session"] });
       router.replace(`/organizations/${membership.organization.id}`);
     } catch (caught) {
       setError(caught instanceof ApiError ? caught : new ApiError(0, undefined));
