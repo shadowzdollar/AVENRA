@@ -39,8 +39,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Service
 public class RequestLinkService {
 
-    static final int DEFAULT_VALIDITY_DAYS = 14;
-
     private final RequestLinkRepository links;
     private final RequirementRepository requirements;
     private final WorkGate work;
@@ -99,71 +97,71 @@ public class RequestLinkService {
         String email = UserDirectory.normalizeEmail(input.getRecipientEmail());
         String name = Text.optional(input.getRecipientName());
         String message = Text.optional(input.getMessage());
-        int days = input.getExpiresInDays() == null ? DEFAULT_VALIDITY_DAYS : input.getExpiresInDays();
         Set<UUID> requested = new TreeSet<>(input.getRequirementIds());
-        return access.run(
-                userId,
-                organizationId,
-                Permission.INFORMATION_COLLECT,
-                granted -> idempotency.once(
-                        userId,
-                        "createRequestLink",
-                        idempotencyKey,
-                        Text.fingerprint(organizationId, workId, email, name, message, days, requested),
-                        RequestLink.class,
-                        () -> {
-                            var target = work.lockOpen(organizationId, workId);
-                            var ofWork = requirements.forWork(organizationId, workId).stream()
-                                    .map(RequirementRepository.RequirementRow::id)
-                                    .toList();
-                            if (!ofWork.containsAll(requested)) {
-                                throw ApiException.invalid("requirementIds", "must be requirements of this work");
-                            }
-                            OffsetDateTime now = OffsetDateTime.now(clock);
-                            String token = SecureTokens.generate();
-                            var row = new LinkRow(
-                                    UUID.randomUUID(),
-                                    organizationId,
-                                    workId,
-                                    email,
-                                    name,
-                                    message,
-                                    userId,
-                                    now,
-                                    now.plus(Duration.ofDays(days)),
-                                    null,
-                                    null,
-                                    0,
-                                    null,
-                                    null);
-                            var sealed = box.seal(
-                                    token.getBytes(java.nio.charset.StandardCharsets.UTF_8), tokenContext(row.id()));
-                            links.insert(
-                                    row,
-                                    SecureTokens.hash(token),
-                                    new RequestLinkRepository.SealedToken(sealed.keyId(), sealed.ciphertext()),
-                                    requested);
-                            events.publishEvent(
-                                    new InformationEvents.InformationRequested(organizationId, workId, row.id()));
-                            String sender = users.find(userId)
-                                    .map(UserDirectory.UserSummary::displayName)
-                                    .orElse("Someone");
-                            outgoing.queue(
-                                    requestEmail(
-                                            email,
-                                            name,
-                                            sender,
-                                            access.organizationName(organizationId),
-                                            target.title(),
-                                            token,
-                                            days),
-                                    organizationId);
-                            audit.record(AuditLog.Event.of("work.request_link.created", organizationId, userId)
-                                    .resource("request_link", row.id())
-                                    .detail("workId", workId.toString())
-                                    .detail("requirements", requested.size()));
-                            return InformationViews.link(row, List.copyOf(requested), now);
-                        }));
+        return access.run(userId, organizationId, Permission.INFORMATION_COLLECT, granted -> {
+            int days = input.getExpiresInDays() == null
+                    ? access.requestLinkDays(organizationId)
+                    : input.getExpiresInDays();
+            return idempotency.once(
+                    userId,
+                    "createRequestLink",
+                    idempotencyKey,
+                    Text.fingerprint(organizationId, workId, email, name, message, input.getExpiresInDays(), requested),
+                    RequestLink.class,
+                    () -> {
+                        var target = work.lockOpen(organizationId, workId);
+                        var ofWork = requirements.forWork(organizationId, workId).stream()
+                                .map(RequirementRepository.RequirementRow::id)
+                                .toList();
+                        if (!ofWork.containsAll(requested)) {
+                            throw ApiException.invalid("requirementIds", "must be requirements of this work");
+                        }
+                        OffsetDateTime now = OffsetDateTime.now(clock);
+                        String token = SecureTokens.generate();
+                        var row = new LinkRow(
+                                UUID.randomUUID(),
+                                organizationId,
+                                workId,
+                                email,
+                                name,
+                                message,
+                                userId,
+                                now,
+                                now.plus(Duration.ofDays(days)),
+                                null,
+                                null,
+                                0,
+                                null,
+                                null);
+                        var sealed = box.seal(
+                                token.getBytes(java.nio.charset.StandardCharsets.UTF_8), tokenContext(row.id()));
+                        links.insert(
+                                row,
+                                SecureTokens.hash(token),
+                                new RequestLinkRepository.SealedToken(sealed.keyId(), sealed.ciphertext()),
+                                requested);
+                        events.publishEvent(
+                                new InformationEvents.InformationRequested(organizationId, workId, row.id()));
+                        String sender = users.find(userId)
+                                .map(UserDirectory.UserSummary::displayName)
+                                .orElse("Someone");
+                        outgoing.queue(
+                                requestEmail(
+                                        email,
+                                        name,
+                                        sender,
+                                        access.organizationName(organizationId),
+                                        target.title(),
+                                        token,
+                                        days),
+                                organizationId);
+                        audit.record(AuditLog.Event.of("work.request_link.created", organizationId, userId)
+                                .resource("request_link", row.id())
+                                .detail("workId", workId.toString())
+                                .detail("requirements", requested.size()));
+                        return InformationViews.link(row, List.copyOf(requested), now);
+                    });
+        });
     }
 
     public void revoke(UUID userId, UUID organizationId, UUID workId, UUID linkId) {

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class OrganizationRepository {
 
-    public record OrganizationRow(UUID id, String name, OffsetDateTime createdAt) {}
+    public record OrganizationRow(UUID id, String name, OffsetDateTime createdAt, int requestLinkDays) {}
 
     public record MembershipRow(UUID id, UUID organizationId, UUID userId, Role role, OffsetDateTime createdAt) {}
 
@@ -37,16 +37,17 @@ public class OrganizationRepository {
     }
 
     public Optional<OrganizationRow> findOrganization(UUID id) {
-        return jdbc.sql("select id, name, created_at from organizations where id = :id")
+        return jdbc.sql("select id, name, created_at, request_link_days from organizations where id = :id")
                 .param("id", id)
                 .query(OrganizationRow.class)
                 .optional();
     }
 
-    public void renameOrganization(UUID id, String name, OffsetDateTime now) {
-        jdbc.sql("update organizations set name = :name, updated_at = :now where id = :id")
+    public void updateOrganization(UUID id, String name, int requestLinkDays, OffsetDateTime now) {
+        jdbc.sql("update organizations set name = :name, request_link_days = :days, updated_at = :now where id = :id")
                 .param("id", id)
                 .param("name", name)
+                .param("days", requestLinkDays)
                 .param("now", now)
                 .update();
     }
@@ -131,7 +132,7 @@ public class OrganizationRepository {
 
     public List<MembershipWithOrganization> membershipsOf(UUID userId) {
         return jdbc.sql("""
-                        select m.id as membership_id, m.role, o.id, o.name, o.created_at
+                        select m.id as membership_id, m.role, o.id, o.name, o.created_at, o.request_link_days
                         from memberships m join organizations o on o.id = m.organization_id
                         where m.user_id = :user order by o.name
                         """)
@@ -142,7 +143,8 @@ public class OrganizationRepository {
                         new OrganizationRow(
                                 rs.getObject("id", UUID.class),
                                 rs.getString("name"),
-                                rs.getObject("created_at", OffsetDateTime.class))))
+                                rs.getObject("created_at", OffsetDateTime.class),
+                                rs.getInt("request_link_days"))))
                 .list();
     }
 }
