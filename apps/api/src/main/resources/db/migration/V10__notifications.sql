@@ -40,9 +40,9 @@ ALTER TABLE notification_preferences ENABLE ROW LEVEL SECURITY;
 
 -- The organization's own jobs create notifications for its members; a person
 -- reads and marks only their own.
--- Recipients are resolved from current memberships by the application.
-CREATE POLICY notifications_create ON notifications FOR INSERT
-    WITH CHECK (organization_id = app_organization_id());
+-- Notifications are created only through notifications_create (below), which
+-- deduplicates without letting the organization's sessions read people's
+-- notifications.
 CREATE POLICY notifications_own_read ON notifications FOR SELECT
     USING (user_id = app_user_id());
 CREATE POLICY notifications_own_mark ON notifications FOR UPDATE
@@ -78,3 +78,37 @@ CREATE FUNCTION sweep_unattended_exceptions(p_older_than_seconds integer)
     $$;
 REVOKE EXECUTE ON FUNCTION sweep_unattended_exceptions(integer) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION sweep_unattended_exceptions(integer) TO ${app_role};
+
+-- Creates a notification once per person and key, in the caller's organization,
+-- for a member of it. Returns whether it was new.
+CREATE FUNCTION notifications_create(p_id uuid, p_org uuid, p_user uuid, p_category text, p_title text,
+                                     p_body text, p_link text, p_source_type text, p_source_id text,
+                                     p_key text, p_email text, p_now timestamptz)
+    RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp
+    AS $$
+    DECLARE
+        created integer;
+    BEGIN
+        IF p_org IS DISTINCT FROM app_organization_id() THEN
+            RAISE EXCEPTION 'notifications are created in the organization''s own scope'
+                USING ERRCODE = 'insufficient_privilege';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM memberships WHERE organization_id = p_org AND user_id = p_user) THEN
+            RAISE EXCEPTION 'the recipient is not a member of the organization'
+                USING ERRCODE = 'insufficient_privilege';
+        END IF;
+        INSERT INTO notifications (id, organization_id, user_id, category, title, body, link, source_type,
+                                   source_id, dedupe_key, email_status, created_at)
+        VALUES (p_id, p_org, p_user, p_category, p_title, p_body, p_link, p_source_type, p_source_id, p_key,
+                p_email, p_now)
+        ON CONFLICT (user_id, dedupe_key) DO NOTHING;
+        GET DIAGNOSTICS created = ROW_COUNT;
+        RETURN created = 1;
+    END
+    $$;
+REVOKE EXECUTE ON FUNCTION notifications_create(uuid, uuid, uuid, text, text, text, text, text, text, text, text,
+    timestamptz) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION notifications_create(uuid, uuid, uuid, text, text, text, text, text, text, text, text,
+    timestamptz) TO ${app_role};
+REVOKE INSERT ON notifications FROM ${app_role};

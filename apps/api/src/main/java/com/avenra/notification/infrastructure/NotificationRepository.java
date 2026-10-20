@@ -41,27 +41,24 @@ public class NotificationRepository {
 
     /** Creates the notification unless this person already has one with the key; true when new. */
     public boolean insert(NotificationRow row) {
-        return jdbc.sql("""
-                        insert into notifications (id, organization_id, user_id, category, title, body, link,
-                            source_type, source_id, dedupe_key, email_status, created_at)
-                        values (:id, :org, :user, :category, :title, :body, :link, :sourceType, :sourceId, :key,
-                            :email, :now)
-                        on conflict (user_id, dedupe_key) do nothing
+        return Boolean.TRUE.equals(jdbc.sql("""
+                        select notifications_create(:id, :org, :user, :category, :title, :body, :link, :sourceType,
+                            :sourceId, :key, :email, :now)
                         """)
-                        .param("id", row.id())
-                        .param("org", row.organizationId())
-                        .param("user", row.userId())
-                        .param("category", row.category())
-                        .param("title", row.title())
-                        .param("body", row.body())
-                        .param("link", row.link())
-                        .param("sourceType", row.sourceType())
-                        .param("sourceId", row.sourceId())
-                        .param("key", row.dedupeKey())
-                        .param("email", row.emailStatus())
-                        .param("now", row.createdAt())
-                        .update()
-                == 1;
+                .param("id", row.id())
+                .param("org", row.organizationId())
+                .param("user", row.userId())
+                .param("category", row.category())
+                .param("title", row.title())
+                .param("body", row.body())
+                .param("link", row.link())
+                .param("sourceType", row.sourceType())
+                .param("sourceId", row.sourceId())
+                .param("key", row.dedupeKey())
+                .param("email", row.emailStatus())
+                .param("now", row.createdAt())
+                .query(Boolean.class)
+                .single());
     }
 
     public List<NotificationRow> forUser(UUID userId, int limit) {
