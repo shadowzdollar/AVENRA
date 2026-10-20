@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import { NotificationBell } from "@/components/notifications";
 import { Alert } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useRequiredSession } from "@/lib/session";
@@ -36,6 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link href="/account" className="hover:text-text-primary">
               Account
             </Link>
+            {session.data ? <NotificationBell /> : null}
           </nav>
           <div className="ml-auto flex items-center gap-3 text-sm">
             {session.data ? <span className="text-text-secondary">{session.data.displayName}</span> : null}

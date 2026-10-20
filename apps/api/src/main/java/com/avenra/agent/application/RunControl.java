@@ -48,6 +48,10 @@ class RunControl {
     void move(RunRow run, RunStatus target, @Nullable String summary, Budget budget) {
         RunStatus next = run.status().moveTo(target);
         repository.updateRun(run.id(), next, summary, budget, null, OffsetDateTime.now(clock));
+        if (next == RunStatus.AWAITING_APPROVAL) {
+            events.publishEvent(new AgentEvents.ApprovalNeeded(
+                    run.organizationId(), run.workId(), run.id(), run.status() == RunStatus.RUNNING));
+        }
     }
 
     /** Records what the run spent, without changing its state. */

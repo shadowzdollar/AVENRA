@@ -1,6 +1,7 @@
 package com.avenra.work.application;
 
 import com.avenra.audit.AuditLog;
+import com.avenra.work.WorkEvents;
 import com.avenra.work.domain.ExceptionType;
 import com.avenra.work.infrastructure.ExceptionRepository;
 import com.avenra.work.infrastructure.ExceptionRepository.ExceptionRow;
@@ -9,6 +10,7 @@ import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,12 +22,19 @@ class Exceptions {
     private final ExceptionRepository repository;
     private final AuditLog audit;
     private final MeterRegistry metrics;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
 
-    Exceptions(ExceptionRepository repository, AuditLog audit, MeterRegistry metrics, Clock clock) {
+    Exceptions(
+            ExceptionRepository repository,
+            AuditLog audit,
+            MeterRegistry metrics,
+            ApplicationEventPublisher events,
+            Clock clock) {
         this.repository = repository;
         this.audit = audit;
         this.metrics = metrics;
+        this.events = events;
         this.clock = clock;
     }
 
@@ -66,6 +75,8 @@ class Exceptions {
                 .detail("type", type.name());
         audit.record(workId == null ? event : event.detail("workId", workId.toString()));
         metrics.counter("avenra.exception.raised", "type", type.name()).increment();
+        events.publishEvent(new WorkEvents.ExceptionRaised(
+                organizationId, workId, row.id(), type.name(), type.severity().name(), description));
         return true;
     }
 }

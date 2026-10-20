@@ -46,7 +46,11 @@ public final class InformationEvents {
             UUID itemId,
             java.util.List<String> problems) {}
 
-    /** A request link expired with required items still missing. */
+    /**
+     * A request link expired with required items still missing.
+     *
+     * @param sentBy who created the request link
+     */
     public record RequestExpiredIncomplete(
-            UUID organizationId, UUID workId, UUID requestLinkId, String recipient, long missing) {}
+            UUID organizationId, UUID workId, UUID requestLinkId, String recipient, long missing, UUID sentBy) {}
 }

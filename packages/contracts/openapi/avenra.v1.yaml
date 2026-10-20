@@ -46,6 +46,8 @@ tags:
     gateway.'
 - name: integrations
   description: 'Connections to other systems: signed webhooks and storage export (ADR-034).'
+- name: notifications
+  description: What needs a person, in the app and by email (ADR-035).
 paths:
   /api/v1/meta:
     get:
@@ -2514,6 +2516,129 @@ paths:
           $ref: '#/components/responses/ClientError'
         5XX:
           $ref: '#/components/responses/ServerError'
+  /api/v1/notifications:
+    get:
+      operationId: listNotifications
+      summary: Your notifications
+      tags:
+      - notifications
+      x-avenra-permission: authenticated
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters: []
+      responses:
+        '200':
+          description: Your notifications across your organizations.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationList'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/notifications/{notificationId}/read:
+    post:
+      operationId: readNotification
+      summary: Mark a notification read
+      tags:
+      - notifications
+      x-avenra-permission: authenticated
+      x-avenra-audit: none
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/NotificationId'
+      responses:
+        '204':
+          description: Marked read.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/notifications/read:
+    post:
+      operationId: readAllNotifications
+      summary: Mark all your notifications read
+      tags:
+      - notifications
+      x-avenra-permission: authenticated
+      x-avenra-audit: none
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters: []
+      responses:
+        '204':
+          description: Marked read.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/account/notification-preferences:
+    get:
+      operationId: getNotificationPreferences
+      summary: Your notification preferences
+      tags:
+      - notifications
+      x-avenra-permission: authenticated
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters: []
+      responses:
+        '200':
+          description: Per category.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    put:
+      operationId: updateNotificationPreferences
+      summary: Choose which notifications you also get by email
+      tags:
+      - notifications
+      x-avenra-permission: authenticated
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters: []
+      responses:
+        '200':
+          description: Updated.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationPreferencesInput'
 components:
   headers:
     RequestId:
@@ -5147,6 +5272,110 @@ components:
         deliveredAt:
           type: string
           format: date-time
+    NotificationCategory:
+      type: string
+      enum:
+      - exception
+      - answer
+      - request
+      - approval
+      - integration
+      - escalation
+      description: New categories are added over time; show unknown ones as general notifications.
+    Notification:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - organizationId
+      - category
+      - title
+      - body
+      - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        organizationName:
+          type: string
+        category:
+          $ref: '#/components/schemas/NotificationCategory'
+        title:
+          type: string
+        body:
+          type: string
+        link:
+          type: string
+          description: A path inside Avenra, e.g. `/organizations/…/work/…`.
+        createdAt:
+          type: string
+          format: date-time
+        readAt:
+          type: string
+          format: date-time
+    NotificationList:
+      type: object
+      additionalProperties: false
+      required:
+      - unread
+      - notifications
+      properties:
+        unread:
+          type: integer
+          minimum: 0
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+          description: Newest first, at most 50.
+    NotificationPreference:
+      type: object
+      additionalProperties: false
+      required:
+      - category
+      - email
+      - inApp
+      properties:
+        category:
+          $ref: '#/components/schemas/NotificationCategory'
+        email:
+          type: boolean
+        inApp:
+          type: boolean
+          description: 'Always true: in-app notifications cannot be switched off.'
+    NotificationPreferences:
+      type: object
+      additionalProperties: false
+      required:
+      - preferences
+      properties:
+        preferences:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationPreference'
+    NotificationPreferencesInput:
+      type: object
+      additionalProperties: false
+      required:
+      - preferences
+      properties:
+        preferences:
+          type: array
+          maxItems: 20
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - category
+            - email
+            properties:
+              category:
+                $ref: '#/components/schemas/NotificationCategory'
+              email:
+                type: boolean
   securitySchemes:
     sessionCookie:
       type: apiKey
@@ -5284,6 +5513,13 @@ components:
         format: uuid
     DeliveryId:
       name: deliveryId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    NotificationId:
+      name: notificationId
       in: path
       required: true
       schema:

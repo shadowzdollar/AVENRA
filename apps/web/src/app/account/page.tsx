@@ -6,6 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { Alert, Button, Card, Field } from "@/components/ui";
 import { api, ApiError, unwrap } from "@/lib/api";
 import { sessionKey } from "@/lib/session";
+import { NotificationPreferences } from "@/components/notifications";
 
 function message(error: unknown): string | null {
   return error instanceof ApiError ? error.message : error ? "Something went wrong. Please try again." : null;
@@ -208,6 +209,7 @@ function Account() {
       </div>
       <TwoStepVerification enabled={session.data?.mfaEnabled ?? false} />
       <ChangePassword />
+      <NotificationPreferences />
       <Sessions />
     </div>
   );
