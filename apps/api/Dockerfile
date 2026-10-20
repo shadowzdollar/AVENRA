@@ -4,7 +4,7 @@
 # Tests are not run here; CI runs them before images are built.
 
 # --- Build ------------------------------------------------------------------
-FROM eclipse-temurin:25.0.4_7-jdk-alpine AS build
+FROM eclipse-temurin:25.0.4.1_1-jdk-alpine AS build
 WORKDIR /workspace
 
 # The contract is the source of the generated API interfaces (ADR-008).
@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -ntp package -DskipTests \
     && java -Djarmode=tools -jar target/avenra-api-*.jar extract --layers --launcher --destination /extracted
 
 # --- Runtime ----------------------------------------------------------------
-FROM eclipse-temurin:25.0.4_7-jre-alpine
+FROM eclipse-temurin:25.0.4.1_1-jre-alpine
 
 # Operating-system security updates published since the base image was built.
 # A new OS_PACKAGES_DATE (CI passes the day) re-runs this layer even when the
