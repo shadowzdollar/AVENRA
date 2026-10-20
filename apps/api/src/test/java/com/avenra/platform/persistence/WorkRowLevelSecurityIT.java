@@ -53,7 +53,9 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
             "work_completions",
             "ai_settings",
             "ai_invocations",
-            "document_readings");
+            "document_readings",
+            "agent_runs",
+            "agent_steps");
 
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
@@ -243,6 +245,20 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
                         + org + "', '" + document + "', 1, '" + "0".repeat(64)
                         + "', '{}', 'DONE', '{\"fields\":[],\"instructionsDetected\":false,\"proposals\":[],"
                         + "\"source\":\"TEXT\"}', '" + invocation + "', now(), now())");
+        UUID run = UUID.randomUUID();
+        exec(
+                owner,
+                "insert into agent_runs (id, organization_id, work_id, capability, status, started_by, allowed_tools,"
+                        + " max_model_calls, max_tool_calls, max_side_effects, max_cost_micros, deadline, created_at,"
+                        + " updated_at) values ('" + run + "', '" + org + "', '" + work + "', 'information.plan',"
+                        + " 'AWAITING_APPROVAL', '" + user + "', '{create_task}', 1, 20, 1, 200000, now() + interval"
+                        + " '1 hour', now(), now())");
+        exec(
+                owner,
+                "insert into agent_steps (id, organization_id, run_id, position, tool, risk, input, status, created_at)"
+                        + " values ('" + UUID.randomUUID() + "', '" + org + "', '" + run
+                        + "', 1, 'create_task', 'MEDIUM',"
+                        + " '{}', 'PROPOSED', now())");
     }
 
     private void insertLink(Connection owner, UUID id, byte[] token, String expires, String revoked)

@@ -13,7 +13,10 @@ import org.springframework.stereotype.Repository;
 public class AiRepository {
 
     public record SettingsRow(
-            boolean documentReading, @Nullable UUID updatedBy, OffsetDateTime updatedAt) {}
+            boolean documentReading,
+            boolean workPlanning,
+            @Nullable UUID updatedBy,
+            OffsetDateTime updatedAt) {}
 
     public record InvocationRow(
             UUID id,
@@ -50,25 +53,30 @@ public class AiRepository {
 
     public Optional<SettingsRow> settings(UUID organizationId) {
         return jdbc.sql("""
-                        select document_reading, updated_by, updated_at from ai_settings
+                        select document_reading, work_planning, updated_by, updated_at from ai_settings
                         where organization_id = :org
                         """)
                 .param("org", organizationId)
                 .query((rs, row) -> new SettingsRow(
-                        rs.getBoolean(1), rs.getObject(2, UUID.class), rs.getObject(3, OffsetDateTime.class)))
+                        rs.getBoolean(1),
+                        rs.getBoolean(2),
+                        rs.getObject(3, UUID.class),
+                        rs.getObject(4, OffsetDateTime.class)))
                 .optional();
     }
 
-    public void saveSettings(UUID organizationId, boolean documentReading, UUID by, OffsetDateTime now) {
+    public void saveSettings(
+            UUID organizationId, boolean documentReading, boolean workPlanning, UUID by, OffsetDateTime now) {
         jdbc.sql("""
-                        insert into ai_settings (organization_id, document_reading, updated_by, updated_at)
-                        values (:org, :reading, :by, :now)
+                        insert into ai_settings (organization_id, document_reading, work_planning, updated_by, updated_at)
+                        values (:org, :reading, :planning, :by, :now)
                         on conflict (organization_id) do update
-                        set document_reading = excluded.document_reading, updated_by = excluded.updated_by,
-                            updated_at = excluded.updated_at
+                        set document_reading = excluded.document_reading, work_planning = excluded.work_planning,
+                            updated_by = excluded.updated_by, updated_at = excluded.updated_at
                         """)
                 .param("org", organizationId)
                 .param("reading", documentReading)
+                .param("planning", workPlanning)
                 .param("by", by)
                 .param("now", now)
                 .update();

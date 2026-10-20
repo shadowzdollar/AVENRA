@@ -27,8 +27,8 @@ class AiController implements AiApi {
 
     @Override
     public ResponseEntity<AiSettings> updateAiSettings(UUID organizationId, AiSettingsInput body) {
-        return ResponseEntity.ok(
-                settings.update(CurrentUser.require().userId(), organizationId, body.getDocumentReading()));
+        return ResponseEntity.ok(settings.update(
+                CurrentUser.require().userId(), organizationId, body.getDocumentReading(), body.getWorkPlanning()));
     }
 
     @Override

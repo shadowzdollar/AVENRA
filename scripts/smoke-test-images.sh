@@ -5,6 +5,9 @@
 #   - the container refuses to start without its required configuration
 #   - with valid configuration it becomes healthy and serves requests
 #
+# The API container allows 50 sign-ups per hour (instead of 5) because the
+# browser tests that run against these containers sign up several accounts.
+#
 # Requires: images built with tag $TAG, local infrastructure running
 # (`make infra-up`), and the values from .env.
 set -euo pipefail
@@ -97,6 +100,7 @@ docker run -d --name avenra-api-smoke --network host \
   -e SPRING_MAIL_HOST=127.0.0.1 -e SPRING_MAIL_PORT=11025 \
   -e AVENRA_WEB_PUBLIC_BASE_URL=http://127.0.0.1:13000 \
   -e AVENRA_AI_SERVICE_TOKEN -e AVENRA_AI_URL=http://127.0.0.1:18090 \
+  -e SPRING_APPLICATION_JSON='{"avenra":{"rate-limits":{"policies":{"sign-up":{"capacity":50,"refill":"1h"}}}}}' \
   "avenra-api:$TAG" >/dev/null
 wait_healthy avenra-api-smoke
 expect_uid avenra-api-smoke 10001

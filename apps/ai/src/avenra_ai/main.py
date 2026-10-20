@@ -21,7 +21,8 @@ from avenra_ai.logs import configure_logging, request_id_var, trace_id_var
 from avenra_ai.providers import ErrorCode, Provider
 from avenra_ai.providers.claude import ClaudeProvider
 from avenra_ai.providers.fake import FakeProvider
-from avenra_ai.tasks import document_read
+from avenra_ai.tasks import document_read, work_plan
+from avenra_ai.tasks.common import TaskFailedError
 
 REQUEST_ID_HEADER = "X-Request-Id"
 _ACCEPTED_REQUEST_ID = re.compile(r"[A-Za-z0-9._-]{8,128}")
@@ -71,7 +72,7 @@ def _error(code: str, status: int) -> JSONResponse:
     return JSONResponse(body, status_code=status, headers={"Cache-Control": "no-store"})
 
 
-def _task_error(failure: document_read.ReadFailedError) -> JSONResponse:
+def _task_error(failure: TaskFailedError) -> JSONResponse:
     status, message = _TASK_ERRORS[failure.code]
     body: dict[str, object] = {
         "code": failure.code.value,
@@ -93,7 +94,7 @@ def build_provider(settings: Settings) -> Provider:
             effort=settings.effort,
             timeout_seconds=settings.request_timeout_seconds,
         )
-    return FakeProvider({document_read.TASK: document_read.fake_answer})
+    return FakeProvider({document_read.TASK: document_read.fake_answer, work_plan.TASK: work_plan.fake_answer})
 
 
 class _UnauthenticatedError(Exception):
@@ -155,11 +156,14 @@ def create_app(settings: Settings | None = None, provider: Provider | None = Non
         response.headers["WWW-Authenticate"] = "Bearer"
         return response
 
-    @app.exception_handler(document_read.ReadFailedError)
-    async def read_failed(_request: Request, exc: document_read.ReadFailedError) -> JSONResponse:
+    @app.exception_handler(TaskFailedError)
+    async def task_failed(request: Request, exc: TaskFailedError) -> JSONResponse:
         log.info(
             "Task failed",
-            extra={"task": document_read.TASK, "error": {"code": exc.code.value, "retryable": exc.code.retryable}},
+            extra={
+                "url": {"path": request.url.path},
+                "error": {"code": exc.code.value, "retryable": exc.code.retryable},
+            },
         )
         return _task_error(exc)
 
@@ -196,6 +200,15 @@ def create_app(settings: Settings | None = None, provider: Provider | None = Non
                     "latency_ms": result.invocation.latency_ms,
                 },
             },
+        )
+        return JSONResponse(result.model_dump(by_alias=True, mode="json"), headers={"Cache-Control": "no-store"})
+
+    @app.post("/v1/tasks/work-plan", dependencies=[Depends(service_caller)])
+    async def plan_work(body: work_plan.PlanRequest) -> JSONResponse:
+        result = await work_plan.plan(body, provider)
+        log.info(
+            "Task completed",
+            extra={"task": work_plan.TASK, "ai": {"model": result.invocation.model, "steps": len(result.steps)}},
         )
         return JSONResponse(result.model_dump(by_alias=True, mode="json"), headers={"Cache-Control": "no-store"})
 

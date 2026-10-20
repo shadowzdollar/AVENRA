@@ -38,3 +38,4 @@ PUT /api/v1/organizations/{organizationId}/work/{workId}/requirements/{requireme
 PUT /api/v1/organizations/{organizationId}/work/{workId}/requirements/{requirementId}/rules added the new `DOCUMENT_FIELD` enum value to the `rules/items/type` response property for the response status `200`
 PUT /api/v1/organizations/{organizationId}/work/{workId}/requirements/{requirementId}/rules added the new `DOCUMENT_KIND` enum value to the `currentItem/checks/checks/items/rule` response property for the response status `200`
 PUT /api/v1/organizations/{organizationId}/work/{workId}/requirements/{requirementId}/rules added the new `DOCUMENT_KIND` enum value to the `rules/items/type` response property for the response status `200`
+GET /api/v1/organizations/{organizationId}/ai/usage added the new `work.plan` enum value to the `invocations/items/purpose` response property for the response status `200`
