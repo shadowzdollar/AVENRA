@@ -11,6 +11,7 @@ import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.function.Supplier;
@@ -64,15 +65,23 @@ public class StorageExporter {
             builder.endpointOverride(endpoint);
         }
         String prefix = folder(settings.prefix());
+        String current = "";
         try (S3Client s3 = builder.build()) {
             for (Item item : items) {
+                current = item.key();
+                byte[] content;
                 try (InputStream in = item.content().get()) {
-                    s3.putObject(
-                            put -> put.bucket(settings.bucket())
-                                    .key(prefix + item.key())
-                                    .contentType(item.contentType()),
-                            RequestBody.fromInputStream(in, item.length()));
+                    content = in.readAllBytes();
                 }
+                // The service checks the SHA-256 itself, as for stored documents (ADR-019).
+                String checksum =
+                        Base64.getEncoder().encodeToString(HexFormat.of().parseHex(item.sha256Hex()));
+                s3.putObject(
+                        put -> put.bucket(settings.bucket())
+                                .key(prefix + item.key())
+                                .contentType(item.contentType())
+                                .checksumSHA256(checksum),
+                        RequestBody.fromBytes(content));
                 String stored;
                 try (InputStream back =
                         s3.getObject(get -> get.bucket(settings.bucket()).key(prefix + item.key()))) {
@@ -91,7 +100,7 @@ public class StorageExporter {
             if (status == 429 || status >= 500) {
                 return Outcome.retry(status, "The storage service answered " + status + ".");
             }
-            return Outcome.fail(status, "The storage service refused the export (" + status + " " + code + ").");
+            return Outcome.fail(status, "The storage service refused " + current + " (" + status + " " + code + ").");
         } catch (SdkClientException | IOException unreachable) {
             return Outcome.retry(null, "The storage service could not be reached.");
         }

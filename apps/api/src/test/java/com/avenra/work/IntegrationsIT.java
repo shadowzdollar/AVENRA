@@ -339,10 +339,10 @@ class IntegrationsIT extends IntegrationTestBase {
     @Test
     void completedWorkIsExportedToTheBucketAndVerified() throws Exception {
         var s = setup();
-        String bucket = "export-" + UUID.randomUUID().toString().substring(0, 8);
-        try (var s3 = TestServices.s3Client()) {
-            s3.createBucket(request -> request.bucket(bucket));
-        }
+        // The shared test bucket, under a folder of its own: SeaweedFS needs new volumes for every new
+        // bucket, which the test container runs out of late in the suite.
+        String bucket = TestServices.S3_BUCKET;
+        String folder = "exports-" + UUID.randomUUID() + "/";
         var created = created(s.owner()
                         .post(
                                 s.integrations(),
@@ -358,7 +358,7 @@ class IntegrationsIT extends IntegrationTestBase {
                                                 "bucket",
                                                 bucket,
                                                 "prefix",
-                                                "clients/",
+                                                folder,
                                                 "pathStyle",
                                                 true),
                                         "credentials",
@@ -405,11 +405,10 @@ class IntegrationsIT extends IntegrationTestBase {
                 .isEqualTo("DELIVERED");
         var completion = ok(s.owner().get(s.workPath() + "/completion")).body();
         try (var s3 = TestServices.s3Client()) {
-            String manifest = s3.getObjectAsBytes(
-                            get -> get.bucket(bucket).key("clients/" + s.work() + "/manifest.json"))
+            String manifest = s3.getObjectAsBytes(get -> get.bucket(bucket).key(folder + s.work() + "/manifest.json"))
                     .asUtf8String();
             assertThat(manifest).isEqualTo(completion.get("manifest").asString());
-            var keys = s3.listObjectsV2(list -> list.bucket(bucket).prefix("clients/" + s.work() + "/documents/"))
+            var keys = s3.listObjectsV2(list -> list.bucket(bucket).prefix(folder + s.work() + "/documents/"))
                     .contents();
             assertThat(keys)
                     .singleElement()
