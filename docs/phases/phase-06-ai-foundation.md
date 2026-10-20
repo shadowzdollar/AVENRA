@@ -1,6 +1,6 @@
 # Phase 6: AI Foundation
 
-**Status:** In progress
+**Status:** Complete (2026-10-20), with one written deferral (the real-model evaluation run)
 **Guidelines:** §6, §41–§53, §99, §103, §121 (Phase 6), §129, §143
 **Master Project:** §12 steps 6–7, §14.4, §41, §43
 
@@ -65,10 +65,15 @@ Reading is off until an owner of the organization switches it on.
 | 6.9 | Documents are data: injection attempts in documents do not change the output's shape or the system's behaviour | Delimited untrusted content (`test_the_document_is_passed_as_delimited_untrusted_data…`), no tools (`test_sends_a_schema_constrained_request_without_tools`), closed enums; injection reported (`AiReadingIT.injectedInstructionsAreReported…`); eval gate `injectionsFollowed = 0` on four injection cases | ☑ |
 | 6.10 | Tool proposals are validated against declared schemas and never executed by the AI service | `tools.py` catalogue; unknown tools and extra input rejected (`test_invalid_answers…`, `AiServiceClientTest`); proposals only shown as suggestions (`reading-view.tsx`, `ReadingView` test) | ☑ |
 | 6.11 | The API authenticates to the AI service; failures are classified as retryable or not | `test_tasks_need_the_service_token` (constant-time, before the body), smoke test 401; classification `test_failures_are_classified`, `test_retryable_failures_are_the_transient_ones`, `AiReadingIT.retryableFailuresAreRetried…` (rate limit retried, refusal not); trace id logged (`test_the_callers_trace_id_is_logged`) | ☑ |
-| 6.12 | Evaluation dataset and runner; CI runs it on the fake provider; a run against the real model is recorded | 16-case dataset, runner, CI gate on the fake provider (`test_evals.py`). **Run against the real model pending:** needs `ANTHROPIC_API_KEY` in `.env`, then `make ai-eval PROVIDER=claude` | ☐ |
+| 6.12 | Evaluation dataset and runner; CI runs it on the fake provider; a run against the real model is recorded | 16-case dataset, runner, CI gate on the fake provider (`test_evals.py`). Dataset, runner and CI gate done. The run against the real model is **deferred** (below): no provider key is available yet | ☑ (run deferred) |
 | 6.13 | Threat model for AI document reading | `docs/security/threat-model-ai.md` | ☑ |
 
 ## Hardening record
+
+- CI note (2026-10-20): GitHub Actions stopped starting jobs (account billing
+  or spending limit). PR #42 itself merged with every CI check green; later
+  evidence is from local runs of the same checks (`make check`, browser tests
+  against a production build).
 
 - Every check CI runs passed locally (`make check`): AI service 69 tests (ruff,
   mypy strict), API 78 unit and 145 integration tests, web 44 unit tests;
@@ -92,3 +97,4 @@ Reading is off until an owner of the organization switches it on.
 | OpenTelemetry SDK in the AI service | One hop only; the trace id is propagated and logged on both sides | When the AI service makes more than one traced call |
 | Reading office files (Word, Excel, PowerPoint) | Needs a converter dependency; PDF, images, text and CSV cover Phase 6 | When a team needs it |
 | Re-reading already uploaded documents when reading is switched on | Readings start with the next verification of an answer | When asked for |
+| **Evaluation run against the real model (6.12)** | No `ANTHROPIC_API_KEY` yet. The product owner asked to continue to later phases (2026-10-20). Production must not enable document reading for real clients until this run meets the ADR-032 thresholds | As soon as the key is in `.env`: `make ai-eval PROVIDER=claude`, store the report in `apps/ai/evals/reports/` and reference it here |
