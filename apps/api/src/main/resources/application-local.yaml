@@ -2,6 +2,12 @@ avenra:
   environment: LOCAL
   web:
     allowed-origins: http://localhost:3000
+  # Every browser journey signs up new accounts from one address; locally the
+  # sign-up limit is raised so the suite can run repeatedly. Elsewhere the
+  # default of 5 per hour applies.
+  rate-limits:
+    policies:
+      sign-up: { capacity: 50, refill: 1h }
 
 spring:
   mail:
