@@ -4,6 +4,7 @@ import com.avenra.information.Information;
 import com.avenra.platform.web.ApiException;
 import com.avenra.platform.web.ErrorResponse;
 import com.avenra.verification.Verification;
+import com.avenra.work.WorkEvents;
 import com.avenra.work.domain.CompletionCriteria;
 import com.avenra.work.infrastructure.ExceptionRepository;
 import com.avenra.work.infrastructure.WorkRepository;
@@ -15,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -31,6 +33,7 @@ class Completions {
     private final Verification verification;
     private final ExceptionRepository exceptions;
     private final WorkRepository work;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
 
     Completions(
@@ -38,11 +41,13 @@ class Completions {
             Verification verification,
             ExceptionRepository exceptions,
             WorkRepository work,
+            ApplicationEventPublisher events,
             Clock clock) {
         this.information = information;
         this.verification = verification;
         this.exceptions = exceptions;
         this.work = work;
+        this.events = events;
         this.clock = clock;
     }
 
@@ -106,7 +111,9 @@ class Completions {
                 information.completionFacts(completed.organizationId(), completed.id()).stream()
                         .map(Completions::entry)
                         .toList());
-        verification.seal(completed.organizationId(), completed.id(), manifest);
+        var sealed = verification.seal(completed.organizationId(), completed.id(), manifest);
+        events.publishEvent(new WorkEvents.Completed(
+                completed.organizationId(), completed.id(), completed.title(), now, sealed.sha256()));
     }
 
     private static Map<String, Object> entry(Information.CompletionFact fact) {

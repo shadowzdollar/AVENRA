@@ -8,6 +8,9 @@ avenra:
   rate-limits:
     policies:
       sign-up: { capacity: 50, refill: 1h }
+  # Local receivers and storage run on loopback over plain HTTP (ADR-034).
+  integrations:
+    allow-loopback-http: true
 
 spring:
   mail:

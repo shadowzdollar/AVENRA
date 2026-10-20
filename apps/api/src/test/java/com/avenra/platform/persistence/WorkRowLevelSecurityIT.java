@@ -55,7 +55,9 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
             "ai_invocations",
             "document_readings",
             "agent_runs",
-            "agent_steps");
+            "agent_steps",
+            "integration_connections",
+            "integration_deliveries");
 
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
@@ -259,6 +261,17 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
                         + " values ('" + UUID.randomUUID() + "', '" + org + "', '" + run
                         + "', 1, 'create_task', 'MEDIUM',"
                         + " '{}', 'PROPOSED', now())");
+        UUID connection = UUID.randomUUID();
+        exec(
+                owner,
+                "insert into integration_connections (id, organization_id, provider, name, status, events, settings,"
+                        + " created_by, created_at, updated_at) values ('" + connection + "', '" + org + "', 'WEBHOOK',"
+                        + " 'Hook', 'ACTIVE', '{work.completed}', '{}', '" + user + "', now(), now())");
+        exec(
+                owner,
+                "insert into integration_deliveries (id, organization_id, connection_id, event_id, event_type, payload,"
+                        + " status, created_at) values ('" + UUID.randomUUID() + "', '" + org + "', '" + connection
+                        + "', '" + UUID.randomUUID() + "', 'work.completed', '{}', 'PENDING', now())");
     }
 
     private void insertLink(Connection owner, UUID id, byte[] token, String expires, String revoked)
