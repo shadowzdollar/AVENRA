@@ -36,6 +36,8 @@ public final class TestAiService {
     private static final JsonMapper JSON = JsonMapper.builder().build();
     private static final List<JsonNode> REQUESTS = new CopyOnWriteArrayList<>();
     private static volatile Function<JsonNode, Answer> responder = TestAiService::read;
+    private static volatile Function<JsonNode, Answer> planner = TestAiService::plan;
+    private static final List<JsonNode> PLAN_REQUESTS = new CopyOnWriteArrayList<>();
     private static HttpServer server;
 
     private TestAiService() {}
@@ -48,6 +50,7 @@ public final class TestAiService {
                 throw new UncheckedIOException(failure);
             }
             server.createContext("/v1/tasks/document-read", TestAiService::handle);
+            server.createContext("/v1/tasks/work-plan", TestAiService::handlePlan);
             server.start();
         }
         return "http://127.0.0.1:" + server.getAddress().getPort();
@@ -64,7 +67,63 @@ public final class TestAiService {
 
     public static void reset() {
         responder = TestAiService::read;
+        planner = TestAiService::plan;
         REQUESTS.clear();
+        PLAN_REQUESTS.clear();
+    }
+
+    /** Planning requests since the last {@link #reset}. */
+    public static List<JsonNode> planRequests() {
+        return List.copyOf(PLAN_REQUESTS);
+    }
+
+    public static void plan(Function<JsonNode, Answer> next) {
+        planner = next;
+    }
+
+    private static void handlePlan(HttpExchange exchange) throws IOException {
+        try (exchange) {
+            Answer answer;
+            if (!("Bearer " + TOKEN).equals(exchange.getRequestHeaders().getFirst("Authorization"))) {
+                answer = new Answer(401, Map.of("code", "AUTHENTICATION_REQUIRED", "message", "x", "requestId", "r"));
+            } else {
+                JsonNode request = JSON.readTree(exchange.getRequestBody());
+                PLAN_REQUESTS.add(request);
+                answer = planner.apply(request);
+            }
+            byte[] body = JSON.writeValueAsBytes(answer.body());
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(answer.status(), body.length);
+            exchange.getResponseBody().write(body);
+        }
+    }
+
+    /** A plan with these steps, as the AI service would return it. */
+    public static Answer planOf(List<Map<String, Object>> steps) {
+        var invocation = invocation();
+        invocation.put("prompt", Map.of("name", "work_plan", "version", 1, "sha256", "cd".repeat(32)));
+        return new Answer(200, Map.of("summary", "A plan for the work.", "steps", steps, "invocation", invocation));
+    }
+
+    public static Map<String, Object> step(String tool, Map<String, Object> input) {
+        return Map.of("tool", tool, "input", input, "reason", "Needed for this work.");
+    }
+
+    /** The default plan: two requirements, a task, and the request to the client. */
+    public static Answer plan(JsonNode request) {
+        return planOf(List.of(
+                step(
+                        "create_requirement",
+                        Map.of(
+                                "title", "Passport",
+                                "kind", "DOCUMENT",
+                                "required", true,
+                                "instructions", "A clear copy of the photo page.")),
+                step(
+                        "create_requirement",
+                        Map.of("title", "Date of birth", "kind", "DATE", "required", true, "instructions", "")),
+                step("create_task", Map.of("title", "Review the documents", "completionCondition", "All accepted.")),
+                step("send_information_request", Map.of("message", "Please send the items below."))));
     }
 
     private static void handle(HttpExchange exchange) throws IOException {

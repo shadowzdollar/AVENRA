@@ -1,6 +1,6 @@
 # ADR-004: Central agent orchestrator with a tool gateway
 
-**Status:** Accepted (implemented in Phase 7)
+**Status:** Accepted (implemented in Phase 7, ADR-033)
 
 ## Context
 

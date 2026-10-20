@@ -2,6 +2,7 @@ package com.avenra.ai.infrastructure;
 
 import com.avenra.ai.AiProperties;
 import com.avenra.ai.DocumentReading;
+import com.avenra.ai.WorkPlan;
 import io.micrometer.observation.ObservationRegistry;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -67,7 +68,15 @@ public class AiServiceClient {
      * @param invocation present when a model was called and cost was incurred, so it is recorded
      */
     public record Failure(
-            String code, boolean retryable, @Nullable Invocation invocation, String detail) implements Result {}
+            String code, boolean retryable, @Nullable Invocation invocation, String detail)
+            implements Result, PlanResult {}
+
+    public sealed interface PlanResult permits PlanSuccess, Failure {}
+
+    public record PlanSuccess(WorkPlan plan, Invocation invocation) implements PlanResult {}
+
+    static final Set<String> PLAN_TOOLS = Set.of("create_requirement", "create_task", "send_information_request");
+    static final int MAX_PLAN_STEPS = 15;
 
     private final RestClient http;
     private final JsonMapper json;
@@ -113,6 +122,70 @@ public class AiServiceClient {
                     timedOut ? "TIMEOUT" : "AI_SERVICE_UNAVAILABLE", true, null, "the AI service did not answer");
         }
     }
+
+    public PlanResult planWork(com.avenra.ai.Ai.PlanRequest request) {
+        var body = new LinkedHashMap<String, Object>();
+        body.put("title", request.title());
+        body.put("description", request.description());
+        body.put("workType", request.workType());
+        body.put("existingRequirements", request.existingRequirements());
+        body.put("tools", request.tools());
+        try {
+            return http.post()
+                    .uri("/v1/tasks/work-plan")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(json.writeValueAsString(body))
+                    .exchange((sent, response) -> {
+                        JsonNode answer = read(response.getBody());
+                        if (!response.getStatusCode().is2xxSuccessful()) {
+                            return failure(response.getStatusCode().value(), answer);
+                        }
+                        if (answer == null || !answer.path("invocation").isObject()) {
+                            return new Failure(
+                                    "INVALID_OUTPUT", false, null, "the AI service's answer could not be read");
+                        }
+                        Invocation invocation = invocation(answer.path("invocation"));
+                        try {
+                            return new PlanSuccess(plan(answer, request.tools()), invocation);
+                        } catch (IllegalArgumentException invalid) {
+                            return new Failure("INVALID_OUTPUT", false, invocation, invalid.getMessage());
+                        }
+                    });
+        } catch (ResourceAccessException unreachable) {
+            boolean timedOut = unreachable.getCause() instanceof java.net.http.HttpTimeoutException;
+            log.warn("AI service unreachable", unreachable);
+            return new Failure(
+                    timedOut ? "TIMEOUT" : "AI_SERVICE_UNAVAILABLE", true, null, "the AI service did not answer");
+        }
+    }
+
+    /** Only the shape is checked here; the agent's gateway validates each tool's input itself. */
+    static WorkPlan plan(JsonNode answer, List<String> allowed) {
+        String summary = optional(answer.path("summary"), 500);
+        if (summary == null || summary.isBlank()) {
+            throw new IllegalArgumentException("the plan has no summary");
+        }
+        var steps = new ArrayList<WorkPlan.Step>();
+        for (JsonNode node : answer.path("steps")) {
+            String tool = node.path("tool").asString("");
+            if (!PLAN_TOOLS.contains(tool)
+                    || !allowed.contains(tool)
+                    || !node.path("input").isObject()) {
+                throw new IllegalArgumentException("a step uses a tool that is not allowed");
+            }
+            String reason = optional(node.path("reason"), MAX_REASON);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> input = JSON_FOR_PLANS.convertValue(node.path("input"), Map.class);
+            steps.add(new WorkPlan.Step(tool, input, reason == null ? "" : reason));
+        }
+        if (steps.size() > MAX_PLAN_STEPS) {
+            throw new IllegalArgumentException("the plan has too many steps");
+        }
+        return new WorkPlan(summary, steps);
+    }
+
+    private static final JsonMapper JSON_FOR_PLANS = JsonMapper.builder().build();
 
     private @Nullable JsonNode read(InputStream body) {
         try {

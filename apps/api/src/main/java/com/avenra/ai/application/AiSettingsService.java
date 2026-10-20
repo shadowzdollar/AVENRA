@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 /** The organization's AI setting and its usage records (ADR-030). */
@@ -41,18 +42,26 @@ public class AiSettingsService {
         return access.run(userId, organizationId, Permission.ORGANIZATION_READ, caller -> settings(organizationId));
     }
 
-    /** Only owners hold {@code ai.manage}; the change is audited with its old and new value. */
-    public AiSettings update(UUID userId, UUID organizationId, boolean documentReading) {
+    /**
+     * Only owners hold {@code ai.manage}; the change is audited with its old and new value.
+     *
+     * @param workPlanning the new planning setting, or {@code null} to keep it
+     */
+    public AiSettings update(
+            UUID userId, UUID organizationId, boolean documentReading, @Nullable Boolean workPlanning) {
         return access.run(userId, organizationId, Permission.AI_MANAGE, caller -> {
-            boolean before = repository
-                    .settings(organizationId)
-                    .map(AiRepository.SettingsRow::documentReading)
-                    .orElse(false);
-            repository.saveSettings(organizationId, documentReading, userId, OffsetDateTime.now(clock));
-            if (before != documentReading) {
+            var before = repository.settings(organizationId);
+            boolean readingBefore =
+                    before.map(AiRepository.SettingsRow::documentReading).orElse(false);
+            boolean planningBefore =
+                    before.map(AiRepository.SettingsRow::workPlanning).orElse(false);
+            boolean planning = workPlanning == null ? planningBefore : workPlanning;
+            repository.saveSettings(organizationId, documentReading, planning, userId, OffsetDateTime.now(clock));
+            if (readingBefore != documentReading || planningBefore != planning) {
                 audit.record(AuditLog.Event.of("ai.settings_changed", organizationId, userId)
                         .resource("organization", organizationId)
-                        .detail("documentReading", documentReading));
+                        .detail("documentReading", documentReading)
+                        .detail("workPlanning", planning));
             }
             return settings(organizationId);
         });
@@ -74,10 +83,11 @@ public class AiSettingsService {
     }
 
     private AiSettings settings(UUID organizationId) {
-        var api = new AiSettings(false, properties.dailyCallLimit());
+        var api = new AiSettings(false, properties.dailyCallLimit(), false);
         repository
                 .settings(organizationId)
                 .ifPresent(row -> api.documentReading(row.documentReading())
+                        .workPlanning(row.workPlanning())
                         .updatedAt(row.updatedAt().withOffsetSameInstant(ZoneOffset.UTC))
                         .updatedByUserId(row.updatedBy()));
         return api;

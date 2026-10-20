@@ -8,17 +8,14 @@ import base64
 import binascii
 import json
 import re
-from dataclasses import dataclass
 from datetime import date, datetime
 from enum import StrEnum
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError, model_validator
-from pydantic.alias_generators import to_camel
 
 from avenra_ai import grounding, retrieval, tools
 from avenra_ai.documents import DocumentText, extract_text
-from avenra_ai.pricing import estimate_micros
 from avenra_ai.prompts import Prompt, load
 from avenra_ai.providers.base import (
     Content,
@@ -29,8 +26,14 @@ from avenra_ai.providers.base import (
     StructuredRequest,
     StructuredResult,
     TextContent,
-    Usage,
 )
+from avenra_ai.tasks.common import Camel as _Camel
+from avenra_ai.tasks.common import Invocation, TaskFailedError
+from avenra_ai.tasks.common import invocation as _invocation
+from avenra_ai.tasks.common import reason as _reason
+
+# The name this task's callers use for its failure.
+ReadFailedError = TaskFailedError
 
 TASK = "document.read"
 PROMPT_NAME = "document_read"
@@ -42,10 +45,6 @@ MAX_QUOTE_CHARS = 1_000
 
 _ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 _NUMBER = re.compile(r"-?\d+(\.\d+)?")
-
-
-class _Camel(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, extra="forbid", frozen=True)
 
 
 Label = Annotated[
@@ -143,32 +142,6 @@ class ProposalReading(_Camel):
     input: dict[str, object]
 
 
-class PromptInfo(_Camel):
-    name: str
-    version: int
-    sha256: str
-
-
-class UsageInfo(_Camel):
-    input_tokens: int
-    output_tokens: int
-    cache_read_tokens: int
-    cache_write_tokens: int
-
-
-class Invocation(_Camel):
-    """What one call cost and who answered; the API records it (ADR-030)."""
-
-    provider: str
-    model_requested: str
-    model: str | None
-    prompt: PromptInfo
-    usage: UsageInfo
-    latency_ms: int
-    estimated_cost_micros: int | None
-    fallback_used: bool
-
-
 class Retrieval(_Camel):
     chunks_total: int
     chunks_used: int
@@ -182,18 +155,6 @@ class ReadResult(_Camel):
     source: Literal["TEXT", "FILE"]
     retrieval: Retrieval | None
     invocation: Invocation
-
-
-@dataclass
-class ReadFailedError(Exception):
-    """A reading that produced nothing usable, with the invocation that is recorded anyway."""
-
-    code: ErrorCode
-    detail: str
-    invocation: Invocation | None
-
-    def __str__(self) -> str:
-        return f"{self.code}: {self.detail}"
 
 
 # --- The task -----------------------------------------------------------------------------------
@@ -387,39 +348,6 @@ def _field(item: _FieldOut, kind: FieldKind, text: str | None) -> FieldReading:
         page=item.page,
         located=is_located if item.found else None,
     )
-
-
-def _invocation(
-    provider: Provider,
-    prompt: Prompt,
-    model: str | None,
-    usage: Usage,
-    latency_ms: int,
-    *,
-    fallback: bool,
-) -> Invocation:
-    return Invocation(
-        provider=provider.name,
-        model_requested=provider.model,
-        model=model,
-        prompt=PromptInfo(name=prompt.name, version=prompt.version, sha256=prompt.sha256),
-        usage=UsageInfo(
-            input_tokens=usage.input_tokens,
-            output_tokens=usage.output_tokens,
-            cache_read_tokens=usage.cache_read_tokens,
-            cache_write_tokens=usage.cache_write_tokens,
-        ),
-        latency_ms=latency_ms,
-        estimated_cost_micros=estimate_micros(model, usage),
-        fallback_used=fallback,
-    )
-
-
-def _reason(error: Exception) -> str:
-    # Validation messages can quote the model's output; only the kind of problem is kept.
-    if isinstance(error, ValidationError):
-        return "the answer does not match the output model"
-    return str(error)[:200]
 
 
 # --- Fake answers (deterministic; for tests, CI and local work) ---------------------------------

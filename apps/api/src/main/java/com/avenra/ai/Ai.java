@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class Ai {
 
     public static final String DOCUMENT_READ = "document.read";
+    public static final String WORK_PLAN = "work.plan";
 
     /** A field the rules ask for: its name and {@code TEXT}, {@code NUMBER} or {@code DATE}. */
     public record FieldRequest(String name, String kind) {}
@@ -130,29 +131,129 @@ public class Ai {
         var result = client.readDocument(request.contentType(), request.content(), request.kinds(), fields);
         return switch (result) {
             case AiServiceClient.Success success -> {
-                UUID id = record(request, success.invocation(), "SUCCEEDED", null);
+                UUID id = record(subject(request), success.invocation(), "SUCCEEDED", null);
                 yield new Read(success.reading(), id);
             }
             case AiServiceClient.Failure failure -> {
                 UUID id = failure.invocation() == null
                         ? null
-                        : record(request, failure.invocation(), outcome(failure.code()), failure.code());
+                        : record(subject(request), failure.invocation(), outcome(failure.code()), failure.code());
                 yield new NotRead(Reason.FAILED, failure.retryable(), id, failureText(failure.code()));
             }
         };
     }
 
-    private UUID record(
-            ReadRequest request, AiServiceClient.Invocation invocation, String outcome, @Nullable String errorCode) {
-        UUID id = UUID.randomUUID();
-        var span = tracer.currentSpan();
-        var row = new InvocationRow(
-                id,
+    /** Whether the organization lets the assistant plan its work (ADR-033). Off without a setting. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public boolean workPlanningEnabled(UUID organizationId) {
+        return repository
+                .settings(organizationId)
+                .map(AiRepository.SettingsRow::workPlanning)
+                .orElse(false);
+    }
+
+    /** What the planner is told about a work item: the team's own description of it, as data. */
+    public record PlanRequest(
+            UUID organizationId,
+            UUID workId,
+            UUID requestedBy,
+            String title,
+            @Nullable String description,
+            @Nullable String workType,
+            List<String> existingRequirements,
+            List<String> tools,
+            int attempt) {}
+
+    public sealed interface PlanOutcome permits Planned, NotPlanned {}
+
+    /** A validated plan; still untrusted until the tool gateway checks each step (ADR-033). */
+    public record Planned(WorkPlan plan, UUID invocationId, long costMicros) implements PlanOutcome {}
+
+    public record NotPlanned(
+            Reason reason, boolean retryable, @Nullable UUID invocationId, long costMicros, String detail)
+            implements PlanOutcome {}
+
+    /** Asks the AI service for a plan. Same rules as reading: setting first, daily limit, recorded. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public PlanOutcome planWork(PlanRequest request) {
+        UUID organizationId = request.organizationId();
+        if (!workPlanningEnabled(organizationId)) {
+            return new NotPlanned(
+                    Reason.SWITCHED_OFF, false, null, 0, "Work planning is switched off for this organization.");
+        }
+        if (repository.totalsSince(organizationId, startOfToday()).calls() >= properties.dailyCallLimit()) {
+            meters.counter("avenra.ai.limited", "purpose", WORK_PLAN).increment();
+            return new NotPlanned(
+                    Reason.DAILY_LIMIT, false, null, 0, "The organization reached today's limit of AI calls.");
+        }
+        var subject = new Subject(
+                organizationId,
+                WORK_PLAN,
+                request.workId(),
+                null,
+                request.requestedBy(),
+                request.attempt(),
+                "ai.work_planned",
+                "work");
+        var result = client.planWork(request);
+        return switch (result) {
+            case AiServiceClient.PlanSuccess success -> {
+                UUID id = record(subject, success.invocation(), "SUCCEEDED", null);
+                yield new Planned(success.plan(), id, cost(success.invocation()));
+            }
+            case AiServiceClient.Failure failure -> {
+                UUID id = failure.invocation() == null
+                        ? null
+                        : record(subject, failure.invocation(), outcome(failure.code()), failure.code());
+                yield new NotPlanned(
+                        Reason.FAILED,
+                        failure.retryable(),
+                        id,
+                        failure.invocation() == null ? 0 : cost(failure.invocation()),
+                        "The assistant could not plan this work ("
+                                + failure.code().toLowerCase(java.util.Locale.ROOT) + ").");
+            }
+        };
+    }
+
+    private static long cost(AiServiceClient.Invocation invocation) {
+        return invocation.estimatedCostMicros() == null ? 0 : invocation.estimatedCostMicros();
+    }
+
+    /** What a recorded call was about. */
+    private record Subject(
+            UUID organizationId,
+            String purpose,
+            @Nullable UUID subjectId,
+            @Nullable Integer subjectVersion,
+            @Nullable UUID actor,
+            int attempt,
+            String auditAction,
+            String resourceType) {}
+
+    private static Subject subject(ReadRequest request) {
+        return new Subject(
                 request.organizationId(),
                 DOCUMENT_READ,
                 request.documentId(),
                 request.version(),
                 null,
+                request.attempt(),
+                "ai.document_read",
+                "document");
+    }
+
+    private UUID record(
+            Subject request, AiServiceClient.Invocation invocation, String outcome, @Nullable String errorCode) {
+        UUID id = UUID.randomUUID();
+        var span = tracer.currentSpan();
+        var row = new InvocationRow(
+                id,
+                request.organizationId(),
+                request.purpose(),
+                request.subjectId(),
+                request.subjectVersion(),
+                request.actor(),
                 invocation.provider(),
                 invocation.modelRequested(),
                 invocation.model(),
@@ -172,20 +273,25 @@ public class Ai {
                 OffsetDateTime.now(clock));
         transactions.runSeparately(TenantScope.system(request.organizationId()), () -> {
             repository.insertInvocation(row);
-            audit.record(AuditLog.Event.of("ai.document_read", request.organizationId(), null)
-                    .resource("document", request.documentId())
-                    .detail("version", request.version())
+            var event = AuditLog.Event.of(request.auditAction(), request.organizationId(), request.actor())
                     .detail("invocationId", id.toString())
-                    .detail("outcome", outcome));
+                    .detail("outcome", outcome);
+            if (request.subjectId() != null) {
+                event = event.resource(request.resourceType(), request.subjectId());
+            }
+            if (request.subjectVersion() != null) {
+                event = event.detail("version", request.subjectVersion());
+            }
+            audit.record(event);
             return null;
         });
-        meters.counter("avenra.ai.invocations", "purpose", DOCUMENT_READ, "outcome", outcome)
+        meters.counter("avenra.ai.invocations", "purpose", request.purpose(), "outcome", outcome)
                 .increment();
         if (invocation.estimatedCostMicros() != null) {
             meters.counter(
                             "avenra.ai.cost.micros",
                             "purpose",
-                            DOCUMENT_READ,
+                            request.purpose(),
                             "model",
                             String.valueOf(invocation.model()))
                     .increment(invocation.estimatedCostMicros());

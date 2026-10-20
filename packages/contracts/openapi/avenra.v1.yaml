@@ -41,6 +41,9 @@ tags:
   description: Public operations used by clients holding a request link.
 - name: ai
   description: 'AI document reading: the organization setting and usage records.'
+- name: agents
+  description: 'Agent runs: plans proposed by the assistant, approved by people, run through the tool
+    gateway.'
 paths:
   /api/v1/meta:
     get:
@@ -2121,6 +2124,160 @@ paths:
           $ref: '#/components/responses/ClientError'
         5XX:
           $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/agent-runs:
+    get:
+      operationId: listAgentRuns
+      summary: Agent runs of a work item
+      tags:
+      - agents
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      responses:
+        '200':
+          description: Runs, newest first.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentRun'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+    post:
+      operationId: startAgentRun
+      summary: Ask the assistant to plan this work
+      tags:
+      - agents
+      x-avenra-permission: work.update
+      x-avenra-audit: required
+      x-avenra-idempotency: key-required
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '201':
+          description: Started; the plan arrives shortly.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRun'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+      description: Needs work planning switched on for the organization (`AI_PLANNING_OFF` otherwise).
+        Nothing runs until a person approves the plan (ADR-033).
+  /api/v1/organizations/{organizationId}/work/{workId}/agent-runs/{runId}:
+    get:
+      operationId: getAgentRun
+      summary: An agent run with its steps
+      tags:
+      - agents
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/AgentRunId'
+      responses:
+        '200':
+          description: The run.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRun'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/agent-runs/{runId}/approval:
+    post:
+      operationId: decideAgentRun
+      summary: Approve or reject a plan, or approve high-risk steps
+      tags:
+      - agents
+      x-avenra-permission: work.approve
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/AgentRunId'
+      responses:
+        '200':
+          description: The run after the decision.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRun'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentApprovalRequest'
+  /api/v1/organizations/{organizationId}/work/{workId}/agent-runs/{runId}/stop:
+    post:
+      operationId: stopAgentRun
+      summary: Stop a run now
+      tags:
+      - agents
+      x-avenra-permission: work.update
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/AgentRunId'
+      responses:
+        '200':
+          description: The stopped run.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRun'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentStopRequest'
 components:
   headers:
     RequestId:
@@ -4192,6 +4349,7 @@ components:
       required:
       - documentReading
       - dailyCallLimit
+      - workPlanning
       properties:
         documentReading:
           type: boolean
@@ -4206,6 +4364,10 @@ components:
         updatedByUserId:
           type: string
           format: uuid
+        workPlanning:
+          type: boolean
+          description: Whether the assistant may plan work (sends work details to the AI provider). Off
+            by default.
     AiSettingsInput:
       type: object
       additionalProperties: false
@@ -4213,6 +4375,8 @@ components:
       - documentReading
       properties:
         documentReading:
+          type: boolean
+        workPlanning:
           type: boolean
     AiInvocation:
       type: object
@@ -4239,6 +4403,7 @@ components:
           type: string
           enum:
           - document.read
+          - work.plan
         subjectId:
           type: string
           format: uuid
@@ -4331,6 +4496,213 @@ components:
           items:
             $ref: '#/components/schemas/AiInvocation'
           description: Newest first, at most 100.
+    AgentRunStatus:
+      type: string
+      enum:
+      - PLANNING
+      - AWAITING_APPROVAL
+      - RUNNING
+      - COMPLETED
+      - REJECTED
+      - STOPPED
+      - FAILED
+    AgentStepStatus:
+      type: string
+      enum:
+      - PROPOSED
+      - APPROVED
+      - RUNNING
+      - SUCCEEDED
+      - REJECTED
+      - FAILED
+      - SKIPPED
+    ToolRisk:
+      type: string
+      enum:
+      - LOW
+      - MEDIUM
+      - HIGH
+      - CRITICAL
+    AgentBudget:
+      type: object
+      additionalProperties: false
+      required:
+      - maxModelCalls
+      - maxToolCalls
+      - maxSideEffects
+      - maxCostMicros
+      - deadline
+      - modelCalls
+      - toolCalls
+      - sideEffects
+      - costMicros
+      properties:
+        maxModelCalls:
+          type: integer
+          minimum: 0
+        maxToolCalls:
+          type: integer
+          minimum: 0
+        maxSideEffects:
+          type: integer
+          minimum: 0
+        modelCalls:
+          type: integer
+          minimum: 0
+        toolCalls:
+          type: integer
+          minimum: 0
+        sideEffects:
+          type: integer
+          minimum: 0
+        maxCostMicros:
+          type: integer
+          format: int64
+          minimum: 0
+        costMicros:
+          type: integer
+          format: int64
+          minimum: 0
+        deadline:
+          type: string
+          format: date-time
+    AgentStep:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - position
+      - tool
+      - risk
+      - input
+      - status
+      - needsOwnApproval
+      - attempts
+      properties:
+        id:
+          type: string
+          format: uuid
+        position:
+          type: integer
+          minimum: 1
+        tool:
+          type: string
+          enum:
+          - create_requirement
+          - create_task
+          - send_information_request
+        description:
+          type: string
+          description: What the step will do, in words.
+        reason:
+          type: string
+          description: Why the assistant proposed it.
+        risk:
+          $ref: '#/components/schemas/ToolRisk'
+        input:
+          type: object
+          additionalProperties: true
+          description: The validated input of the tool.
+        status:
+          $ref: '#/components/schemas/AgentStepStatus'
+        needsOwnApproval:
+          type: boolean
+          description: High-risk steps are approved one by one.
+        approvedByUserId:
+          type: string
+          format: uuid
+        approvedAt:
+          type: string
+          format: date-time
+        attempts:
+          type: integer
+          minimum: 0
+        result:
+          type: string
+          description: What the step did, once verified.
+        error:
+          type: string
+        finishedAt:
+          type: string
+          format: date-time
+    AgentRun:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - workId
+      - capability
+      - status
+      - startedByUserId
+      - budget
+      - steps
+      - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        workId:
+          type: string
+          format: uuid
+        capability:
+          type: string
+          enum:
+          - information.plan
+        status:
+          $ref: '#/components/schemas/AgentRunStatus'
+        summary:
+          type: string
+        startedByUserId:
+          type: string
+          format: uuid
+        budget:
+          $ref: '#/components/schemas/AgentBudget'
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentStep'
+        stopReason:
+          type: string
+          description: Why the run stopped, failed or was rejected.
+        traceId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+    AgentApprovalRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - decision
+      properties:
+        decision:
+          type: string
+          enum:
+          - APPROVE
+          - REJECT
+        highRiskStepIds:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            format: uuid
+          description: High-risk steps approved now as well. Others stay waiting for their own approval.
+        reason:
+          type: string
+          maxLength: 1000
+    AgentStopRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
   securitySchemes:
     sessionCookie:
       type: apiKey
@@ -4447,6 +4819,13 @@ components:
         reach access logs or referrers.
     ExceptionId:
       name: exceptionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AgentRunId:
+      name: runId
       in: path
       required: true
       schema:
