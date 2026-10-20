@@ -20,7 +20,10 @@ RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -ntp package -DskipTests \
 FROM eclipse-temurin:25.0.4_7-jre-alpine
 
 # Operating-system security updates published since the base image was built.
-RUN apk upgrade --no-cache \
+# A new OS_PACKAGES_DATE (CI passes the day) re-runs this layer even when the
+# build cache holds an older one, so cached images never keep stale packages.
+ARG OS_PACKAGES_DATE=unset
+RUN echo "OS packages as of ${OS_PACKAGES_DATE}" && apk upgrade --no-cache \
     && addgroup -S -g 10001 avenra && adduser -S -D -H -u 10001 -G avenra avenra
 WORKDIR /app
 

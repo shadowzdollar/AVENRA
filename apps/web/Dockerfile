@@ -23,7 +23,10 @@ RUN pnpm --filter @avenra/contracts run generate \
 # --- Runtime ----------------------------------------------------------------
 FROM node:24.21.0-alpine3.24
 # Operating-system security updates published since the base image was built.
-RUN apk upgrade --no-cache
+# A new OS_PACKAGES_DATE (CI passes the day) re-runs this layer even when the
+# build cache holds an older one, so cached images never keep stale packages.
+ARG OS_PACKAGES_DATE=unset
+RUN echo "OS packages as of ${OS_PACKAGES_DATE}" && apk upgrade --no-cache
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     HOSTNAME=0.0.0.0 \
