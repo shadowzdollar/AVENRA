@@ -102,7 +102,7 @@ services:
   # Local mail catcher (ADR-015): receives every email the applications send;
   # nothing leaves the machine. UI: http://127.0.0.1:18025
   mailpit:
-    image: axllent/mailpit:v1.31.5
+    image: axllent/mailpit:v1.31.6
     ports:
       - "127.0.0.1:11025:1025"  # SMTP
       - "127.0.0.1:18025:8025"  # UI
