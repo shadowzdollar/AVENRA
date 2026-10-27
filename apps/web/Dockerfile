@@ -5,7 +5,7 @@
 # forwarded, ADR-013) is read at runtime.
 
 # --- Build ------------------------------------------------------------------
-FROM node:24.21.0-alpine3.24 AS build
+FROM node:24.22.0-alpine3.24 AS build
 RUN npm install --global pnpm@12.4.1
 WORKDIR /workspace
 
@@ -21,7 +21,7 @@ RUN pnpm --filter @avenra/contracts run generate \
     && pnpm --filter @avenra/web run build
 
 # --- Runtime ----------------------------------------------------------------
-FROM node:24.21.0-alpine3.24
+FROM node:24.22.0-alpine3.24
 # Operating-system security updates published since the base image was built.
 # A new OS_PACKAGES_DATE (CI passes the day) re-runs this layer even when the
 # build cache holds an older one, so cached images never keep stale packages.
