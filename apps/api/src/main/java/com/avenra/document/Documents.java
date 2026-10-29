@@ -85,6 +85,10 @@ public class Documents {
             return verdict.infected();
         }
 
+        public long size() {
+            return size;
+        }
+
         public String sha256Hex() {
             return HexFormat.of().formatHex(sha256);
         }

@@ -15,6 +15,7 @@ import com.avenra.platform.AvenraProperties;
 import com.avenra.platform.crypto.SecureTokens;
 import com.avenra.platform.email.EmailMessage;
 import com.avenra.platform.email.OutgoingEmail;
+import com.avenra.platform.entitlements.Entitlements;
 import com.avenra.platform.idempotency.Idempotency;
 import com.avenra.platform.tenancy.TenantScope;
 import com.avenra.platform.tenancy.TenantTransactions;
@@ -48,6 +49,7 @@ public class InvitationService {
     private final UserDirectory users;
     private final OutgoingEmail outgoing;
     private final AuditLog audit;
+    private final Entitlements entitlements;
     private final URI publicBaseUrl;
     private final Clock clock;
 
@@ -60,6 +62,7 @@ public class InvitationService {
             UserDirectory users,
             OutgoingEmail outgoing,
             AuditLog audit,
+            Entitlements entitlements,
             AvenraProperties properties,
             Clock clock) {
         this.invitations = invitations;
@@ -70,6 +73,7 @@ public class InvitationService {
         this.users = users;
         this.outgoing = outgoing;
         this.audit = audit;
+        this.entitlements = entitlements;
         this.publicBaseUrl = properties.web().publicBaseUrl();
         this.clock = clock;
     }
@@ -90,6 +94,7 @@ public class InvitationService {
                             if (!granted.role().mayAssign(role)) {
                                 throw ApiException.accessDenied();
                             }
+                            entitlements.requireRoom(organizationId, Entitlements.Limit.MEMBERS, 1);
                             boolean alreadyMember = users
                                     .findAll(organizations.listMembers(organizationId).stream()
                                             .map(OrganizationRepository.MembershipRow::userId)

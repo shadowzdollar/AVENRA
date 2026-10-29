@@ -15,6 +15,7 @@ import com.avenra.information.infrastructure.RequirementRepository;
 import com.avenra.information.infrastructure.RequirementRepository.RequirementRow;
 import com.avenra.organization.OrganizationAccess;
 import com.avenra.organization.domain.Permission;
+import com.avenra.platform.entitlements.Entitlements;
 import com.avenra.platform.idempotency.Idempotency;
 import com.avenra.platform.web.ApiException;
 import com.avenra.platform.web.Text;
@@ -50,6 +51,7 @@ public class InformationService {
     private final ApplicationEventPublisher events;
     private final OrganizationAccess access;
     private final AuditLog audit;
+    private final Entitlements entitlements;
     private final Clock clock;
 
     InformationService(
@@ -64,6 +66,7 @@ public class InformationService {
             ApplicationEventPublisher events,
             OrganizationAccess access,
             AuditLog audit,
+            Entitlements entitlements,
             Clock clock) {
         this.requirements = requirements;
         this.work = work;
@@ -76,6 +79,7 @@ public class InformationService {
         this.events = events;
         this.access = access;
         this.audit = audit;
+        this.entitlements = entitlements;
         this.clock = clock;
     }
 
@@ -224,6 +228,7 @@ public class InformationService {
         try (var prepared = documents.prepare(content, fileName)) {
             var outcome = access.run(userId, organizationId, Permission.INFORMATION_COLLECT, granted -> {
                 work.lockOpen(organizationId, workId);
+                entitlements.requireRoom(organizationId, Entitlements.Limit.STORAGE_BYTES, prepared.size());
                 var requirement = lock(workId, requirementId);
                 var result = submissions.storeFile(requirement, prepared, Submissions.Source.teamMember(userId));
                 if (result.item() == null) {

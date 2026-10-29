@@ -25,15 +25,21 @@ class AiFigures implements UsageContributor {
 
     @Override
     public List<Figure> usage(UUID organizationId) {
+        LocalDate today = LocalDate.now(clock.withZone(ZoneOffset.UTC));
         return jdbc.sql("""
-                        select count(*) as calls, coalesce(sum(input_tokens + output_tokens), 0) as tokens
-                        from ai_invocations where organization_id = :org and created_at >= :today
+                        select count(*) filter (where created_at >= :today) as calls,
+                               coalesce(sum(input_tokens + output_tokens) filter (where created_at >= :today), 0)
+                                   as tokens,
+                               count(*) as month
+                        from ai_invocations where organization_id = :org and created_at >= :month
                         """)
                 .param("org", organizationId)
-                .param("today", LocalDate.now(clock).atStartOfDay().atOffset(ZoneOffset.UTC))
+                .param("today", today.atStartOfDay().atOffset(ZoneOffset.UTC))
+                .param("month", today.withDayOfMonth(1).atStartOfDay().atOffset(ZoneOffset.UTC))
                 .query((rs, row) -> List.of(
                         new Figure("ai.calls_today", "Assistant calls today", rs.getLong("calls")),
-                        new Figure("ai.tokens_today", "Assistant tokens today", rs.getLong("tokens"))))
+                        new Figure("ai.tokens_today", "Assistant tokens today", rs.getLong("tokens")),
+                        new Figure("ai.calls_month", "Assistant calls this month", rs.getLong("month"))))
                 .single();
     }
 }

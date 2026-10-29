@@ -34,6 +34,11 @@ avenra:
     max-retry: 1s
     max-attempts: 3
     pause-after: 2
+  # Checkouts complete at once through the fake provider (ADR-037); the
+  # secret only signs local test events.
+  billing:
+    provider: fake
+    webhook-secret: ${AVENRA_BILLING_WEBHOOK_SECRET:local-only-billing-webhook-secret}
 
   # Fast jobs for tests (ADR-022). Schedules fire once at start; tests fire
   # them explicitly when they need to.
