@@ -58,7 +58,10 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
             "agent_steps",
             "integration_connections",
             "integration_deliveries",
-            "notifications");
+            "notifications",
+            "subscriptions",
+            "billing_events",
+            "usage_records");
 
     private final JdbcTemplate jdbc;
     private final TransactionTemplate tx;
@@ -278,6 +281,19 @@ class WorkRowLevelSecurityIT extends IntegrationTestBase {
                 "insert into notifications (id, organization_id, user_id, category, title, body, source_type,"
                         + " source_id, dedupe_key, email_status, created_at) values ('" + UUID.randomUUID() + "', '"
                         + org + "', '" + user + "', 'exception', 'T', 'B', 'exception', 'x', 'k', 'NOT_SENT', now())");
+        exec(
+                owner,
+                "insert into subscriptions (organization_id, plan, status, trial_ends_at, provider, created_at,"
+                        + " updated_at) values ('" + org + "', 'STARTER', 'TRIALING', now(), 'none', now(), now())");
+        exec(
+                owner,
+                "insert into billing_events (provider, event_id, organization_id, type, occurred_at, received_at,"
+                        + " payload, outcome) values ('fake', '" + UUID.randomUUID() + "', '" + org
+                        + "', 'subscription.updated', now(), now(), '{}', 'APPLIED')");
+        exec(
+                owner,
+                "insert into usage_records (organization_id, metric, day, value, recorded_at) values ('" + org
+                        + "', 'members', current_date, 1, now())");
     }
 
     private void insertLink(Connection owner, UUID id, byte[] token, String expires, String revoked)

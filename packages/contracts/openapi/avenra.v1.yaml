@@ -50,6 +50,8 @@ tags:
   description: What needs a person, in the app and by email (ADR-035).
 - name: administration
   description: Audit history, usage, health and permissions of an organization (ADR-036).
+- name: billing
+  description: Plans, subscriptions, entitlements and usage records (ADR-037).
 paths:
   /api/v1/meta:
     get:
@@ -2799,6 +2801,199 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdministrationOverview'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/billing/plans:
+    get:
+      operationId: listPlans
+      summary: Plans and what they include
+      tags:
+      - billing
+      x-avenra-permission: authenticated
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters: []
+      responses:
+        '200':
+          description: From smallest to largest.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanDescription'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/billing:
+    get:
+      operationId: getBilling
+      summary: Subscription and usage against the plan
+      tags:
+      - billing
+      x-avenra-permission: billing.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: The subscription and each limit with current use.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingOverview'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/billing/checkout:
+    post:
+      operationId: startCheckout
+      summary: Change the plan
+      tags:
+      - billing
+      x-avenra-permission: billing.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: key-required
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      description: Only self-serve plans (`PLAN_NOT_SELF_SERVE` otherwise). The plan changes when the
+        provider confirms it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutRequest'
+      responses:
+        '200':
+          description: Send the browser to `checkoutUrl`.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkout'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/billing/cancellation:
+    post:
+      operationId: cancelSubscription
+      summary: Cancel at the end of the period
+      tags:
+      - billing
+      x-avenra-permission: billing.manage
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: The subscription, ending at the end of its period.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/billing/usage-records:
+    get:
+      operationId: listUsageRecords
+      summary: Daily usage records
+      tags:
+      - billing
+      x-avenra-permission: billing.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      description: Append-only records, one per day and metric, from which a bill can be recalculated.
+      responses:
+        '200':
+          description: Oldest first; at most 92 days.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UsageRecord'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/billing/providers/{provider}/events:
+    post:
+      operationId: receiveBillingEvent
+      summary: Receive a billing provider event
+      tags:
+      - billing
+      x-avenra-permission: public
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/BillingProvider'
+      - name: Avenra-Billing-Signature
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 300
+        description: '`t=<unix seconds>,v1=<hex HMAC-SHA256 of "<t>.<raw body>">` with the provider''s
+          signing secret.'
+      description: Called by the billing provider, not by browsers. Events are stored once by id; replays
+        and events older than the last applied change nothing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingProviderEvent'
+      responses:
+        '204':
+          description: Accepted; applied once, in order.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
         4XX:
           $ref: '#/components/responses/ClientError'
         5XX:
@@ -5670,6 +5865,203 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/HealthCheck'
+    Plan:
+      type: string
+      enum:
+      - STARTER
+      - BUSINESS
+      - ENTERPRISE
+    BillingLimit:
+      type: string
+      enum:
+      - members
+      - work.open
+      - integrations.active
+      - documents.bytes
+      - ai.calls_month
+      description: What a plan limits; each matches a usage figure of the module that owns the data.
+    PlanLimit:
+      type: object
+      additionalProperties: false
+      required:
+      - limit
+      - label
+      properties:
+        limit:
+          $ref: '#/components/schemas/BillingLimit'
+        label:
+          type: string
+        allowed:
+          type: integer
+          format: int64
+          description: Absent when unlimited.
+    PlanDescription:
+      type: object
+      additionalProperties: false
+      required:
+      - plan
+      - name
+      - selfServe
+      - limits
+      properties:
+        plan:
+          $ref: '#/components/schemas/Plan'
+        name:
+          type: string
+        selfServe:
+          type: boolean
+          description: Whether it can be chosen at checkout; otherwise talk to us.
+        limits:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanLimit'
+    SubscriptionStatus:
+      type: string
+      enum:
+      - TRIALING
+      - ACTIVE
+      - PAST_DUE
+      - CANCELED
+    Subscription:
+      type: object
+      additionalProperties: false
+      required:
+      - plan
+      - status
+      - inGoodStanding
+      - cancelAtPeriodEnd
+      - provider
+      - updatedAt
+      properties:
+        plan:
+          $ref: '#/components/schemas/Plan'
+        status:
+          $ref: '#/components/schemas/SubscriptionStatus'
+        inGoodStanding:
+          type: boolean
+          description: When false, adding members, work, integrations, files or assistant calls is refused
+            (`SUBSCRIPTION_INACTIVE`); reading, finishing work and exporting stay available.
+        trialEndsAt:
+          type: string
+          format: date-time
+        currentPeriodEnd:
+          type: string
+          format: date-time
+        cancelAtPeriodEnd:
+          type: boolean
+        provider:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    Entitlement:
+      type: object
+      additionalProperties: false
+      required:
+      - limit
+      - label
+      - used
+      properties:
+        limit:
+          $ref: '#/components/schemas/BillingLimit'
+        label:
+          type: string
+        used:
+          type: integer
+          format: int64
+        allowed:
+          type: integer
+          format: int64
+          description: Absent when unlimited.
+    BillingOverview:
+      type: object
+      additionalProperties: false
+      required:
+      - subscription
+      - entitlements
+      properties:
+        subscription:
+          $ref: '#/components/schemas/Subscription'
+        entitlements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Entitlement'
+    CheckoutRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - plan
+      properties:
+        plan:
+          $ref: '#/components/schemas/Plan'
+    Checkout:
+      type: object
+      additionalProperties: false
+      required:
+      - checkoutUrl
+      properties:
+        checkoutUrl:
+          type: string
+          maxLength: 2000
+          description: Where the browser goes to pay; it comes back to the billing page.
+    UsageRecord:
+      type: object
+      additionalProperties: false
+      required:
+      - metric
+      - day
+      - value
+      properties:
+        metric:
+          type: string
+        day:
+          type: string
+          format: date
+        value:
+          type: integer
+          format: int64
+    BillingProviderEvent:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - type
+      - occurredAt
+      - organizationId
+      description: A change at the billing provider, in Avenra's provider-neutral form.
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 200
+        type:
+          type: string
+          enum:
+          - subscription.updated
+          - subscription.canceled
+          - payment.failed
+          - payment.succeeded
+        occurredAt:
+          type: string
+          format: date-time
+        organizationId:
+          type: string
+          format: uuid
+        plan:
+          $ref: '#/components/schemas/Plan'
+        status:
+          $ref: '#/components/schemas/SubscriptionStatus'
+        currentPeriodEnd:
+          type: string
+          format: date-time
+        cancelAtPeriodEnd:
+          type: boolean
+        customerRef:
+          type: string
+          maxLength: 200
+        subscriptionRef:
+          type: string
+          maxLength: 200
   securitySchemes:
     sessionCookie:
       type: apiKey
@@ -5819,3 +6211,10 @@ components:
       schema:
         type: string
         format: uuid
+    BillingProvider:
+      name: provider
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^[a-z][a-z0-9-]{0,30}$

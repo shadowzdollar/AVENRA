@@ -23,6 +23,7 @@ import com.avenra.integration.infrastructure.IntegrationRepository.DeliveryRow;
 import com.avenra.organization.OrganizationAccess;
 import com.avenra.organization.domain.Permission;
 import com.avenra.platform.AvenraProperties;
+import com.avenra.platform.entitlements.Entitlements;
 import com.avenra.platform.idempotency.Idempotency;
 import com.avenra.platform.web.ApiException;
 import java.net.InetAddress;
@@ -56,6 +57,7 @@ public class IntegrationService {
     private final OrganizationAccess access;
     private final Idempotency idempotency;
     private final AuditLog audit;
+    private final Entitlements entitlements;
     private final IntegrationProperties properties;
     private final JsonMapper json;
     private final Clock clock;
@@ -67,6 +69,7 @@ public class IntegrationService {
             OrganizationAccess access,
             Idempotency idempotency,
             AuditLog audit,
+            Entitlements entitlements,
             IntegrationProperties properties,
             AvenraProperties platform,
             JsonMapper json,
@@ -80,6 +83,7 @@ public class IntegrationService {
         this.access = access;
         this.idempotency = idempotency;
         this.audit = audit;
+        this.entitlements = entitlements;
         this.properties = properties;
         this.json = json;
         this.clock = clock;
@@ -112,6 +116,7 @@ public class IntegrationService {
                                 + events,
                         IntegrationSecret.class,
                         () -> {
+                            entitlements.requireRoom(organizationId, Entitlements.Limit.INTEGRATIONS, 1);
                             UUID id = UUID.randomUUID();
                             OffsetDateTime now = OffsetDateTime.now(clock);
                             var secret = secretFor(provider, id, input.getCredentials());

@@ -5,6 +5,7 @@ import com.avenra.contract.v1.model.Organization;
 import com.avenra.contract.v1.model.OrganizationMembership;
 import com.avenra.identity.MembershipDirectory;
 import com.avenra.organization.OrganizationAccess;
+import com.avenra.organization.OrganizationEvents;
 import com.avenra.organization.domain.Permission;
 import com.avenra.organization.domain.Role;
 import com.avenra.organization.infrastructure.OrganizationRepository;
@@ -20,6 +21,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 /** Creating, listing and renaming organizations; also serves the identity module's directory. */
@@ -31,6 +33,7 @@ public class OrganizationService implements MembershipDirectory {
     private final TenantTransactions transactions;
     private final Idempotency idempotency;
     private final AuditLog audit;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
 
     OrganizationService(
@@ -39,12 +42,14 @@ public class OrganizationService implements MembershipDirectory {
             TenantTransactions transactions,
             Idempotency idempotency,
             AuditLog audit,
+            ApplicationEventPublisher events,
             Clock clock) {
         this.organizations = organizations;
         this.access = access;
         this.transactions = transactions;
         this.idempotency = idempotency;
         this.audit = audit;
+        this.events = events;
         this.clock = clock;
     }
 
@@ -62,6 +67,7 @@ public class OrganizationService implements MembershipDirectory {
                             organizations.insertMembership(membershipId, id, userId, Role.OWNER, now);
                             audit.record(AuditLog.Event.of("organization.created", id, userId)
                                     .resource("organization", id));
+                            events.publishEvent(new OrganizationEvents.Created(id, userId));
                             return toApi(new OrganizationRow(id, name, now, DEFAULT_REQUEST_LINK_DAYS));
                         }));
     }

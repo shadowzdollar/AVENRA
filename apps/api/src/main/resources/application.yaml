@@ -101,6 +101,11 @@ avenra:
     active-key-id: ${AVENRA_CRYPTO_ACTIVE_KEY_ID}
   email:
     from: ${AVENRA_EMAIL_FROM:Avenra <no-reply@avenra.localhost>}
+  # Billing (ADR-037): "none" until a real provider is connected; "fake"
+  # completes checkouts at once and is refused in production.
+  billing:
+    provider: ${AVENRA_BILLING_PROVIDER:none}
+    webhook-secret: ${AVENRA_BILLING_WEBHOOK_SECRET:}
   # Rate-limit policies named by x-avenra-rate-limit in the contract (ADR-016).
   rate-limits:
     policies:

@@ -11,6 +11,11 @@ avenra:
   # Local receivers and storage run on loopback over plain HTTP (ADR-034).
   integrations:
     allow-loopback-http: true
+  # Checkouts complete at once through the fake provider (ADR-037); the
+  # secret only signs local test events.
+  billing:
+    provider: fake
+    webhook-secret: ${AVENRA_BILLING_WEBHOOK_SECRET:local-only-billing-webhook-secret}
 
 spring:
   mail:

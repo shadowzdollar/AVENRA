@@ -102,7 +102,7 @@ docker run -d --name avenra-api-smoke --network host \
   -e SPRING_MAIL_HOST=127.0.0.1 -e SPRING_MAIL_PORT=11025 \
   -e AVENRA_WEB_PUBLIC_BASE_URL=http://127.0.0.1:13000 \
   -e AVENRA_AI_SERVICE_TOKEN -e AVENRA_AI_URL=http://127.0.0.1:18090 \
-  -e SPRING_APPLICATION_JSON='{"avenra":{"rate-limits":{"policies":{"sign-up":{"capacity":50,"refill":"1h"}}},"integrations":{"allow-loopback-http":true}}}' \
+  -e SPRING_APPLICATION_JSON='{"avenra":{"rate-limits":{"policies":{"sign-up":{"capacity":50,"refill":"1h"}}},"integrations":{"allow-loopback-http":true},"billing":{"provider":"fake","webhook-secret":"smoke-only-billing-webhook-secret"}}}' \
   "avenra-api:$TAG" >/dev/null
 wait_healthy avenra-api-smoke
 expect_uid avenra-api-smoke 10001

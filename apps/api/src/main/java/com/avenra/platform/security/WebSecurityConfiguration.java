@@ -21,6 +21,7 @@ import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -59,7 +60,9 @@ class WebSecurityConfiguration {
             // Client request links: the request token is the credential (ADR-020).
             new Endpoint(HttpMethod.GET, "/api/v1/client-requests/current"),
             new Endpoint(HttpMethod.POST, "/api/v1/client-requests/current/requirements/{requirementId}/value"),
-            new Endpoint(HttpMethod.POST, "/api/v1/client-requests/current/requirements/{requirementId}/file"));
+            new Endpoint(HttpMethod.POST, "/api/v1/client-requests/current/requirements/{requirementId}/file"),
+            // Billing provider events: the signature over the body is the credential (ADR-037).
+            new Endpoint(HttpMethod.POST, "/api/v1/billing/providers/{provider}/events"));
 
     static final String CSRF_COOKIE = "XSRF-TOKEN";
     static final String CSRF_HEADER = "X-XSRF-TOKEN";
@@ -90,7 +93,10 @@ class WebSecurityConfiguration {
                 // The token is read from the header as sent: a single-page app cannot use the
                 // per-request masked tokens of the default handler.
                 .csrf(csrf -> csrf.csrfTokenRepository(csrfTokens)
-                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                        // Sent by the provider's servers, not by browsers; signed instead.
+                        .ignoringRequestMatchers(PathPatternRequestMatcher.withDefaults()
+                                .matcher(HttpMethod.POST, "/api/v1/billing/providers/*/events")))
                 .addFilterBefore(new OriginCheckFilter(properties, errorWriter), AnonymousAuthenticationFilter.class)
                 .addFilterBefore(new SessionAuthenticationFilter(authenticator), AnonymousAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions(frame -> frame.deny())

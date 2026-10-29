@@ -51,3 +51,4 @@ Statuses: `Proposed` → `Accepted` → (`Superseded by ADR-NNN` | `Deprecated`)
 | [034](ADR-034-integrations.md) | Integration model, webhooks and storage export | Accepted |
 | [035](ADR-035-notifications.md) | Notifications | Accepted |
 | [036](ADR-036-administration.md) | Administration, usage and health | Accepted |
+| [037](ADR-037-billing.md) | Billing, plans and entitlements | Accepted |

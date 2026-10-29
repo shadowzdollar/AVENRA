@@ -13,6 +13,7 @@ import com.avenra.contract.v1.model.WorkTransition;
 import com.avenra.information.Information;
 import com.avenra.organization.OrganizationAccess;
 import com.avenra.organization.domain.Permission;
+import com.avenra.platform.entitlements.Entitlements;
 import com.avenra.platform.idempotency.Idempotency;
 import com.avenra.platform.web.ApiException;
 import com.avenra.platform.web.Text;
@@ -48,6 +49,7 @@ public class WorkService {
     private final OrganizationAccess access;
     private final Idempotency idempotency;
     private final AuditLog audit;
+    private final Entitlements entitlements;
     private final Clock clock;
 
     WorkService(
@@ -62,6 +64,7 @@ public class WorkService {
             OrganizationAccess access,
             Idempotency idempotency,
             AuditLog audit,
+            Entitlements entitlements,
             Clock clock) {
         this.work = work;
         this.information = information;
@@ -74,6 +77,7 @@ public class WorkService {
         this.access = access;
         this.idempotency = idempotency;
         this.audit = audit;
+        this.entitlements = entitlements;
         this.clock = clock;
     }
 
@@ -121,6 +125,7 @@ public class WorkService {
                                 input.getOwnerMembershipId()),
                         WorkDetail.class,
                         () -> {
+                            entitlements.requireRoom(organizationId, Entitlements.Limit.OPEN_WORK, 1);
                             clients.requireClient(organizationId, input.getClientId());
                             clients.requireProject(organizationId, input.getProjectId(), input.getClientId());
                             UUID owner = input.getOwnerMembershipId() == null

@@ -59,9 +59,22 @@ class EmailJobHandler implements JobHandler {
             if (permanent(failure)) {
                 throw new JobFailure.NonRetryable("The email was rejected (" + payload.category() + ")", null);
             }
+            // The failure's type only: its message may name recipients or server details.
+            log.atWarn()
+                    .addKeyValue("email.category", payload.category())
+                    .addKeyValue("error.type", rootCause(failure).getClass().getName())
+                    .log("Email delivery failed; it will be retried");
             throw new JobFailure.Retryable("Email delivery failed temporarily (" + payload.category() + ")", null);
         }
         log.atInfo().addKeyValue("email.category", payload.category()).log("Email sent");
+    }
+
+    private static Throwable rootCause(Throwable failure) {
+        Throwable cause = failure;
+        while (cause.getCause() != null && cause.getCause() != cause) {
+            cause = cause.getCause();
+        }
+        return cause;
     }
 
     static boolean permanent(Throwable failure) {

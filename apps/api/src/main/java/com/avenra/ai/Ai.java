@@ -4,6 +4,7 @@ import com.avenra.ai.infrastructure.AiRepository;
 import com.avenra.ai.infrastructure.AiRepository.InvocationRow;
 import com.avenra.ai.infrastructure.AiServiceClient;
 import com.avenra.audit.AuditLog;
+import com.avenra.platform.entitlements.Entitlements;
 import com.avenra.platform.tenancy.TenantScope;
 import com.avenra.platform.tenancy.TenantTransactions;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -62,6 +63,8 @@ public class Ai {
     public enum Reason {
         SWITCHED_OFF,
         DAILY_LIMIT,
+        /** The plan's monthly calls are used up, or the subscription is not active (ADR-037). */
+        PLAN_LIMIT,
         FAILED
     }
 
@@ -70,6 +73,7 @@ public class Ai {
     private final TenantTransactions transactions;
     private final AuditLog audit;
     private final AiProperties properties;
+    private final Entitlements entitlements;
     private final MeterRegistry meters;
     private final Tracer tracer;
     private final Clock clock;
@@ -80,6 +84,7 @@ public class Ai {
             TenantTransactions transactions,
             AuditLog audit,
             AiProperties properties,
+            Entitlements entitlements,
             MeterRegistry meters,
             Tracer tracer,
             Clock clock) {
@@ -88,6 +93,7 @@ public class Ai {
         this.transactions = transactions;
         this.audit = audit;
         this.properties = properties;
+        this.entitlements = entitlements;
         this.meters = meters;
         this.tracer = tracer;
         this.clock = clock;
@@ -124,6 +130,14 @@ public class Ai {
                     false,
                     null,
                     "The organization reached today's limit of automatic readings; the document was not read.");
+        }
+        if (!entitlements.hasRoom(organizationId, Entitlements.Limit.AI_CALLS_MONTH, 1)) {
+            meters.counter("avenra.ai.limited", "purpose", DOCUMENT_READ).increment();
+            return new NotRead(
+                    Reason.PLAN_LIMIT,
+                    false,
+                    null,
+                    "The organization's plan allows no more assistant calls this month; the document was not read.");
         }
         var fields = request.fields().stream()
                 .map(field -> new AiServiceClient.Field(field.name(), field.kind()))
@@ -185,6 +199,15 @@ public class Ai {
             meters.counter("avenra.ai.limited", "purpose", WORK_PLAN).increment();
             return new NotPlanned(
                     Reason.DAILY_LIMIT, false, null, 0, "The organization reached today's limit of AI calls.");
+        }
+        if (!entitlements.hasRoom(organizationId, Entitlements.Limit.AI_CALLS_MONTH, 1)) {
+            meters.counter("avenra.ai.limited", "purpose", WORK_PLAN).increment();
+            return new NotPlanned(
+                    Reason.PLAN_LIMIT,
+                    false,
+                    null,
+                    0,
+                    "The organization's plan allows no more assistant calls this month.");
         }
         var subject = new Subject(
                 organizationId,
