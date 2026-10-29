@@ -82,6 +82,46 @@ public class RequestLinkRepository {
                 .list();
     }
 
+    /** The organization's newest links, by state at {@code now} (ADR-039). */
+    public List<LinkRow> forOrganization(UUID organizationId, @Nullable String status, OffsetDateTime now) {
+        return jdbc.sql("select " + LINK + """
+                         from request_links
+                        where organization_id = :org
+                          and (cast(:status as text) is null
+                               or (:status = 'REVOKED' and revoked_at is not null)
+                               or (:status = 'ACTIVE' and revoked_at is null and expires_at > :now)
+                               or (:status = 'EXPIRED' and revoked_at is null and expires_at <= :now))
+                        order by created_at desc, id
+                        limit 200
+                        """)
+                .param("org", organizationId)
+                .param("status", status)
+                .param("now", now)
+                .query(LinkRow.class)
+                .list();
+    }
+
+    /** How many requested items each link's recipient has answered through it. */
+    public Map<UUID, Integer> answeredCounts(UUID organizationId, Collection<UUID> linkIds) {
+        if (linkIds.isEmpty()) {
+            return Map.of();
+        }
+        var counts = new java.util.HashMap<UUID, Integer>();
+        jdbc.sql("""
+                        select r.request_link_id, count(distinct i.requirement_id) as answered
+                        from request_link_requirements r
+                        join information_items i on i.organization_id = r.organization_id
+                             and i.requirement_id = r.requirement_id and i.source_link_id = r.request_link_id
+                        where r.organization_id = :org and r.request_link_id in (:links)
+                        group by r.request_link_id
+                        """)
+                .param("org", organizationId)
+                .param("links", List.copyOf(linkIds))
+                .query((rs, row) -> counts.put(rs.getObject("request_link_id", UUID.class), rs.getInt("answered")))
+                .list();
+        return counts;
+    }
+
     public Map<UUID, List<UUID>> requirementIds(Collection<UUID> linkIds) {
         if (linkIds.isEmpty()) {
             return Map.of();

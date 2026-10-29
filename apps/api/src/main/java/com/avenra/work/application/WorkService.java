@@ -28,6 +28,7 @@ import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -230,16 +231,39 @@ public class WorkService {
         return access.run(userId, organizationId, Permission.WORK_READ, granted -> {
             find(organizationId, workId);
             return verification.evidence(organizationId, workId).stream()
-                    .map(row -> new com.avenra.contract.v1.model.Evidence(
-                                    row.id(),
-                                    com.avenra.contract.v1.model.Evidence.KindEnum.fromValue(row.kind()),
-                                    new com.avenra.contract.v1.model.Reference(row.referenceType(), row.referenceId()),
-                                    row.description(),
-                                    WorkViews.utc(row.createdAt()))
-                            .requirementId(row.requirementId())
-                            .fingerprint(row.fingerprint()))
+                    .map(WorkService::evidenceView)
                     .toList();
         });
+    }
+
+    /** The organization's newest evidence across all work, with the work it belongs to (ADR-039). */
+    public List<com.avenra.contract.v1.model.Evidence> organizationEvidence(
+            UUID userId, UUID organizationId, @Nullable String kind) {
+        return access.run(userId, organizationId, Permission.WORK_READ, granted -> {
+            var rows = verification.organizationEvidence(organizationId, kind);
+            var titles = work.titles(
+                    organizationId,
+                    rows.stream()
+                            .map(com.avenra.verification.Verification.EvidenceView::workId)
+                            .distinct()
+                            .toList());
+            return rows.stream()
+                    .map(row -> evidenceView(row).workTitle(titles.get(row.workId())))
+                    .toList();
+        });
+    }
+
+    private static com.avenra.contract.v1.model.Evidence evidenceView(
+            com.avenra.verification.Verification.EvidenceView row) {
+        return new com.avenra.contract.v1.model.Evidence(
+                        row.id(),
+                        com.avenra.contract.v1.model.Evidence.KindEnum.fromValue(row.kind()),
+                        new com.avenra.contract.v1.model.Reference(row.referenceType(), row.referenceId()),
+                        row.description(),
+                        WorkViews.utc(row.createdAt()))
+                .workId(row.workId())
+                .requirementId(row.requirementId())
+                .fingerprint(row.fingerprint());
     }
 
     public com.avenra.contract.v1.model.CompletionManifest completion(UUID userId, UUID organizationId, UUID workId) {

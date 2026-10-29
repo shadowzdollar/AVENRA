@@ -133,6 +133,25 @@ public class AgentService {
                         .toList());
     }
 
+    /** The organization's newest runs across all work, optionally in one status (ADR-039). */
+    public List<AgentRun> organizationRuns(
+            UUID userId, UUID organizationId, @org.jspecify.annotations.Nullable String status) {
+        return access.run(userId, organizationId, Permission.WORK_READ, granted -> {
+            var titles = new java.util.HashMap<UUID, String>();
+            return repository.runsOfOrganization(organizationId, status).stream()
+                    .map(run -> {
+                        String title = titles.computeIfAbsent(
+                                run.workId(),
+                                id -> work.facts(organizationId, id)
+                                        .map(WorkTools.WorkFacts::title)
+                                        .orElse(""));
+                        var view = views.run(run, repository.stepsOf(run.id()));
+                        return title.isEmpty() ? view : view.workTitle(title);
+                    })
+                    .toList();
+        });
+    }
+
     public AgentRun get(UUID userId, UUID organizationId, UUID workId, UUID runId) {
         return access.run(userId, organizationId, Permission.WORK_READ, granted -> view(organizationId, workId, runId));
     }

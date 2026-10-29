@@ -265,6 +265,19 @@ public class VerificationStore {
                 .list();
     }
 
+    public List<EvidenceRow> organizationEvidence(UUID organizationId, @Nullable String kind) {
+        return jdbc.sql("""
+                        select id, work_id, requirement_id, kind, reference_type, reference_id, description, fingerprint,
+                               created_at
+                        from evidence where organization_id = :org and (cast(:kind as text) is null or kind = :kind)
+                        order by created_at desc, id desc limit 200
+                        """)
+                .param("org", organizationId)
+                .param("kind", kind)
+                .query(EvidenceRow.class)
+                .list();
+    }
+
     public void insertCompletion(UUID organizationId, CompletionRow row) {
         jdbc.sql("""
                         insert into work_completions (organization_id, work_id, manifest, sha256, completed_at)

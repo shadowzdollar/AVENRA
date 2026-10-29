@@ -7,4 +7,5 @@ import org.jspecify.annotations.Nullable;
 public record WorkFilter(
         @Nullable UUID projectId,
         @Nullable UUID clientId,
-        @Nullable WorkStatus status) {}
+        @Nullable WorkStatus status,
+        @Nullable String titleContains) {}

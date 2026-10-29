@@ -17,6 +17,7 @@ import com.avenra.platform.crypto.SecureTokens;
 import com.avenra.platform.email.EmailMessage;
 import com.avenra.platform.email.OutgoingEmail;
 import com.avenra.platform.idempotency.Idempotency;
+import com.avenra.platform.jobs.JobQueue;
 import com.avenra.platform.web.ApiException;
 import com.avenra.platform.web.Text;
 import java.net.URI;
@@ -49,6 +50,8 @@ public class RequestLinkService {
     private final SecretBox box;
     private final ApplicationEventPublisher events;
     private final AuditLog audit;
+    private final InformationViews views;
+    private final JobQueue jobs;
     private final URI publicBaseUrl;
     private final Clock clock;
 
@@ -63,6 +66,8 @@ public class RequestLinkService {
             SecretBox box,
             ApplicationEventPublisher events,
             AuditLog audit,
+            InformationViews views,
+            JobQueue jobs,
             AvenraProperties properties,
             Clock clock) {
         this.links = links;
@@ -75,6 +80,8 @@ public class RequestLinkService {
         this.box = box;
         this.events = events;
         this.audit = audit;
+        this.views = views;
+        this.jobs = jobs;
         this.publicBaseUrl = properties.web().publicBaseUrl();
         this.clock = clock;
     }
@@ -82,14 +89,104 @@ public class RequestLinkService {
     public List<RequestLink> list(UUID userId, UUID organizationId, UUID workId) {
         return access.run(userId, organizationId, Permission.INFORMATION_READ, granted -> {
             work.find(organizationId, workId).orElseThrow(ApiException::notFound);
-            var rows = links.forWork(organizationId, workId);
-            var requirementIds =
-                    links.requirementIds(rows.stream().map(LinkRow::id).toList());
-            OffsetDateTime now = OffsetDateTime.now(clock);
-            return rows.stream()
-                    .map(row -> InformationViews.link(row, requirementIds.getOrDefault(row.id(), List.of()), now))
-                    .toList();
+            return views(organizationId, links.forWork(organizationId, workId), null);
         });
+    }
+
+    /** The organization's newest requests across all work, with the work each belongs to (ADR-039). */
+    public List<RequestLink> organizationList(UUID userId, UUID organizationId, @Nullable String status) {
+        return access.run(userId, organizationId, Permission.INFORMATION_READ, granted -> {
+            var rows = links.forOrganization(organizationId, status, OffsetDateTime.now(clock));
+            var titles = new java.util.HashMap<UUID, String>();
+            for (var row : rows) {
+                titles.computeIfAbsent(
+                        row.workId(),
+                        id -> work.find(organizationId, id)
+                                .map(WorkGate.WorkInfo::title)
+                                .orElse(""));
+            }
+            return views(organizationId, rows, titles);
+        });
+    }
+
+    private List<RequestLink> views(
+            UUID organizationId, List<LinkRow> rows, java.util.@Nullable Map<UUID, String> titles) {
+        var ids = rows.stream().map(LinkRow::id).toList();
+        var requirementIds = links.requirementIds(ids);
+        var answered = links.answeredCounts(organizationId, ids);
+        OffsetDateTime now = OffsetDateTime.now(clock);
+        return rows.stream()
+                .map(row -> {
+                    var view = InformationViews.link(row, requirementIds.getOrDefault(row.id(), List.of()), now)
+                            .answeredCount(answered.getOrDefault(row.id(), 0));
+                    String title = titles == null ? null : titles.get(row.workId());
+                    return title == null || title.isEmpty() ? view : view.workTitle(title);
+                })
+                .toList();
+    }
+
+    /** A reminder sent on request at most this often. */
+    static final java.time.Duration MANUAL_REMINDER_GAP = java.time.Duration.ofHours(1);
+
+    /** No request gets more reminders than this, scheduled and manual together. */
+    static final int MAX_REMINDERS = 10;
+
+    /**
+     * Reminds the recipient now (ADR-039). Queues the same job, with the same key, as the scheduled
+     * reminders, so a reminder is sent once even if a scheduled one falls due at the same time.
+     */
+    public RequestLink remind(UUID userId, UUID organizationId, UUID workId, UUID linkId) {
+        return access.run(userId, organizationId, Permission.INFORMATION_COLLECT, granted -> {
+            work.find(organizationId, workId).orElseThrow(ApiException::notFound);
+            var link = links.findForUpdate(organizationId, linkId)
+                    .filter(row -> row.workId().equals(workId))
+                    .orElseThrow(ApiException::notFound);
+            OffsetDateTime now = OffsetDateTime.now(clock);
+            var target = work.find(organizationId, workId).orElseThrow(ApiException::notFound);
+            if (link.revokedAt() != null || !link.expiresAt().isAfter(now) || target.finished()) {
+                throw ApiException.conflict(
+                        "REQUEST_LINK_INACTIVE", "This request is revoked, expired or its work is finished.");
+            }
+            if (outstanding(linkId).isEmpty()) {
+                throw ApiException.conflict("NOTHING_TO_REMIND", "Everything this request asked for was answered.");
+            }
+            if (link.remindersSent() >= MAX_REMINDERS) {
+                throw ApiException.conflict("REMINDER_LIMIT", "This request has had as many reminders as it may.");
+            }
+            OffsetDateTime last = link.lastRemindedAt() == null ? link.createdAt() : link.lastRemindedAt();
+            if (now.isBefore(last.plus(MANUAL_REMINDER_GAP))) {
+                throw ApiException.conflict("REMINDER_TOO_SOON", "The recipient heard from you less than an hour ago.");
+            }
+            int number = link.remindersSent() + 1;
+            jobs.enqueue(JobQueue.Request.of(
+                            FollowUps.REMIND,
+                            organizationId,
+                            java.util.Map.of("requestLinkId", linkId.toString(), "reminder", number))
+                    .idempotencyKey(linkId + ":" + number));
+            audit.record(AuditLog.Event.of("work.request_link.reminder_requested", organizationId, userId)
+                    .resource("request_link", linkId)
+                    .detail("workId", workId.toString())
+                    .detail("reminder", number));
+            return views(organizationId, List.of(link), null).getFirst();
+        });
+    }
+
+    /** Titles of the required items the link asked for that are still missing or were rejected. */
+    @org.springframework.transaction.annotation.Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public List<String> outstanding(UUID linkId) {
+        var covered = links.requirementIds(List.of(linkId)).getOrDefault(linkId, List.of());
+        var rows = requirements.byIds(covered);
+        var loaded = views.load(rows);
+        return rows.stream()
+                .filter(RequirementRepository.RequirementRow::required)
+                .filter(row -> {
+                    var state = loaded.state(row);
+                    return state == com.avenra.information.domain.Completeness.RequirementState.MISSING
+                            || state == com.avenra.information.domain.Completeness.RequirementState.REJECTED;
+                })
+                .map(RequirementRepository.RequirementRow::title)
+                .toList();
     }
 
     public RequestLink create(
