@@ -52,6 +52,8 @@ tags:
   description: Audit history, usage, health and permissions of an organization (ADR-036).
 - name: billing
   description: Plans, subscriptions, entitlements and usage records (ADR-037).
+- name: analytics
+  description: How an organization's work is going and how much it uses (ADR-038).
 paths:
   /api/v1/meta:
     get:
@@ -2994,6 +2996,44 @@ paths:
           headers:
             X-Request-Id:
               $ref: '#/components/headers/RequestId'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/analytics:
+    get:
+      operationId: getAnalytics
+      summary: How the organization's work is going
+      tags:
+      - analytics
+      description: Computed from the organization's own records only; never includes answers, documents
+        or names.
+      x-avenra-permission: analytics.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: days
+        in: query
+        required: false
+        schema:
+          type: integer
+          enum:
+          - 7
+          - 30
+          - 90
+          default: 30
+      responses:
+        '200':
+          description: The period ending now, compared with the period before.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsReport'
         4XX:
           $ref: '#/components/responses/ClientError'
         5XX:
@@ -6062,6 +6102,123 @@ components:
         subscriptionRef:
           type: string
           maxLength: 200
+    AnalyticsUnit:
+      type: string
+      enum:
+      - COUNT
+      - PERCENT
+      - SECONDS
+      - BYTES
+    AnalyticsMetric:
+      type: object
+      additionalProperties: false
+      required:
+      - key
+      - label
+      - unit
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        unit:
+          $ref: '#/components/schemas/AnalyticsUnit'
+        value:
+          type: number
+          description: Absent when there is nothing to measure (for example a median of no work).
+        previous:
+          type: number
+          description: The same metric over the period before.
+    AnalyticsPoint:
+      type: object
+      additionalProperties: false
+      required:
+      - start
+      - value
+      properties:
+        start:
+          type: string
+          format: date
+        value:
+          type: number
+    AnalyticsSeries:
+      type: object
+      additionalProperties: false
+      required:
+      - key
+      - label
+      - unit
+      - interval
+      - points
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        unit:
+          $ref: '#/components/schemas/AnalyticsUnit'
+        interval:
+          type: string
+          enum:
+          - DAY
+          - WEEK
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsPoint'
+    AnalyticsWorkType:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - created
+      - completed
+      properties:
+        type:
+          type: string
+          description: The work type, or `Untyped`.
+        created:
+          type: integer
+          format: int64
+        completed:
+          type: integer
+          format: int64
+        completionRate:
+          type: number
+          description: Percent of the period's ended work that was completed.
+        medianCompletionSeconds:
+          type: number
+    AnalyticsReport:
+      type: object
+      additionalProperties: false
+      required:
+      - days
+      - from
+      - to
+      - metrics
+      - series
+      - workTypes
+      properties:
+        days:
+          type: integer
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsMetric'
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsSeries'
+        workTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsWorkType'
   securitySchemes:
     sessionCookie:
       type: apiKey

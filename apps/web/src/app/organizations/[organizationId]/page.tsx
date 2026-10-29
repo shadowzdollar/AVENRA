@@ -114,6 +114,11 @@ function Organization({ id }: { id: string }) {
               Integrations
             </Link>
           ) : null}
+          {permissions.has("analytics.read") ? (
+            <Link href={`/organizations/${id}/analytics`} className="text-brand hover:underline">
+              Analytics
+            </Link>
+          ) : null}
           {permissions.has("billing.read") ? (
             <Link href={`/organizations/${id}/billing`} className="text-brand hover:underline">
               Billing

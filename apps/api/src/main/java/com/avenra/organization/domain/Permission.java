@@ -24,7 +24,8 @@ public enum Permission {
     INTEGRATION_MANAGE("integration.manage"),
     BILLING_READ("billing.read"),
     BILLING_MANAGE("billing.manage"),
-    AUDIT_READ("audit.read");
+    AUDIT_READ("audit.read"),
+    ANALYTICS_READ("analytics.read");
 
     private final String code;
 

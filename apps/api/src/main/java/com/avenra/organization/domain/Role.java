@@ -25,7 +25,8 @@ public enum Role {
             INFORMATION_READ,
             INFORMATION_COLLECT,
             INFORMATION_VERIFY,
-            INTEGRATION_READ)),
+            INTEGRATION_READ,
+            ANALYTICS_READ)),
     MEMBER(EnumSet.of(
             ORGANIZATION_READ,
             MEMBERS_READ,
