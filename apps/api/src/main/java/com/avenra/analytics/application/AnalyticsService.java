@@ -14,39 +14,28 @@ import com.avenra.platform.web.ApiException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 /**
  * An organization's analytics over the last 7, 30 or 90 days, compared with the period before
- * (ADR-038). Each module reports on its own data; results are kept for a few minutes per
- * organization and period, after the caller's permission was checked.
+ * (ADR-038). Each module reports on its own data, from indexed queries, fresh on every request
+ * (ADR-039 removed the cache: people check analytics right after changing work).
  */
 @Service
 public class AnalyticsService {
 
     static final Set<Integer> PERIODS = Set.of(7, 30, 90);
-    static final Duration CACHE_FOR = Duration.ofMinutes(5);
-    private static final int CACHE_LIMIT = 1_000;
-
-    private record Key(UUID organizationId, int days) {}
-
-    private record Cached(AnalyticsReport report, Instant until) {}
-
     private final OrganizationAccess access;
     private final List<AnalyticsContributor> contributors;
     private final Clock clock;
-    private final Map<Key, Cached> cache = new ConcurrentHashMap<>();
 
     AnalyticsService(OrganizationAccess access, List<AnalyticsContributor> contributors, Clock clock) {
         this.access = access;
@@ -59,22 +48,7 @@ public class AnalyticsService {
             throw ApiException.invalid("days", "must be 7, 30 or 90");
         }
         return access.run(userId, organizationId, Permission.ANALYTICS_READ, granted -> {
-            Instant now = clock.instant();
-            var key = new Key(organizationId, days);
-            var cached = cache.get(key);
-            if (cached != null && now.isBefore(cached.until())) {
-                return cached.report();
-            }
-            var report = compute(organizationId, days, now);
-            if (cache.size() >= CACHE_LIMIT) {
-                cache.entrySet()
-                        .removeIf(entry -> !now.isBefore(entry.getValue().until()));
-                if (cache.size() >= CACHE_LIMIT) {
-                    cache.clear();
-                }
-            }
-            cache.put(key, new Cached(report, now.plus(CACHE_FOR)));
-            return report;
+            return compute(organizationId, days, clock.instant());
         });
     }
 

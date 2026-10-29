@@ -28,7 +28,10 @@ export function useRequiredSession() {
   return session;
 }
 
+/** Where a signed-in person starts: their organizations. */
+export const HOME = "/organizations";
+
 /** Only same-origin paths are accepted as a destination after sign-in. */
 export function safeNext(next: string | null): string {
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  return next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : HOME;
 }

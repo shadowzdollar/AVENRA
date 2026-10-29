@@ -25,6 +25,7 @@ test("checks give clients immediate feedback and completion is proven", async ({
   await team.getByRole("button", { name: "Create" }).click();
   await team.getByRole("link", { name: /Checked Advisors/ }).click();
   await team.getByRole("link", { name: "Work", exact: true }).click();
+  await team.getByRole("link", { name: "New work" }).first().click();
   await team.getByLabel("Title").fill("KYC for Initech");
   await team.getByRole("button", { name: "Create" }).click();
   await expect(team.getByRole("heading", { name: "KYC for Initech" })).toBeVisible();

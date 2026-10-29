@@ -1,4 +1,5 @@
 import type { components } from "@avenra/contracts";
+import type { Tone } from "@/components/ui";
 import { ApiError } from "./api";
 
 export type WorkStatus = components["schemas"]["WorkStatus"];
@@ -20,6 +21,53 @@ const STATUS_LABELS: Record<WorkStatus, string> = {
 
 export function statusLabel(status: WorkStatus): string {
   return STATUS_LABELS[status];
+}
+
+/** The pill tone of a work status: status colours only for real states (§144.3). */
+export function statusTone(status: WorkStatus): Tone {
+  switch (status) {
+    case "COMPLETED":
+      return "success";
+    case "FAILED":
+      return "error";
+    case "BLOCKED":
+      return "warning";
+    case "RUNNING":
+    case "WAITING_FOR_INFORMATION":
+    case "WAITING_FOR_APPROVAL":
+      return "brand";
+    default:
+      return "neutral";
+  }
+}
+
+/** Whether the work is still going (not completed or cancelled). */
+export function isOpen(status: WorkStatus): boolean {
+  return status !== "COMPLETED" && status !== "CANCELLED";
+}
+
+/** The path from intent to verified completion, as shown on a work item. */
+export const STAGES = ["Defined", "Ready", "Collecting", "Approving", "Completed"] as const;
+
+/** Where a status sits on that path; blocked and failed work shows where it stopped. */
+export function stageIndex(status: WorkStatus): number {
+  switch (status) {
+    case "DRAFT":
+      return 0;
+    case "READY":
+      return 1;
+    case "RUNNING":
+    case "WAITING_FOR_INFORMATION":
+    case "BLOCKED":
+    case "FAILED":
+      return 2;
+    case "WAITING_FOR_APPROVAL":
+      return 3;
+    case "COMPLETED":
+      return 4;
+    case "CANCELLED":
+      return 0;
+  }
 }
 
 /** Moving to these statuses must be explained (ADR-018). */

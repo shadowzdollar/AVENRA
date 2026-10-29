@@ -15,10 +15,12 @@ test("people are told what needs them and choose how", async ({ page }) => {
   await page.getByLabel("Name").fill("Notified Advisors");
   await page.getByRole("button", { name: "Create" }).click();
   await page.getByRole("link", { name: /Notified Advisors/ }).click();
+  await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Switch planning on" }).click();
   await expect(page.getByTestId("planning-status")).toHaveText("Planning is on.");
 
   await page.getByRole("link", { name: "Work", exact: true }).click();
+  await page.getByRole("link", { name: "New work" }).first().click();
   await page.getByLabel("Title").fill("Onboarding Nina Novak");
   await page.getByRole("button", { name: "Create" }).click();
   await expect(page.getByRole("heading", { name: "Onboarding Nina Novak" })).toBeVisible();
@@ -38,6 +40,7 @@ test("people are told what needs them and choose how", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Onboarding Nina Novak" })).toBeVisible();
   await expect(page.getByTestId("notification-bell")).toHaveText("Notifications");
 
+  await page.getByLabel("Account menu").click();
   await page.getByRole("link", { name: "Account" }).click();
   const preferences = page.getByTestId("notification-preferences");
   const answers = preferences.getByLabel("Answers from clients");

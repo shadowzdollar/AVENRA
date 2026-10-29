@@ -15,8 +15,8 @@ test("an owner administers the organization", async ({ page }) => {
   await page.getByLabel("Name").fill("Administered Advisors");
   await page.getByRole("button", { name: "Create" }).click();
   await page.getByRole("link", { name: /Administered Advisors/ }).click();
-  await page.getByRole("link", { name: "Administration" }).click();
-  await expect(page.getByRole("heading", { name: "Administration" })).toBeVisible();
+  await page.getByRole("link", { name: "Settings" }).click();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
 
   await page.getByLabel("Request links valid for (days)").fill("21");
   await page.getByRole("button", { name: "Save settings" }).click();
@@ -24,7 +24,6 @@ test("an owner administers the organization", async ({ page }) => {
 
   await expect(page.getByTestId("usage-members")).toHaveText("1");
   await expect(page.getByTestId("health-status")).toHaveText("Everything looks fine.");
-  await expect(page.getByRole("cell", { name: "audit.read" })).toBeVisible();
 
   const history = page.getByTestId("audit-history");
   await page.getByLabel("Action starts with").fill("organization.");
@@ -37,6 +36,10 @@ test("an owner administers the organization", async ({ page }) => {
   await page.getByRole("link", { name: "Export CSV" }).click();
   const file = await download;
   expect(file.suggestedFilename()).toMatch(/^audit-.*\.csv$/);
+
+  // What each role may do is on the team page, from the code that enforces it.
+  await page.getByRole("link", { name: "Team" }).click();
+  await expect(page.getByRole("cell", { name: "audit.read" })).toBeVisible();
 
   expect(problems).toEqual([]);
 });

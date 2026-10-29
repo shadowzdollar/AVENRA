@@ -1,5 +1,6 @@
 "use client";
 
+import { Lock, LogIn, Mail, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
@@ -55,7 +56,7 @@ function SignInForm() {
 
   if (challenge) {
     return (
-      <AuthLayout title="Two-step verification" subtitle="Enter the 6-digit code from your authenticator app, or a recovery code.">
+      <AuthLayout icon={ShieldCheck} title="Two-step verification" subtitle="Enter the 6-digit code from your authenticator app, or a recovery code.">
         <form onSubmit={verify} className="flex flex-col gap-4">
           {error ? <Alert tone="error">{error.message}</Alert> : null}
           <Field label="Code" inputMode="numeric" autoComplete="one-time-code" required value={code} onChange={(e) => setCode(e.target.value)} />
@@ -68,7 +69,7 @@ function SignInForm() {
   }
 
   return (
-    <AuthLayout title="Sign in" subtitle="From Intent to Completed Work.">
+    <AuthLayout icon={LogIn} title="Sign in to your workspace" subtitle="Enter your email and password to continue.">
       <form onSubmit={signIn} className="flex flex-col gap-4">
         {error ? (
           <Alert tone="error">
@@ -83,9 +84,9 @@ function SignInForm() {
             ) : null}
           </Alert>
         ) : null}
-        <Field label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Field label="Password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-        <Button type="submit" busy={busy}>
+        <Field label="Email" type="email" icon={Mail} autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Field label="Password" type="password" icon={Lock} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Button type="submit" busy={busy} className="h-10 w-full">
           Sign in
         </Button>
       </form>

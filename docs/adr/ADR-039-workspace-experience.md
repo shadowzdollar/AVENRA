@@ -58,6 +58,11 @@ follow.
   none, icons are plain components and replaceable one by one; (6) cost —
   tree-shaken, only imported icons are bundled.
 
+- **Amends ADR-038:** organization analytics are no longer cached. The
+  overview reads them on every visit, and a five-minute cache showed figures
+  that ignored work created a moment before. The queries are indexed per
+  organization and the default rate limit still applies.
+
 ## Consequences
 
 - The prototype can keep evolving in Lovable; changes are carried over by

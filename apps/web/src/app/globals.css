@@ -18,6 +18,17 @@
   --color-success: #16a34a;
   --color-warning: #d97706;
   --color-error: #dc2626;
+  /* ADR-039: an off-white workspace canvas and the surfaces behind status pills. */
+  --color-canvas: #f8f9fb;
+  --color-success-surface: #ecfdf3;
+  --color-warning-surface: #fffaeb;
+  --color-error-surface: #fef3f2;
+
+  --radius-panel: 1rem;
+  --shadow-soft: 0 1px 2px rgb(11 13 15 / 0.05);
+  --shadow-card: 0 1px 2px rgb(11 13 15 / 0.04), 0 8px 24px -12px rgb(11 13 15 / 0.1);
+  --shadow-float: 0 2px 4px rgb(11 13 15 / 0.04), 0 18px 40px -16px rgb(11 13 15 / 0.22);
+  --shadow-brand: 0 10px 22px -10px color-mix(in oklab, var(--color-brand) 60%, transparent);
 
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -30,6 +41,25 @@
   body {
     @apply bg-background text-text-primary font-sans antialiased;
   }
+}
+
+/* Marketing and sign-in backgrounds (§144.3: marketing may be more expressive). */
+@utility bg-hero-wash {
+  background-image: radial-gradient(60% 55% at 50% 0%, color-mix(in oklab, var(--color-brand) 16%, white), transparent 70%),
+    radial-gradient(40% 40% at 85% 30%, color-mix(in oklab, var(--color-brand) 9%, white), transparent 70%);
+}
+@utility bg-auth-wash {
+  background-image: radial-gradient(
+    70% 60% at 50% 45%,
+    color-mix(in oklab, var(--color-brand) 18%, white),
+    color-mix(in oklab, var(--color-brand) 9%, white) 60%,
+    var(--color-brand-surface)
+  );
+}
+@utility bg-grid {
+  background-image: linear-gradient(var(--color-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
 /* Completeness bars (native <progress>; inline styles are blocked by the CSP). */

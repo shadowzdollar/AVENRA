@@ -23,6 +23,7 @@ test("documents are read automatically only when an owner allows it, and only ad
   await team.getByLabel("Name").fill("Reading Advisors");
   await team.getByRole("button", { name: "Create" }).click();
   await team.getByRole("link", { name: /Reading Advisors/ }).click();
+  await team.getByRole("link", { name: "Settings" }).click();
 
   // Off by default; the owner switches it on.
   const settings = team.getByTestId("ai-settings");
@@ -31,6 +32,7 @@ test("documents are read automatically only when an owner allows it, and only ad
   await expect(settings.getByTestId("ai-status")).toHaveText("Reading is on.");
 
   await team.getByRole("link", { name: "Work", exact: true }).click();
+  await team.getByRole("link", { name: "New work" }).first().click();
   await team.getByLabel("Title").fill("Onboarding Jane Doe");
   await team.getByRole("button", { name: "Create" }).click();
   await expect(team.getByRole("heading", { name: "Onboarding Jane Doe" })).toBeVisible();
@@ -72,7 +74,7 @@ test("documents are read automatically only when an owner allows it, and only ad
   }).toPass({ timeout: 45_000 });
   await expect(requirement.getByTestId("checks")).toContainText("read automatically, advisory");
 
-  await team.goto(new URL(team.url()).pathname.replace(/\/work\/.*$/, ""));
+  await team.goto(new URL(team.url()).pathname.replace(/\/work\/.*$/, "/settings"));
   await expect(team.getByTestId("ai-usage")).toContainText("Today: 1 of");
 
   expect(teamProblems).toEqual([]);

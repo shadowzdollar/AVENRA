@@ -13,7 +13,9 @@ describe("safeNext", () => {
     ["protocol-relative URL", "//evil.example/phish"],
     ["relative without slash", "evil.example"],
     ["javascript URL", "javascript:alert(1)"],
-  ])("falls back to the home page for a %s", (_case, value) => {
-    expect(safeNext(value)).toBe("/");
+    // Browsers treat a backslash after the slash like a second slash.
+    ["backslash URL", "/\\evil.example/phish"],
+  ])("falls back to the organizations for a %s", (_case, value) => {
+    expect(safeNext(value)).toBe("/organizations");
   });
 });

@@ -19,7 +19,21 @@ function barPath(x: number, width: number, height: number): string {
  * One series of bars over time, with a tooltip on hover or focus and the same
  * numbers as a table for people who prefer (or need) one.
  */
-export function BarChart({ title, bars, format }: { title: string; bars: Bar[]; format: (value: number) => string }) {
+export function BarChart({
+  title,
+  bars,
+  format,
+  showTitle = true,
+  emptyText = "No data for this period yet.",
+}: {
+  title: string;
+  bars: Bar[];
+  format: (value: number) => string;
+  /** Hidden when a panel around the chart already says what it is (still read out). */
+  showTitle?: boolean;
+  /** Said instead of drawing bars when every bar is zero. */
+  emptyText?: string;
+}) {
   const [active, setActive] = useState<number | null>(null);
   const width = Math.max(bars.length * 24, 240);
   const slot = width / Math.max(bars.length, 1);
@@ -27,9 +41,9 @@ export function BarChart({ title, bars, format }: { title: string; bars: Bar[]; 
   const shown = active === null ? null : bars[active];
   return (
     <figure className="flex flex-col gap-2">
-      <figcaption className="text-sm font-medium">{title}</figcaption>
-      {bars.length === 0 ? (
-        <p className="text-sm text-text-secondary">No data for this period yet.</p>
+      <figcaption className={showTitle ? "text-sm font-medium" : "sr-only"}>{title}</figcaption>
+      {bars.length === 0 || max === 0 ? (
+        <p className="py-10 text-center text-[13px] text-text-secondary">{emptyText}</p>
       ) : (
         <>
           <div className="relative">

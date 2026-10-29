@@ -27,6 +27,7 @@ test("sign up, organize, invite a colleague, and sign out", async ({ browser }) 
   await owner.getByRole("button", { name: "Create" }).click();
   await owner.getByRole("link", { name: /Acme Advisory/ }).click();
   await expect(owner.getByRole("heading", { name: "Acme Advisory" })).toBeVisible();
+  await owner.getByRole("link", { name: "Team" }).click();
   await expect(owner.getByRole("cell", { name: "Olivia Owner" })).toBeVisible();
 
   // Owner invites a colleague as a member.
@@ -45,6 +46,7 @@ test("sign up, organize, invite a colleague, and sign out", async ({ browser }) 
   await colleague.getByRole("button", { name: "Accept invitation" }).click();
 
   await expect(colleague.getByRole("heading", { name: "Acme Advisory" })).toBeVisible();
+  await colleague.getByRole("link", { name: "Team" }).click();
   await expect(colleague.getByRole("cell", { name: "Olivia Owner" })).toBeVisible();
   // A member can see the team but has no member-management controls.
   await expect(colleague.getByRole("button", { name: "Send invitation" })).toHaveCount(0);
@@ -59,7 +61,7 @@ test("sign up, organize, invite a colleague, and sign out", async ({ browser }) 
   await expect(owner.getByText("this device")).toBeVisible();
   await owner.getByRole("button", { name: "Sign out", exact: true }).first().click();
   await expect(owner).toHaveURL(/\/sign-in/);
-  await owner.goto("/");
+  await owner.goto("/organizations");
   await expect(owner).toHaveURL(/\/sign-in/);
 
   expect(ownerProblems, "owner page problems").toEqual([]);

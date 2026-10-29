@@ -18,7 +18,7 @@ and the period before:
 | agent | steps proposed, automation rate |
 | billing | daily usage from the usage records |
 
-Reports are cached for five minutes per organization and period.
+Reports are computed on every request (ADR-039).
 
 ## Customer analytics (operators)
 
