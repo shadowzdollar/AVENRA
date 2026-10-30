@@ -1,10 +1,11 @@
 "use client";
 
-import { Lock, LogIn, Mail, ShieldCheck } from "lucide-react";
+import { LogIn, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
-import { Alert, AuthLayout, Button, Field } from "@/components/ui";
+import { CodeInput, EmailField, PasswordField, TrustRow } from "@/components/auth";
+import { Alert, AuthLayout, Button } from "@/components/ui";
 import { api, ApiError, unwrap } from "@/lib/api";
 import { safeNext } from "@/lib/session";
 
@@ -15,6 +16,7 @@ function SignInForm() {
   const [password, setPassword] = useState("");
   const [challenge, setChallenge] = useState<string | null>(null);
   const [code, setCode] = useState("");
+  const [recovery, setRecovery] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -42,8 +44,8 @@ function SignInForm() {
     });
   }
 
-  function verify(event: FormEvent) {
-    event.preventDefault();
+  function verify(event?: FormEvent) {
+    event?.preventDefault();
     void run(async () => {
       unwrap(
         await api.POST("/api/v1/auth/sign-in/mfa", {
@@ -55,15 +57,28 @@ function SignInForm() {
   }
 
   if (challenge) {
+    const complete = recovery ? code.trim().length >= 8 : /^\d{6}$/.test(code);
     return (
-      <AuthLayout icon={ShieldCheck} title="Two-step verification" subtitle="Enter the 6-digit code from your authenticator app, or a recovery code.">
-        <form onSubmit={verify} className="flex flex-col gap-4">
+      <AuthLayout icon={ShieldCheck} title="Two-step verification" subtitle="Your account is protected by a second step. Enter the code to continue.">
+        <form onSubmit={verify} className="flex flex-col gap-5">
           {error ? <Alert tone="error">{error.message}</Alert> : null}
-          <Field label="Code" inputMode="numeric" autoComplete="one-time-code" required value={code} onChange={(e) => setCode(e.target.value)} />
-          <Button type="submit" busy={busy}>
-            Verify
+          <CodeInput value={code} onChange={setCode} recovery={recovery} onRecoveryChange={setRecovery} />
+          <Button type="submit" busy={busy} disabled={!complete} className="h-10 w-full">
+            Verify and sign in
           </Button>
+          <button
+            type="button"
+            className="text-[13px] text-text-secondary hover:text-text-primary"
+            onClick={() => {
+              setChallenge(null);
+              setCode("");
+              setError(null);
+            }}
+          >
+            Sign in with a different account
+          </button>
         </form>
+        <TrustRow />
       </AuthLayout>
     );
   }
@@ -77,27 +92,31 @@ function SignInForm() {
             {error.code === "EMAIL_NOT_VERIFIED" ? (
               <>
                 {" "}
-                <Link className="underline" href={`/sign-up?resend=${encodeURIComponent(email)}`}>
-                  Send it again
+                <Link className="font-medium underline" href={`/sign-up?resend=${encodeURIComponent(email)}`}>
+                  Send the confirmation again
                 </Link>
               </>
             ) : null}
           </Alert>
         ) : null}
-        <Field label="Email" type="email" icon={Mail} autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Field label="Password" type="password" icon={Lock} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <EmailField label="Email" autoComplete="email" required autoFocus value={email} onChange={setEmail} placeholder="you@firm.com" />
+        <div className="flex flex-col gap-1">
+          <PasswordField label="Password" autoComplete="current-password" required value={password} onChange={setPassword} />
+          <Link className="self-end text-[12px] font-medium text-brand hover:underline" href="/forgot-password">
+            Forgot password?
+          </Link>
+        </div>
         <Button type="submit" busy={busy} className="h-10 w-full">
           Sign in
         </Button>
       </form>
-      <div className="mt-6 flex justify-between text-sm">
-        <Link className="text-brand hover:underline" href="/forgot-password">
-          Forgot password?
-        </Link>
-        <Link className="text-brand hover:underline" href="/sign-up">
+      <p className="mt-6 text-center text-[13px] text-text-secondary">
+        New to Avenra?{" "}
+        <Link className="font-medium text-brand hover:underline" href="/sign-up">
           Create an account
         </Link>
-      </div>
+      </p>
+      <TrustRow />
     </AuthLayout>
   );
 }

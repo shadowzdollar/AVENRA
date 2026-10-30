@@ -1,8 +1,8 @@
 import type { ButtonHTMLAttributes, ComponentType, InputHTMLAttributes, ReactNode } from "react";
 import { useId } from "react";
-import { Database, FileCheck2, FileText, Inbox, Mail, MessageSquare, ShieldCheck, Webhook } from "lucide-react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand";
+import { IntegrationBubble } from "@/components/landing/Integrations";
 
 /*
  * Small, accessible building blocks on the design tokens (Guidelines §144,
@@ -324,32 +324,38 @@ function AuthIllustration() {
         <SourceRing />
       </div>
       <p className="mx-auto max-w-sm text-center text-[13px] leading-relaxed text-text-secondary">
-        Requests, answers, documents and checks come together in one place, and become verified completed work.
+        Works with <span className="font-semibold italic text-text-primary">Gmail, Amazon S3, Zapier and Make</span> and the systems your firm
+        already runs on, turning their information into verified completed work.
       </p>
+      <div className="mt-6 flex justify-center gap-1.5">
+        <span className="h-1 w-6 rounded-full bg-brand" />
+        <span className="h-1 w-3 rounded-full bg-background" />
+        <span className="h-1 w-3 rounded-full bg-background" />
+      </div>
     </div>
   );
 }
 
-/** The kinds of sources Avenra brings together, as generic icons (no third-party marks, ADR-039). */
+/** Services Avenra works with, around the mark (the Lovable sign-in design, ADR-039). */
 export function SourceRing() {
   return (
     <>
-      {SOURCES.map(({ icon: Icon, label, position }) => (
-        <div key={label} title={label} className={`absolute ${position} flex size-9 items-center justify-center rounded-lg border border-border bg-background shadow-float`}>
-          <Icon className="size-4 text-brand" />
+      {RING.map(({ name, position }) => (
+        <div key={name} className={`absolute ${position}`}>
+          <IntegrationBubble name={name} size="sm" className="rounded-full" />
         </div>
       ))}
     </>
   );
 }
 
-const SOURCES = [
-  { icon: Mail, label: "Email", position: "left-[46%] top-[6%]" },
-  { icon: MessageSquare, label: "Client answers", position: "left-[6%] top-[32%]" },
-  { icon: FileText, label: "Documents", position: "left-[34%] top-[26%]" },
-  { icon: Database, label: "Records", position: "right-[4%] top-[30%]" },
-  { icon: Inbox, label: "Requests", position: "right-[22%] top-[22%]" },
-  { icon: FileCheck2, label: "Evidence", position: "left-[12%] top-[66%]" },
-  { icon: ShieldCheck, label: "Checks", position: "right-[30%] top-[64%]" },
-  { icon: Webhook, label: "Connected systems", position: "right-[8%] top-[76%]" },
+const RING = [
+  { name: "Gmail", position: "left-[46%] top-[6%]" },
+  { name: "Zapier", position: "left-[6%] top-[32%]" },
+  { name: "Amazon S3", position: "left-[34%] top-[26%]" },
+  { name: "Make", position: "right-[4%] top-[30%]" },
+  { name: "Cloudflare R2", position: "right-[22%] top-[22%]" },
+  { name: "n8n", position: "left-[12%] top-[66%]" },
+  { name: "Backblaze B2", position: "right-[30%] top-[64%]" },
+  { name: "MinIO", position: "right-[8%] top-[76%]" },
 ];

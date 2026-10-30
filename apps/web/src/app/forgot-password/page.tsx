@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { Alert, AuthLayout, Button, Field } from "@/components/ui";
+import { KeyRound } from "lucide-react";
+import { EmailField } from "@/components/auth";
+import { Alert, AuthLayout, Button } from "@/components/ui";
 import { api, ApiError, unwrap } from "@/lib/api";
 
 export default function ForgotPasswordPage() {
@@ -26,19 +28,19 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <AuthLayout title="Reset your password" subtitle="We will email you a link to choose a new password.">
+    <AuthLayout icon={KeyRound} title="Reset your password" subtitle="We will email you a link to choose a new password.">
       {sent ? (
         <Alert tone="success">If an account exists for {email}, a reset link is on its way. It works once and expires in 30 minutes.</Alert>
       ) : (
         <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
           {error ? <Alert tone="error">{error.message}</Alert> : null}
-          <Field label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Button type="submit" busy={busy}>
+          <EmailField label="Email" autoComplete="email" required autoFocus value={email} onChange={setEmail} placeholder="you@firm.com" />
+          <Button type="submit" busy={busy} className="h-10 w-full">
             Send reset link
           </Button>
         </form>
       )}
-      <Link className="mt-6 inline-block text-sm text-brand hover:underline" href="/sign-in">
+      <Link className="mt-6 inline-block text-[13px] font-medium text-brand hover:underline" href="/sign-in">
         Back to sign in
       </Link>
     </AuthLayout>

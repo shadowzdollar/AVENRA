@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
-import { Alert, AuthLayout, Button, Field } from "@/components/ui";
+import { KeyRound } from "lucide-react";
+import { PasswordField, PasswordGuidance } from "@/components/auth";
+import { Alert, AuthLayout, Button } from "@/components/ui";
 import { api, ApiError, unwrap } from "@/lib/api";
 
 function ResetForm() {
@@ -28,29 +30,29 @@ function ResetForm() {
   }
 
   return (
-    <AuthLayout title="Choose a new password" subtitle="All your sessions will be signed out.">
+    <AuthLayout icon={KeyRound} title="Choose a new password" subtitle="For your safety, every session on every device will be signed out.">
       {done ? (
         <Alert tone="success">Your password is changed. Sign in with the new one.</Alert>
       ) : (
         <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
           {error && !error.fieldProblem("newPassword") ? <Alert tone="error">{error.message}</Alert> : null}
-          <Field
+          <PasswordField
             label="New password"
-            type="password"
             autoComplete="new-password"
             required
             minLength={12}
             maxLength={128}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={setPassword}
             error={error?.fieldProblem("newPassword") ? `Password ${error.fieldProblem("newPassword")}.` : undefined}
           />
-          <Button type="submit" busy={busy}>
+          <PasswordGuidance password={password} email="" />
+          <Button type="submit" busy={busy} className="h-10 w-full">
             Change password
           </Button>
         </form>
       )}
-      <Link className="mt-6 inline-block text-sm text-brand hover:underline" href="/sign-in">
+      <Link className="mt-6 inline-block text-[13px] font-medium text-brand hover:underline" href="/sign-in">
         Go to sign in
       </Link>
     </AuthLayout>
