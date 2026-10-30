@@ -103,6 +103,10 @@ services:
   # nothing leaves the machine. UI: http://127.0.0.1:18025
   mailpit:
     image: axllent/mailpit:v1.31.5
+    environment:
+      # Reverse DNS lookups of each client stall on slow networks, holding
+      # roughly one SMTP connection in ten until it times out.
+      MP_SMTP_DISABLE_RDNS: "true"
     ports:
       - "127.0.0.1:11025:1025"  # SMTP
       - "127.0.0.1:18025:8025"  # UI

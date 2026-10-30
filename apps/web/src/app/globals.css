@@ -79,3 +79,81 @@ progress.completeness::-webkit-progress-value {
 progress.completeness::-moz-progress-bar {
   background-color: var(--color-success);
 }
+
+/*
+ * The landing page as designed in the Lovable prototype (ADR-039, §144.3:
+ * marketing may be more expressive). Third-party marks keep their official
+ * colours. Scoped to the landing page's own classes.
+ */
+:root {
+  --landing-shadow-soft: 0 1px 2px oklch(0.155 0.004 250 / 0.05);
+  --landing-shadow-card: 0 1px 2px oklch(0.155 0.004 250 / 0.04), 0 8px 24px -12px oklch(0.155 0.004 250 / 0.1);
+  --landing-shadow-float: 0 2px 4px oklch(0.155 0.004 250 / 0.04), 0 18px 40px -16px oklch(0.155 0.004 250 / 0.22);
+  --hero-reference-wash: linear-gradient(115deg, oklch(0.94 0.034 295), oklch(0.987 0.009 265) 47%, oklch(0.95 0.025 245));
+  --hero-art-wash: linear-gradient(110deg, oklch(0.83 0.09 295 / .8), oklch(0.92 0.025 270 / .7) 55%, oklch(0.84 0.09 240 / .85));
+  --hero-orbit-border: oklch(0.75 0.065 265 / .45);
+}
+
+@utility bg-feature-wash {
+  background-image: radial-gradient(80% 60% at 50% 15%, oklch(0.75 0.13 260), oklch(0.88 0.06 258) 55%, oklch(0.97 0.014 254.6));
+}
+@utility bg-cta-wash {
+  background-image: radial-gradient(70% 90% at 50% 110%, oklch(0.99 0.004 260), transparent 60%),
+    linear-gradient(180deg, oklch(0.86 0.07 258), oklch(0.93 0.04 256));
+}
+@utility bg-dots {
+  background-image: radial-gradient(color-mix(in oklab, var(--color-brand) 35%, transparent) 1px, transparent 1px);
+  background-size: 10px 10px;
+}
+@utility shadow-ink {
+  box-shadow: 0 10px 22px -8px oklch(0.155 0.004 250 / 0.55), inset 0 1px 0 oklch(1 0 0 / 0.14);
+}
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@utility animate-float {
+  animation: float-y 6s ease-in-out infinite;
+}
+
+/* The supplied hero reference: a framed navigation above concentric app orbits. */
+.reference-hero { position: relative; margin: 0 5px; border-radius: 7px 7px 0 0; overflow: hidden; background: var(--hero-reference-wash); padding-top: 16px; }
+.hero-header { position: relative; z-index: 30; width: min(80%, 1160px); margin: 0 auto; }
+.hero-nav { height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 0 18px; border: 1px solid var(--color-border); border-radius: 13px; background: var(--color-background); box-shadow: var(--landing-shadow-card); }
+.hero-stage { position: relative; height: max(590px, calc(100svh - 62px)); max-width: 1440px; margin: auto; }
+.hero-copy { position: relative; z-index: 5; padding-top: 42px; text-align: center; }
+.hero-trust-badge { display: inline-flex; align-items: center; gap: 18px; padding: 7px 14px; background: var(--color-background); border-radius: 30px; box-shadow: var(--landing-shadow-soft); font-size: 12px; }
+.hero-trust-badge > span { display: flex; align-items: center; gap: 5px; }
+.hero-copy h1 { font-size: 52px; line-height: 1.08; font-weight: 650; letter-spacing: 0; margin: 23px auto 0; }
+.hero-copy > p { margin: 15px auto 0; font-size: 15px; line-height: 1.55; color: var(--color-text-primary); }
+.hero-actions { display: flex; justify-content: center; gap: 16px; margin-top: 23px; }
+.hero-orbits { position: absolute; inset: 0; pointer-events: none; }
+.hero-orbit { position: absolute; left: 50%; top: 41%; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--hero-orbit-border); }
+.hero-orbit-outer { width: 84%; aspect-ratio: 1; }
+.hero-orbit-middle { width: 70%; aspect-ratio: 1; border-style: dashed; opacity: .55; }
+.hero-orbit-inner { width: 55%; aspect-ratio: 1; border-style: dashed; opacity: .45; }
+.orbit-point { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--color-brand); }
+.point-left { left: 7.6%; top: 39%; }.point-bottom-left { left: 15%; top: 85%; width: 7px; height: 7px; opacity: .6; }.point-top-right { right: 10.4%; top: 10%; width: 7px; height: 7px; }.point-bottom-right { right: 13.3%; top: 80%; width: 7px; height: 7px; }
+.hero-app-bubble { position: absolute; z-index: 6; width: 59px; height: 59px; border-radius: 50%; display: grid; place-items: center; background: var(--color-background); box-shadow: var(--landing-shadow-card); border: 4px solid color-mix(in oklab, var(--color-background) 75%, transparent); }
+.hero-app-icon { width: 31px; height: 31px; }
+.logo-gmail { color: #ea4335; }.logo-s3 { color: #569a31; }.logo-cloudflare { color: #f38020; }.logo-backblaze { color: #e21e29; }.logo-digitalocean { color: #0080ff; }.logo-minio { color: #c72e49; }.logo-wasabi { color: #01cd3e; }.logo-zapier { color: #ff4f00; }.logo-make { color: #6d00cc; }.logo-n8n { color: #ea4b71; }
+.orbit-slack { left: 22%; top: 6%; }.orbit-asana { left: 14%; top: 26%; }.orbit-meta { left: 21%; top: 46%; }.orbit-mail { left: 8%; top: 59%; }.orbit-drive { left: 20%; top: 77%; }
+.orbit-zapier { right: 20%; top: 6%; }.orbit-aws { right: 12%; top: 24%; }.orbit-flow { right: 19%; top: 46%; }.orbit-click { right: 7%; top: 59%; }.orbit-airtable { right: 19%; top: 77%; }
+.hero-notifications { position: relative; width: 470px; height: 227px; margin: 0 auto; text-align: left; }
+.notification-art { position: absolute; inset: 0; background: var(--hero-art-wash); border-radius: 100px 100px 120px 120px; transform: rotate(-4deg); }
+.notification-dots { position: absolute; width: 75px; height: 65px; background-image: radial-gradient(var(--color-background) 1.5px, transparent 1.5px); background-size: 12px 12px; }
+.dots-left { left: 6px; top: 94px; }.dots-right { right: 35px; top: 51px; background-image: radial-gradient(var(--color-brand) 1.5px, transparent 1.5px); opacity: .4; }
+.notification-arrow { position: absolute; left: 45px; top: 25px; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 14px solid var(--color-brand); transform: rotate(20deg); }
+.notification-strokes { position: absolute; right: 55px; top: 106px; font-size: 38px; color: var(--color-brand); transform: rotate(-20deg); }
+.hero-notification { position: absolute; display: flex; align-items: center; gap: 10px; background: var(--color-background); border: 1px solid var(--color-border); border-radius: 9px; padding: 10px 13px; height: 59px; box-shadow: var(--landing-shadow-float); }
+.notification-first { width: 314px; left: 77px; top: 26px; z-index: 3; }.notification-second { width: 279px; left: 94px; top: 87px; z-index: 2; }.notification-third { width: 257px; left: 102px; top: 147px; z-index: 1; }
+.notification-avatar { position: relative; flex-shrink: 0; width: 34px; height: 34px; }.notification-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; border-radius: 50%; }.avatar-alt img { object-position: 60% 10%; transform: scaleX(-1); }.notification-avatar svg { position: absolute; right: -3px; top: -2px; width: 13px; height: 13px; fill: var(--color-success); color: var(--color-background); }
+.notification-copy { flex: 1; min-width: 0; }.notification-copy strong { display: block; font-size: 11px; font-weight: 600; white-space: nowrap; }.notification-copy span { display: block; margin-top: 4px; font-size: 10px; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hero-trusted { position: relative; z-index: 10; margin: -40px 5px 0; padding: 26px 8% 34px; border-radius: 100px 100px 0 0; background: var(--color-background); }
+.hero-trusted::before { content: ""; position: absolute; inset: 0; background: var(--color-background); z-index: -1; border-radius: inherit; }
+.hero-trusted > p { text-align: center; font-size: 12px; color: var(--color-text-secondary); margin: 0; }
+.hero-trusted-logos { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 22px; max-width: 1180px; margin: 20px auto 0; color: var(--color-text-primary); }
+.hero-trusted-logos > span { font-size: 17px; font-weight: 600; white-space: nowrap; }.hero-trusted-logos .trusted-google { font-size: 21px; }.trusted-paypal, .trusted-shopify { font-style: italic; }.trusted-gumroad { text-transform: uppercase; font-size: 14px !important; }.trusted-upwork { font-weight: 500 !important; }
+@media (min-width: 1500px) { .hero-copy { padding-top: 46px; } }
+@media (max-width: 1050px) { .hero-header { width: 86%; }.hero-copy h1 { font-size: 46px; }.hero-app-bubble { width: 49px; height: 49px; }.hero-app-icon { width: 26px; height: 26px; }.hero-trusted-logos { justify-content: center; } }
+@media (max-width: 700px) { .reference-hero { padding-top: 12px; }.hero-header { width: calc(100% - 28px); }.hero-nav { height: 58px; padding: 0 13px; }.hero-stage { height: max(600px, calc(100svh - 54px)); }.hero-copy { padding-top: 40px; }.hero-copy h1 { font-size: 38px; margin-top: 23px; }.hero-copy > p { padding: 0 35px; font-size: 13px; max-width: 400px; }.hero-trust-badge { font-size: 10px; gap: 10px; }.hero-actions { gap: 10px; }.hero-actions a { padding: 0 16px; font-size: 12px; }.hero-notifications { width: 340px; height: 218px; margin-top: 14px; }.notification-first { left: 30px; width: 280px; }.notification-second { left: 45px; width: 256px; }.notification-third { left: 55px; width: 233px; }.notification-copy strong { font-size: 10px; }.notification-copy span { font-size: 9px; }.hero-app-bubble { width: 36px; height: 36px; border-width: 2px; }.hero-app-icon { width: 20px; height: 20px; }.orbit-slack { left: 5%; top: 4%; }.orbit-zapier { right: 5%; top: 4%; }.orbit-asana { left: 2%; top: 29%; }.orbit-aws { right: 2%; top: 29%; }.orbit-meta, .orbit-flow, .orbit-mail, .orbit-click { display: none; }.orbit-drive { left: 4%; top: 76%; }.orbit-airtable { right: 4%; top: 76%; }.hero-orbit-outer { width: 130%; }.hero-orbit-middle { width: 105%; }.hero-orbit-inner { width: 83%; }.hero-trusted { padding: 24px 22px 30px; border-radius: 55px 55px 0 0; }.hero-trusted > p { font-size: 11px; }.hero-trusted-logos { gap: 18px 24px; }.hero-trusted-logos > span { font-size: 14px; }.hero-trusted-logos .trusted-google { font-size: 17px; } }

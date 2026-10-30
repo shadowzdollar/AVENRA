@@ -33,4 +33,5 @@ start web web-dev 35
 start ai ai-run 36
 
 echo "API http://localhost:8080 · Web http://localhost:3000 · AI http://127.0.0.1:8090 · Traces http://127.0.0.1:16686"
+echo "Email: nothing leaves this machine; every message (sign-up confirmations too) is in http://127.0.0.1:18025"
 wait

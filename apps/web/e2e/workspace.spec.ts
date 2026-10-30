@@ -14,8 +14,8 @@ test("the workspace shows the organization's real work across its pages", async 
   // The public page, signed out.
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /From intent\s+to\s+completed work\./ }).first()).toBeVisible();
-  await expect(page.getByTestId("landing-plan-Starter")).toContainText("30-day trial");
-  await expect(page.getByText("$")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Simple, transparent pricing" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Get started" }).first()).toHaveAttribute("href", "/sign-up");
 
   await signUpAndVerify(page, "Wanda Workspace", email);
   await page.goto("/sign-in");
@@ -80,10 +80,6 @@ test("the workspace shows the organization's real work across its pages", async 
   // Back on the overview, the work counts.
   await page.getByRole("link", { name: "Overview" }).click();
   await expect(page.getByTestId("overview-open")).toContainText("1");
-
-  // Signed in, the public page offers the way back in.
-  await page.goto("/");
-  await expect(page.getByRole("link", { name: "Open your workspace" }).first()).toBeVisible();
 
   // The one expected failure: the reminder refused as too soon (409).
   expect(problems.filter((problem) => !(problem.includes("409") && problem.includes("/reminders")))).toEqual([]);
