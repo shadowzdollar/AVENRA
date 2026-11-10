@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -41,20 +42,19 @@ function CryptographyHeroVisual() {
           </button>
         </div>
 
-        <div className="mt-3 rounded-lg bg-black/70 p-3 font-mono text-[11px] text-emerald-300 border border-white/5">
-          <div className="text-text-tertiary text-[10px] mb-1">
-            {encrypting ? "# Encrypted Ciphertext + Auth Tag" : "# Unencrypted Buffer (In-Memory Only)"}
-          </div>
-          {encrypting ? (
-            <div className="space-y-1 text-indigo-300 break-all text-[10px]">
-              <div><strong>Cipher:</strong> 8f2a99d0e14a8721c0...9182ba01</div>
-              <div><strong>IV (96-bit CSPRNG):</strong> c9182fa18012ba99</div>
-              <div className="text-emerald-400"><strong>Auth Tag (128-bit):</strong> 4e1a029ba821cd</div>
-              <div className="text-text-tertiary">KMS Key ID: arn:aws:kms:us-east-1:1234:key/avenra-prod</div>
+        <div className="mt-3 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+          <div className="relative h-28 w-full overflow-hidden bg-black/40">
+            <img src="/images/security/rls-enforcement.jpg"
+              alt="AES-256-GCM Envelope Encryption"
+              className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+            <div className="absolute top-2 right-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+              {encrypting ? "AUTHENTICATED CIPHERTEXT" : "CLEAN IN-MEMORY BUFFER"}
             </div>
-          ) : (
-            <div className="text-text-secondary whitespace-pre text-[11px]">{`{\n  "matter_id": "mat_2026_901a",\n  "client_name": "Apex Holdings",\n  "retained_earnings": 1420500.00\n}`}</div>
-          )}
+            <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+              Customer AWS KMS Key · AES-256-GCM (FIPS 140-3)
+            </div>
+          </div>
         </div>
       </div>
 

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -16,7 +17,7 @@ import {
 import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { VisualPartnerOrbit } from "@/components/enterprise/VisualPartnerOrbit";
-import { EnterpriseTerminalConsole } from "@/components/enterprise/EnterpriseTerminalConsole";
+import { EnterpriseSectionImage } from "@/components/enterprise/EnterpriseImageCard";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
 
 function IntegrationsHeroVisual() {
@@ -53,46 +54,27 @@ function IntegrationsHeroVisual() {
         ))}
       </div>
 
-      <div className="mt-4 rounded-xl border border-border/80 bg-black/70 p-4 font-mono text-xs text-amber-300">
-        {activeConnector === "storage" && (
-          <div className="space-y-1.5 text-[11px]">
-            <div className="text-text-tertiary"># S3 Protocol Dispatcher</div>
-            <div className="text-emerald-400">AWS S3 Vault: Presigned PUT enabled (us-east-1)</div>
-            <div className="text-emerald-400">Cloudflare R2: Zero-egress replica synced</div>
-            <div className="text-emerald-400">Evidence Package: SHA-256 Sealed Manifest</div>
-            <div className="text-text-tertiary">Current Throughput: 14.8 MB/s • Latency: 42ms</div>
+      <div className="mt-4 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+        <div className="relative h-28 w-full overflow-hidden bg-black/40">
+          <img src={
+              activeConnector === "storage"
+                ? "/images/integrations/storage.jpg"
+                : activeConnector === "automation"
+                ? "/images/integrations/webhook-bus.jpg"
+                : activeConnector === "email"
+                ? "/images/platform/reminders.jpg"
+                : "/images/integrations/openapi-sdk.jpg"
+            }
+            alt="Integration Connector Telemetry"
+            className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+          <div className="absolute top-2 right-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+            CONNECTED · 100% RELIABILITY
           </div>
-        )}
-
-        {activeConnector === "automation" && (
-          <div className="space-y-1.5 text-[11px]">
-            <div className="text-text-tertiary"># Webhook Hub Dispatcher</div>
-            <div className="text-emerald-400">Zapier: Event `work.verified` dispatched (200 OK)</div>
-            <div className="text-emerald-400">Make.com: Ingest scenario active (idemp_892a)</div>
-            <div className="text-emerald-400">HMAC Header: X-Avenra-Signature-SHA256 verified</div>
-            <div className="text-text-tertiary">Queue Depth: 0 pending • Delivery Rate: 100%</div>
+          <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+            Active Subsystem: {activeConnector.toUpperCase()} Dispatcher
           </div>
-        )}
-
-        {activeConnector === "email" && (
-          <div className="space-y-1.5 text-[11px]">
-            <div className="text-text-tertiary"># Inbound & Outbound Mail Engine</div>
-            <div className="text-emerald-400">SPF / DKIM / DMARC: Strict pass required</div>
-            <div className="text-emerald-400">SES / Mailpit: Client magic link delivered (0.8s)</div>
-            <div className="text-emerald-400">Spam / ClamAV: 0 suspicious MIME parts detected</div>
-            <div className="text-text-tertiary">Bounce Rate: 0.02% • Deliverability: 99.8%</div>
-          </div>
-        )}
-
-        {activeConnector === "api" && (
-          <div className="space-y-1.5 text-[11px]">
-            <div className="text-text-tertiary"># OpenAPI v1 Gateway</div>
-            <div className="text-emerald-400">Contract: packages/contracts/openapi.yaml</div>
-            <div className="text-emerald-400">SDKs: TypeScript / Python / Java auto-generated</div>
-            <div className="text-emerald-400">Rate Limiter: 10,000 req/min per tenant</div>
-            <div className="text-text-tertiary">Average Response Time: 18ms</div>
-          </div>
-        )}
+        </div>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-[11px] text-text-tertiary pt-2 border-t border-border/40">
@@ -254,9 +236,21 @@ export default function IntegrationsHubPage() {
           </div>
         </div>
 
-        {/* Embedded Interactive Terminal Console */}
+        {/* Enterprise Integration Ecosystem Visual */}
         <div>
-          <EnterpriseTerminalConsole />
+          <EnterpriseSectionImage
+            src="/images/integrations/ecosystem.jpg"
+            alt="Connected Enterprise Integration Ecosystem"
+            badge="Unified Ecosystem"
+            title="Sovereign Enterprise Integration Ecosystem"
+            description="Seamlessly bridge client onboarding, document intake, and sealed compliance packaging into your existing tech stack with zero vendor lock-in."
+            bullets={[
+              "Native connectors for AWS S3, Cloudflare R2, Azure Blob, and SeaweedFS",
+              "Bi-directional webhook synchronization with Zapier, Slack, and practice management tools",
+              "Type-safe OpenAPI 3.1 code-generated SDKs in TypeScript, Python, and Java",
+              "High-reliability delivery queues with automatic retry schedules across 72 hours",
+            ]}
+          />
         </div>
 
         {/* Technical FAQ */}

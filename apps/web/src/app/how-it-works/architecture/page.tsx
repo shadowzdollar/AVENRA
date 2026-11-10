@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -100,22 +101,51 @@ function ArchitectureHeroVisual() {
         )}
 
         {activeTab === "verification" && (
-          <pre className="overflow-x-auto text-[11px] leading-relaxed text-indigo-200">{`[INFO] Spring Modulith Analysis:
-Modules discovered: 6
-Circular dependencies: 0
-Cross-domain direct SQL joins: 0
-Package-private encapsulation: 94.2%
-Async Event publication: @ApplicationModuleListener
-Result: BUILD SUCCESS (0 violations)`}</pre>
+          <div className="space-y-3">
+            <div className="relative h-28 w-full overflow-hidden rounded-lg">
+              <img src="/images/how-it-works/spring-modulith.jpg"
+                alt="Spring Modulith Analysis"
+                className="h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+              <div className="absolute bottom-2 left-2 text-[10px] font-bold text-white uppercase tracking-wider">
+                Spring Modulith 1.3 · Compile-Time Boundary Proof
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              <div className="bg-canvas-subtle p-2 rounded-lg border border-border">
+                <span className="text-text-tertiary block text-[10px]">Domain Modules</span>
+                <span className="font-bold text-emerald-400">6 Discovered</span>
+              </div>
+              <div className="bg-canvas-subtle p-2 rounded-lg border border-border">
+                <span className="text-text-tertiary block text-[10px]">Circular Dependencies</span>
+                <span className="font-bold text-emerald-400">0 Invariant Pass</span>
+              </div>
+            </div>
+          </div>
         )}
 
         {activeTab === "isolation" && (
-          <pre className="overflow-x-auto text-[11px] leading-relaxed text-amber-200">{`-- ADR-005 Kernel Enforcement
-SET LOCAL app.current_tenant_id = 'tenant_789a';
--- Discard any client-supplied header:
-X-Tenant-Id: <IGNORED_BY_DESIGN>
--- Postgres kernel executes with RLS:
-SELECT * FROM work_items; -- returns 4 rows matching tenant_789a`}</pre>
+          <div className="space-y-3">
+            <div className="relative h-28 w-full overflow-hidden rounded-lg">
+              <img src="/images/how-it-works/kernel-rls.jpg"
+                alt="PostgreSQL Kernel Tenant Isolation"
+                className="h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+              <div className="absolute bottom-2 left-2 text-[10px] font-bold text-white uppercase tracking-wider">
+                PostgreSQL 18 Kernel RLS Enforced
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              <div className="bg-canvas-subtle p-2 rounded-lg border border-border">
+                <span className="text-text-tertiary block text-[10px]">Client Headers</span>
+                <span className="font-bold text-amber-400">Stripped by Reverse Proxy</span>
+              </div>
+              <div className="bg-canvas-subtle p-2 rounded-lg border border-border">
+                <span className="text-text-tertiary block text-[10px]">Session Context</span>
+                <span className="font-bold text-emerald-400">SET LOCAL Verified</span>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 

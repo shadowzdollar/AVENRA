@@ -9,6 +9,7 @@ import {
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
 import { VisualDocumentScannerMockup } from "@/components/enterprise/VisualDocumentScannerMockup";
+import { EnterpriseSectionImage } from "@/components/enterprise/EnterpriseImageCard";
 
 const AI_DOC_FAQS = [
   {
@@ -122,47 +123,21 @@ export default function DocumentIntelligencePage() {
           </div>
         </div>
 
-        {/* Python Pydantic Model Code */}
-        <div className="rounded-3xl border border-border bg-[#0d1117] p-8 md:p-12 text-[#c9d1d9] font-mono text-xs">
-          <div className="flex flex-wrap items-center justify-between border-b border-[#30363d] pb-4 mb-6">
-            <div>
-              <span className="text-cyan-400 font-bold uppercase text-[10px] tracking-wider block">
-                Python 3.14 Engine Model
-              </span>
-              <h3 className="text-lg font-bold text-white mt-1 font-sans">
-                Typed Extraction Contract: Tax Identification & Corporate Resolution
-              </h3>
-            </div>
-            <span className="rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-3 py-1 text-[11px] font-bold">
-              PYDANTIC V2 STRICT
-            </span>
-          </div>
-
-          <pre className="overflow-x-auto text-[11px] leading-relaxed text-[#79c0ff]">
-{`from pydantic import BaseModel, Field, field_validator
-from datetime import date
-from typing import List, Optional
-
-class CorporateOfficer(BaseModel):
-    name: str = Field(..., description="Full legal name of corporate officer")
-    title: str = Field(..., description="Title (e.g. Chief Executive Officer, Managing Partner)")
-    signature_present: bool = Field(..., description="Whether a wet or digital signature was detected")
-
-class TaxResolutionExtraction(BaseModel):
-    entity_name: str = Field(..., min_length=2)
-    employer_identification_number: str = Field(..., regex=r"^\\d{2}-\\d{7}$")
-    incorporation_jurisdiction: str
-    effective_date: date
-    signatories: List[CorporateOfficer]
-    confidence_score: float = Field(..., ge=0.0, le=1.0)
-
-    @field_validator("effective_date")
-    @classmethod
-    def validate_not_future(cls, v: date) -> date:
-        if v > date.today():
-            raise ValueError("Document effective date cannot be in the future")
-        return v`}
-          </pre>
+        {/* Python Pydantic Model Visual */}
+        <div className="mt-8">
+          <EnterpriseSectionImage
+            src="/images/platform/document-intelligence.jpg"
+            alt="Air-Gapped Document Intelligence & Typed Extraction"
+            badge="Typed AI Extraction"
+            title="Air-Gapped Document Intelligence & Typed Extraction"
+            description="Unstructured legal PDFs, tax documents, and financial schedules are ingested through PyMuPDF and parsed strictly into verified, deterministic schemas without model hallucinations."
+            bullets={[
+              "Air-gapped OCR and parsing with zero retention or training on third-party models",
+              "Pydantic v2 schemas reject malformed dates, mismatched EIN formats, or missing signatures",
+              "Confidence scoring triggers human partner review whenever ambiguities arise",
+              "Verified extractions feed directly into the deterministic verification rules engine",
+            ]}
+          />
         </div>
 
         {/* AI FAQs */}

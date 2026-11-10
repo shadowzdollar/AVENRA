@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -8,7 +9,6 @@ import {
   Zap,
   CheckCircle2,
   ArrowRight,
-  Code2,
   RefreshCw,
   FileText,
   Key,
@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseSectionImage } from "@/components/enterprise/EnterpriseImageCard";
 
 function IntentCaptureHeroVisual() {
   const [source, setSource] = useState<"email" | "webhook" | "form">("webhook");
@@ -88,9 +89,16 @@ function IntentCaptureHeroVisual() {
         ))}
       </div>
 
-      <div className="mt-4 rounded-xl border border-border/70 bg-black/70 p-3.5 font-mono text-[11px] text-indigo-200">
-        <div className="text-[10px] text-text-tertiary mb-1"># Inbound Raw Protocol ({curr.channel})</div>
-        <pre className="overflow-x-auto whitespace-pre font-mono">{curr.raw}</pre>
+      <div className="mt-4 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+        <div className="relative h-28 w-full overflow-hidden bg-black/40">
+          <img src="/images/how-it-works/intent-extraction.jpg"
+            alt="Inbound Raw Protocol Ingestion"
+            className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+          <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+            Inbound Channel: {curr.channel}
+          </div>
+        </div>
       </div>
 
       <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
@@ -244,44 +252,21 @@ export default function IntentCapturePage() {
           </div>
         </div>
 
-        {/* OpenAPI v1 Endpoint Specification */}
-        <div className="rounded-3xl border border-border bg-canvas p-8 md:p-12">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
-              <Code2 className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-text-primary">OpenAPI v1 Ingestion Contract</h3>
-              <p className="text-xs text-text-secondary">POST /api/v1/work/ingest</p>
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-2xl bg-black/70 p-6 font-mono text-xs text-indigo-300 border border-white/5 overflow-x-auto">
-            <pre>{`curl -X POST https://api.avenra.yourfirm.com/api/v1/work/ingest \\
-  -H "Authorization: Bearer sec_tok_live_99218a" \\
-  -H "Idempotency-Key: idemp_matter_2026_q3_01" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "client_id": "cli_992819",
-    "template_id": "tmpl_corporate_tax_prep_v2",
-    "title": "2026 Q3 Statutory Audit Binder",
-    "priority": "HIGH",
-    "due_date": "2026-11-30T17:00:00Z",
-    "custom_fields": {
-      "partner_in_charge": "u_81920a",
-      "billing_code": "MAT-901-NYC"
-    }
-  }'
-
-# Response: 201 Created
-{
-  "work_id": "wrk_01HZX8934A",
-  "status": "DRAFT",
-  "requirements_count": 4,
-  "client_portal_url": "https://portal.avenra.yourfirm.com/c/sec_mag_99182a",
-  "created_at": "2026-11-09T17:20:00.104Z"
-}`}</pre>
-          </div>
+        {/* OpenAPI v1 Ingestion Contract Visual */}
+        <div>
+          <EnterpriseSectionImage
+            src="/images/how-it-works/ingestion-gateway.jpg"
+            alt="OpenAPI v1 Ingestion Contract and Gateway"
+            badge="OpenAPI v1 Contract"
+            title="Type-Safe Work Ingestion Gateway"
+            description="Programmatically dispatch engagement requirements from CRM, ERP, and legal practice systems with automatic idempotency protection and magic portal generation."
+            bullets={[
+              "Idempotency keys prevent duplicate deliverable creation during network retries",
+              "Automatic generation of branded, passwordless client upload magic portals",
+              "Template-driven requirement checklists enforce complete file and data gathering",
+              "Immediate synchronous validation of request payloads against OpenAPI 3.1 specs",
+            ]}
+          />
         </div>
 
         {/* Technical FAQ */}

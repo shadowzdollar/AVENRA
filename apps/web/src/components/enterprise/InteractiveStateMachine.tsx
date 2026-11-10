@@ -1,8 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import {
   CheckCircle2,
-  Code2,
   Lock,
   ShieldCheck,
   Workflow,
@@ -272,38 +272,39 @@ export function InteractiveStateMachine() {
           </div>
         </div>
 
-        {/* Right: Real Code & Audit Ledger Stream */}
-        <div className="md:col-span-5 space-y-6">
-          {/* Audit Event JSON */}
-          <div className="rounded-2xl border border-border bg-background p-5 font-mono text-xs">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Lock className="size-3.5 text-success" />
-                <span className="text-[11px] font-bold text-text-primary uppercase tracking-wider">
-                  Append-Only Audit Record
-                </span>
+        {/* Right: Visual State & Audit Inspector */}
+        <div className="md:col-span-5 space-y-4">
+          <div className="overflow-hidden rounded-2xl border border-border bg-canvas shadow-xl">
+            <div className="relative h-44 w-full overflow-hidden bg-black/50">
+              <img src="/images/how-it-works/state-machines.jpg"
+                alt="State Machine Transition Matrix"
+                className="h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+              <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-emerald-500/90 px-2.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider shadow">
+                <Lock className="size-3" /> Append-Only Ledger
               </div>
-              <span className="text-[9px] text-text-secondary">IMMUTABLE</span>
+              <div className="absolute bottom-3 left-3 right-3 text-white">
+                <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">
+                  Validated State
+                </span>
+                <p className="text-sm font-bold truncate">{current.name}</p>
+              </div>
             </div>
-            <pre className="rounded-xl bg-canvas p-3.5 text-[11px] text-text-primary overflow-x-auto leading-relaxed border border-border/50">
-              {JSON.stringify(current.auditPayload, null, 2)}
-            </pre>
-          </div>
 
-          {/* SDK snippet */}
-          <div className="rounded-2xl border border-border bg-background p-5 font-mono text-xs">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Code2 className="size-3.5 text-brand" />
-                <span className="text-[11px] font-bold text-text-primary uppercase tracking-wider">
-                  TypeScript Contract Client
-                </span>
+            <div className="p-4 space-y-3">
+              <div className="flex items-center justify-between text-xs border-b border-border pb-2">
+                <span className="text-text-tertiary">PostgreSQL Event</span>
+                <span className="font-semibold text-text-primary">{current.dbEvent}</span>
               </div>
-              <span className="text-[9px] text-brand">OPENAPI V1</span>
+              <div className="flex items-center justify-between text-xs border-b border-border pb-2">
+                <span className="text-text-tertiary">Transition Integrity</span>
+                <span className="font-semibold text-emerald-500">Physical Invariant Passed</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-text-tertiary">Client Contract</span>
+                <span className="font-semibold text-brand">OpenAPI v1 Typed</span>
+              </div>
             </div>
-            <pre className="rounded-xl bg-canvas p-3.5 text-[11px] text-text-secondary overflow-x-auto leading-relaxed border border-border/50">
-              {current.codeSnippet}
-            </pre>
           </div>
         </div>
       </div>

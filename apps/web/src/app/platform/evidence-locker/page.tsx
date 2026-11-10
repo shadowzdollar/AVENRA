@@ -9,6 +9,7 @@ import {
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { InteractiveEvidenceInspector } from "@/components/enterprise/InteractiveEvidenceInspector";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard, EnterpriseSectionImage } from "@/components/enterprise/EnterpriseImageCard";
 
 const EVIDENCE_FAQS = [
   {
@@ -33,25 +34,19 @@ const EVIDENCE_FAQS = [
 
 export function EvidenceLockerHeroVisual() {
   return (
-    <div className="rounded-2xl border border-cyan-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Sealed Evidence Package</span>
-        <span className="text-cyan-400 font-bold">SHA-256 SEALED</span>
-      </div>
-      <div className="mt-3 space-y-1.5 text-[11px]">
-        <div className="text-cyan-400">├── manifest.json (SHA-256 Root)</div>
-        <div className="text-[#7ee787]">├── audit-summary.html (Zero Network)</div>
-        <div className="text-[#7ee787]">├── checks-log.json (Verification Trace)</div>
-        <div className="text-[#7ee787]">└── documents/</div>
-        <div className="text-[#79c0ff] pl-4">├── signed_engagement_letter.pdf</div>
-        <div className="text-[#79c0ff] pl-4">├── corporate_resolution.pdf</div>
-        <div className="text-[#79c0ff] pl-4">└── shareholders_cap_table.xlsx</div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>Sovereign AWS S3 Custody</span>
-        <span className="text-cyan-400 font-bold">100% Offline Verifiable</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/platform/evidence-locker.jpg"
+      alt="Avenra Sealed Evidence Package"
+      title="Sealed Evidence Package"
+      subtitle="Cryptographically sealed deliverable package with standalone offline viewer"
+      badge="SHA-256 SEALED"
+      badgeVariant="cyan"
+      highlights={[
+        { label: "Manifest Root", value: "SHA-256 Digest" },
+        { label: "Storage Custody", value: "Sovereign S3" },
+        { label: "Verification", value: "100% Offline" },
+      ]}
+    />
   );
 }
 
@@ -130,21 +125,20 @@ export default function EvidenceLockerPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-border bg-[#0d1117] p-6 text-[#c9d1d9] font-mono text-xs overflow-x-auto">
-            <span className="text-[#8b949e]">{"// 1. Download Evidence Pack directly from your private AWS S3 bucket"}</span>
-            <div className="text-cyan-400 mt-1">aws s3 cp s3://firm-vault/evidence/wrk_01HZX892KLA.zip ./</div>
-
-            <span className="text-[#8b949e] block mt-4">{"// 2. Verify package root checksum against the original signed completion notice"}</span>
-            <div className="text-cyan-400 mt-1">sha256sum wrk_01HZX892KLA.zip</div>
-            <div className="text-[#7ee787]">8f4e2b10a9c3d4e5f6a7b8c9d0e1f2a34b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e  wrk_01HZX892KLA.zip</div>
-
-            <span className="text-[#8b949e] block mt-4">{"// 3. Unpack and verify all embedded document hashes against manifest.json"}</span>
-            <div className="text-cyan-400 mt-1">unzip wrk_01HZX892KLA.zip && cd wrk_01HZX892KLA/</div>
-            <div className="text-cyan-400">sha256sum -c manifest.json</div>
-            <div className="text-[#7ee787]">documents/engagement_letter.pdf: OK</div>
-            <div className="text-[#7ee787]">documents/shareholders_cap_table.xlsx: OK</div>
-            <div className="text-[#7ee787]">checks-log.json: OK</div>
-            <div className="text-[#7ee787]">audit-summary.html: OK</div>
+          <div className="mt-8">
+            <EnterpriseSectionImage
+              src="/images/platform/evidence-s3.jpg"
+              alt="Sovereign S3 Custody and Offline Verification"
+              badge="Sovereign Custody"
+              title="Direct S3 Storage Custody & Offline Verification"
+              description="When a government regulator, financial auditor, or corporate acquirer conducts due diligence on a completed deliverable, they do not need to trust Avenra servers. They verify proof on an air-gapped machine directly from your private S3 bucket using standard cryptographic utilities."
+              bullets={[
+                "Institutional private AWS S3 / SeaweedFS storage guarantees complete custody",
+                "Root ZIP checksum matches signed completion notice byte-for-byte",
+                "Individual document SHA-256 hashes verified deterministically against manifest.json",
+                "Zero vendor lock-in with standalone air-gapped HTML audit viewer included",
+              ]}
+            />
           </div>
         </div>
 

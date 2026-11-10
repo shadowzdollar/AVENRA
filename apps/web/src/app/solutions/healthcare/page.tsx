@@ -9,6 +9,7 @@ import {
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseCaseStudy } from "@/components/enterprise/EnterpriseCaseStudy";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard } from "@/components/enterprise/EnterpriseImageCard";
 
 const HEALTHCARE_FAQS = [
   {
@@ -33,23 +34,19 @@ const HEALTHCARE_FAQS = [
 
 export function HealthcareHeroVisual() {
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Clinician Credentialing Dossier</span>
-        <span className="text-emerald-400 font-bold">ISOLATED_DATA</span>
-      </div>
-      <div className="mt-3 space-y-1.5 text-[11px]">
-        <div className="text-emerald-400">Clinician: Dr. Alistair Finch, MD (wrk_med_0129)</div>
-        <div className="text-[#7ee787]">✓ State Medical Board License Verified (Valid thru 2028)</div>
-        <div className="text-[#7ee787]">✓ DEA Controlled Substance Registration Validated</div>
-        <div className="text-[#7ee787]">✓ Malpractice Certificate of Insurance ($3M/$5M Verified)</div>
-        <div className="text-cyan-400">✓ Sealed Credentialing Pack: evd_med_finch.zip (SHA-256)</div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>Sovereign S3 PHI Isolation</span>
-        <span className="text-emerald-400 font-bold">Zero Data Leakage</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/solutions/healthcare.jpg"
+      alt="Clinician Credentialing and Healthcare Technical Safeguards"
+      title="Clinician Credentialing Dossier"
+      subtitle="Medical board license validation, DEA registration checks, and sovereign S3 PHI isolation"
+      badge="ISOLATED DATA"
+      badgeVariant="success"
+      highlights={[
+        { label: "License Status", value: "Verified Active" },
+        { label: "PHI Protection", value: "Sovereign S3" },
+        { label: "Data Leakage", value: "0 Invariant" },
+      ]}
+    />
   );
 }
 

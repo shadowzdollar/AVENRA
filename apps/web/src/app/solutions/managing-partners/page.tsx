@@ -10,6 +10,7 @@ import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { InteractiveRoiCalculator } from "@/components/enterprise/InteractiveRoiCalculator";
 import { EnterpriseCaseStudy } from "@/components/enterprise/EnterpriseCaseStudy";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard } from "@/components/enterprise/EnterpriseImageCard";
 
 const PARTNER_FAQS = [
   {
@@ -34,34 +35,19 @@ const PARTNER_FAQS = [
 
 export function ManagingPartnersHeroVisual() {
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Partner Profitability & Leverage</span>
-        <span className="text-emerald-400 font-bold">REVENUE_EXPANSION</span>
-      </div>
-      <div className="mt-3 space-y-2 text-[11px]">
-        <div className="flex items-center justify-between">
-          <span className="text-emerald-400">Average Realization Rate</span>
-          <span className="text-white font-bold">94.2% (was 81.6%)</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-emerald-400">Partner Matter Capacity</span>
-          <span className="text-success font-bold">2.4x Active Engagements</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-emerald-400">Days Sales Outstanding (DSO)</span>
-          <span className="text-white font-bold">22 Days (down from 58)</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-emerald-400">Annual Recovered Billable Time</span>
-          <span className="text-emerald-400 font-bold">$780,000 / Practice Group</span>
-        </div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>Zero Malpractice Deficiencies</span>
-        <span className="text-emerald-400 font-bold">Partner Equity Protected</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/solutions/managing-partners.jpg"
+      alt="Partner Profitability, Governance and Risk Cockpit"
+      title="Partner Profitability & Leverage"
+      subtitle="Executive matter capacity, higher realization rates, and firm-wide partner equity protection"
+      badge="REVENUE EXPANSION"
+      badgeVariant="success"
+      highlights={[
+        { label: "Realization Rate", value: "94.2% Firm Average" },
+        { label: "Partner Capacity", value: "2.4x Active Matters" },
+        { label: "DSO Turnaround", value: "22 Days" },
+      ]}
+    />
   );
 }
 

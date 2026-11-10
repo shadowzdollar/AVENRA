@@ -15,6 +15,7 @@ import { VisualMagicPortalMockup } from "@/components/enterprise/VisualMagicPort
 import { VisualWorkflowSimulator } from "@/components/enterprise/VisualWorkflowSimulator";
 import { EnterpriseCaseStudy } from "@/components/enterprise/EnterpriseCaseStudy";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard } from "@/components/enterprise/EnterpriseImageCard";
 
 const SOLUTIONS_FAQS = [
   {
@@ -39,34 +40,19 @@ const SOLUTIONS_FAQS = [
 
 export function SolutionsHeroVisual() {
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Enterprise Practice Telemetry</span>
-        <span className="text-emerald-400 font-bold">VERIFIED_OUTCOMES</span>
-      </div>
-      <div className="mt-3 space-y-2 text-[11px]">
-        <div className="flex items-center justify-between">
-          <span className="text-emerald-400">Average Client Turnaround</span>
-          <span className="text-white font-bold">4.2 Hours (was 9 Days)</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-emerald-400">Missing File Deficiencies</span>
-          <span className="text-success font-bold">0.0% (Zero Audit Skips)</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-emerald-400">Billable Realization Rate</span>
-          <span className="text-white font-bold">+18.4% Net Increase</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-emerald-400">Annual Administrative Savings</span>
-          <span className="text-emerald-400 font-bold">$342,000 / 25 Operators</span>
-        </div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>Active Across 420+ Professional Matters</span>
-        <span className="text-emerald-400 font-bold">100% Audit Ready</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/solutions/solutions-matrix.jpg"
+      alt="Enterprise Practice Telemetry and Solutions Matrix"
+      title="Enterprise Practice Telemetry"
+      subtitle="Multi-practice workflow automation, missing file deficiency prevention, and billable realization"
+      badge="VERIFIED OUTCOMES"
+      badgeVariant="success"
+      highlights={[
+        { label: "Client Turnaround", value: "4.2 Hours" },
+        { label: "Missing Deficiencies", value: "0 Invariant" },
+        { label: "Realization Increase", value: "+18.4% Net" },
+      ]}
+    />
   );
 }
 

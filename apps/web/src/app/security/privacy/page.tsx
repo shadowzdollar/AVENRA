@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -90,11 +91,19 @@ function PrivacyHeroVisual() {
         </div>
       </div>
 
-      <div className="mt-3 rounded-lg bg-black/70 p-3 font-mono text-[11px] text-emerald-300 border border-white/5 space-y-1">
-        <div className="text-text-tertiary text-[10px]"># Contractual Privacy Guarantees</div>
-        <div>Customer Data Used For AI Training: <strong className="text-red-400">NEVER (0%)</strong></div>
-        <div>Customer Document Persistence on Avenra: <strong className="text-red-400">0 BYTES</strong></div>
-        <div>Cloud S3 Bucket Ownership: <strong className="text-emerald-400">CUSTOMER-OWNED</strong></div>
+      <div className="mt-3 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+        <div className="relative h-28 w-full overflow-hidden bg-black/40">
+          <img src="/images/security/tenant-isolation.jpg"
+            alt="Customer Data Sovereignty and Privacy"
+            className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+          <div className="absolute top-2 right-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+            100% DATA SOVEREIGNTY
+          </div>
+          <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+            Customer-Owned Bucket: 0 Bytes Stored on Avenra
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-[11px] text-text-tertiary pt-2 border-t border-border/40">

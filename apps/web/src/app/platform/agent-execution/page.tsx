@@ -10,6 +10,7 @@ import {
   } from "lucide-react";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard, EnterpriseSectionImage } from "@/components/enterprise/EnterpriseImageCard";
 
 const AGENT_FAQS = [
   {
@@ -34,24 +35,19 @@ const AGENT_FAQS = [
 
 export function AgentHeroVisual() {
   return (
-    <div className="rounded-2xl border border-cyan-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Sandboxed Agent Runtime</span>
-        <span className="text-warning font-bold">AWAITING_HUMAN_APPROVAL</span>
-      </div>
-      <div className="mt-3 space-y-1.5 text-[11px]">
-        <div className="text-[#8b949e]">{"// Autonomous Step Sequence"}</div>
-        <div className="text-cyan-400">Step 1: Parse Client Articles of Incorporation ✓</div>
-        <div className="text-cyan-400">Step 2: Cross-reference Delaware Sec. of State ✓</div>
-        <div className="text-cyan-400">Step 3: Extract 12 Beneficial Owners & Entities ✓</div>
-        <div className="text-[#d2a8ff]">Step 4: Generate Proposed KYC Verification Summary</div>
-        <div className="text-[#ff7b72] font-bold">→ Boundary Reached: Side-Effect Requires Human Approval</div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-success flex justify-between">
-        <span>Operator Assigned: Managing Partner</span>
-        <span>Zero Unsupervised Writes</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/platform/agent-execution.jpg"
+      alt="Sandboxed Autonomous Agent Execution"
+      title="Sandboxed Agent Runtime"
+      subtitle="Deterministic multi-step agent actions gated by human-in-the-loop approvals"
+      badge="AWAITING HUMAN APPROVAL"
+      badgeVariant="warning"
+      highlights={[
+        { label: "Runtime Sandbox", value: "Strict Isolation" },
+        { label: "Approval Gateway", value: "Human Partner" },
+        { label: "Unsupervised Writes", value: "Zero Permitted" },
+      ]}
+    />
   );
 }
 
@@ -165,51 +161,21 @@ export default function AgentExecutionPage() {
           </div>
         </div>
 
-        {/* Live Agent Trace JSON */}
-        <div className="rounded-3xl border border-border bg-[#0d1117] p-8 md:p-12 text-[#c9d1d9] font-mono text-xs">
-          <div className="flex flex-wrap items-center justify-between border-b border-[#30363d] pb-4 mb-6">
-            <div>
-              <span className="text-cyan-400 font-bold uppercase text-[10px] tracking-wider block">
-                Agent Execution Ledger
-              </span>
-              <h3 className="text-lg font-bold text-white mt-1 font-sans">
-                Sample Execution Trace Recorded in Audit Pack
-              </h3>
-            </div>
-            <span className="rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-3 py-1 text-[11px] font-bold">
-              AGENT RUN #run_01HZX893
-            </span>
-          </div>
-
-          <pre className="overflow-x-auto text-[11px] leading-relaxed text-[#79c0ff]">
-{`{
-  "runId": "run_01HZX893",
-  "workId": "wrk_01HZX892KLA",
-  "agentType": "KYC_CORPORATE_ANALYST",
-  "startedAt": "2026-11-09T17:15:02.100Z",
-  "completedAt": "2026-11-09T17:15:05.420Z",
-  "durationMs": 3320,
-  "stepsExecuted": 3,
-  "tokensConsumed": 1420,
-  "circuitBreakers": { "maxSteps": 10, "timeoutSec": 60, "status": "WITHIN_LIMITS" },
-  "actionBatch": [
-    {
-      "step": 1,
-      "tool": "ocr.extract_table",
-      "args": { "file": "cap_table.xlsx", "sheet": "Shareholders" },
-      "outputSummary": "Extracted 42 shareholders representing 100% equity."
-    },
-    {
-      "step": 2,
-      "tool": "registry.verify_standing",
-      "args": { "jurisdiction": "DE", "fileNumber": "890123" },
-      "outputSummary": "Confirmed: Active Good Standing as of 2026-11-09."
-    }
-  ],
-  "status": "AWAITING_HUMAN_APPROVAL",
-  "assignedApprover": "usr_sarah_jenkins_jd"
-}`}
-          </pre>
+        {/* Live Agent Trace Visual */}
+        <div className="mt-8">
+          <EnterpriseSectionImage
+            src="/images/platform/agent-trace.jpg"
+            alt="Agent Execution Ledger and Circuit Breakers"
+            badge="Agent Execution Ledger"
+            title="Complete Execution Trace & Circuit Breakers"
+            description="Every agent run records its exact token consumption, execution timeline, tool invocations, and approval boundaries into an unalterable audit ledger."
+            bullets={[
+              "Hard circuit breakers enforce max steps and runtime timeouts via Redis token buckets",
+              "Side-effect actions pause automatically at the human-in-the-loop gateway",
+              "Full cryptographic provenance linked into the final sealed deliverable pack",
+              "Partner approval required before any status advancement or external notification",
+            ]}
+          />
         </div>
 
         {/* Agent FAQs */}

@@ -10,6 +10,7 @@ import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseSecurityAuditViewer } from "@/components/enterprise/EnterpriseSecurityAuditViewer";
 import { EnterpriseCaseStudy } from "@/components/enterprise/EnterpriseCaseStudy";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard } from "@/components/enterprise/EnterpriseImageCard";
 
 const SECURITY_LEADER_FAQS = [
   {
@@ -34,23 +35,19 @@ const SECURITY_LEADER_FAQS = [
 
 export function SecurityLeadersHeroVisual() {
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Zero-Trust Infrastructure Perimeter</span>
-        <span className="text-emerald-400 font-bold">RLS_ENFORCED</span>
-      </div>
-      <div className="mt-3 space-y-1.5 text-[11px]">
-        <div className="text-emerald-400">Database Kernel: PostgreSQL 18 RLS Policies Active</div>
-        <div className="text-[#7ee787]">✓ Client Tenant Headers Stripped at Reverse Proxy (ADR-005)</div>
-        <div className="text-[#7ee787]">✓ Customer-Managed AWS KMS Envelope Encryption (AES-256-GCM)</div>
-        <div className="text-[#7ee787]">✓ ClamAV Zero-Disk In-Memory Upload Stream Antivirus</div>
-        <div className="text-cyan-400">✓ Air-Gapped Python AI Container: Zero Data Retention</div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>Audit-Ready Controls Enforced</span>
-        <span className="text-emerald-400 font-bold">Zero Cross-Tenant Risk</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/solutions/security-leaders.jpg"
+      alt="Zero-Trust Infrastructure Perimeter and Key Custody"
+      title="Zero-Trust Infrastructure Perimeter"
+      subtitle="Kernel-level PostgreSQL tenant isolation, KMS envelope encryption, and stream antivirus defense"
+      badge="RLS ENFORCED"
+      badgeVariant="success"
+      highlights={[
+        { label: "Database Isolation", value: "PostgreSQL 18 RLS" },
+        { label: "Envelope Encryption", value: "AES-256-GCM KMS" },
+        { label: "Cross-Tenant Risk", value: "0 Invariant" },
+      ]}
+    />
   );
 }
 

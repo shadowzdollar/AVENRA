@@ -9,6 +9,7 @@ import {
   } from "lucide-react";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard, EnterpriseSectionImage } from "@/components/enterprise/EnterpriseImageCard";
 
 const VERIFICATION_FAQS = [
   {
@@ -33,38 +34,19 @@ const VERIFICATION_FAQS = [
 
 export function VerificationHeroVisual() {
   return (
-    <div className="rounded-2xl border border-cyan-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Deterministic Rule Evaluation</span>
-        <span className="text-success font-bold">ALL_RULES_PASSED</span>
-      </div>
-      <div className="mt-3 space-y-2 text-[11px]">
-        <div className="flex items-center justify-between">
-          <span className="text-cyan-400">chk_tin_ein_format</span>
-          <span className="text-success font-bold">✓ PASSED (0.4ms)</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-cyan-400">chk_cap_table_sum_100</span>
-          <span className="text-success font-bold">✓ PASSED (1.2ms)</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-cyan-400">chk_id_freshness_90d</span>
-          <span className="text-success font-bold">✓ PASSED (0.8ms)</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-cyan-400">chk_clamav_antivirus</span>
-          <span className="text-success font-bold">✓ PASSED (14ms)</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-cyan-400">chk_signatory_resolution</span>
-          <span className="text-success font-bold">✓ PASSED (3.1ms)</span>
-        </div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>Evaluated in Single Transaction</span>
-        <span className="text-cyan-400 font-bold">0 Exceptions</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/platform/verification-engine.jpg"
+      alt="Avenra Verification Engine Rule Evaluator"
+      title="Deterministic Rule Evaluation"
+      subtitle="Sub-millisecond verification rules evaluated with zero hallucinations"
+      badge="ALL RULES PASSED"
+      badgeVariant="success"
+      highlights={[
+        { label: "Execution Mode", value: "Deterministic" },
+        { label: "Malware Scan", value: "ClamAV 1.5.4" },
+        { label: "Audit Trace", value: "Tamper-Evident" },
+      ]}
+    />
   );
 }
 
@@ -193,57 +175,21 @@ export default function VerificationEnginePage() {
           </div>
         </div>
 
-        {/* Verification JSON Trace Walkthrough */}
-        <div className="rounded-3xl border border-border bg-[#0d1117] p-8 md:p-12 text-[#c9d1d9] font-mono text-xs">
-          <div className="flex flex-wrap items-center justify-between border-b border-[#30363d] pb-4 mb-6">
-            <div>
-              <span className="text-cyan-400 font-bold uppercase text-[10px] tracking-wider block">
-                Evidence Ledger Subsystem
-              </span>
-              <h3 className="text-lg font-bold text-white mt-1 font-sans">
-                Sample checks-log.json Generated in Sealed Evidence Package
-              </h3>
-            </div>
-            <span className="rounded-full bg-success/20 text-success border border-success/30 px-3 py-1 text-[11px] font-bold">
-              TAMPER EVIDENT AUDIT TRACE
-            </span>
-          </div>
-
-          <pre className="overflow-x-auto text-[11px] leading-relaxed text-[#79c0ff]">
-{`{
-  "workId": "wrk_01HZX892KLA",
-  "evaluatedAt": "2026-11-09T17:15:08.520Z",
-  "overallOutcome": "PASSED",
-  "totalDurationMs": 142,
-  "checks": [
-    {
-      "checkId": "chk_clamav_antivirus",
-      "ruleName": "Upload Stream Antivirus Scan",
-      "targetFile": "shareholders_cap_table.xlsx",
-      "outcome": "PASSED",
-      "executionDurationMs": 42,
-      "details": { "virusesFound": 0, "engineVersion": "ClamAV 1.5.4" }
-    },
-    {
-      "checkId": "chk_cap_table_sum",
-      "ruleName": "Equity Percentage Sum Equals 100.00%",
-      "targetField": "shareholders.percentageSum",
-      "outcome": "PASSED",
-      "executionDurationMs": 18,
-      "details": { "expected": 100.00, "actual": 100.00, "tolerance": 0.0001 }
-    },
-    {
-      "checkId": "chk_w9_ein_format",
-      "ruleName": "Federal EIN Format Validation",
-      "targetField": "client.employerIdentificationNumber",
-      "outcome": "PASSED",
-      "executionDurationMs": 2,
-      "details": { "regexPattern": "^\\\\d{2}-\\\\d{7}$", "normalizedMatch": true }
-    }
-  ],
-  "auditSignature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-}`}
-          </pre>
+        {/* Verification Evidence Ledger Walkthrough */}
+        <div className="mt-8">
+          <EnterpriseSectionImage
+            src="/images/platform/verification-ledger.jpg"
+            alt="Sample checks-log.json Generated in Sealed Evidence Package"
+            badge="Tamper-Evident Audit Trace"
+            title="Sample checks-log.json Sealed Trace"
+            description="Every verification check records its millisecond duration, deterministic input parameters, exact engine version, and cryptographic hash directly into the sealed evidence package."
+            bullets={[
+              "Stream antivirus analysis scans payload before committing to persistent storage",
+              "Mathematical invariants checked without probabilistic large language model drift",
+              "Individual check outcomes stamped with ISO 8601 UTC microsecond timestamps",
+              "100% offline verifiable by independent auditors and regulators without cloud dependencies",
+            ]}
+          />
         </div>
 
         {/* Verification Engine FAQs */}

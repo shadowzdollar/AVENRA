@@ -9,6 +9,7 @@ import {
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseCaseStudy } from "@/components/enterprise/EnterpriseCaseStudy";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard } from "@/components/enterprise/EnterpriseImageCard";
 
 const ACCOUNTING_FAQS = [
   {
@@ -33,23 +34,19 @@ const ACCOUNTING_FAQS = [
 
 export function AccountingHeroVisual() {
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>CPA Workpaper Reconciliation</span>
-        <span className="text-emerald-400 font-bold">BALANCED_100%</span>
-      </div>
-      <div className="mt-3 space-y-1.5 text-[11px]">
-        <div className="text-emerald-400">Matter: Q3 Corporate Financial Close & Tax Binder</div>
-        <div className="text-[#7ee787]">✓ All 12 Bank Statements Uploaded via Magic Portal</div>
-        <div className="text-[#7ee787]">✓ Ending Cash Balance Reconciled: $4,892,104.22 (0.00 Diff)</div>
-        <div className="text-[#7ee787]">✓ Fixed Asset Depreciation Schedule Verified (MACRS)</div>
-        <div className="text-cyan-400">✓ Sealed Workpaper Package: evd_q3_tax_binder.zip (SHA-256)</div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>PCAOB AS 1215 Compliant</span>
-        <span className="text-emerald-400 font-bold">Zero Missing Workpapers</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/solutions/accounting.jpg"
+      alt="CPA Workpaper and PBC Audit Reconciliation"
+      title="CPA Workpaper Reconciliation"
+      subtitle="Complete PBC workpaper binders, ending cash balance reconciliation, and certified tax packages"
+      badge="BALANCED 100%"
+      badgeVariant="success"
+      highlights={[
+        { label: "PBC Collection", value: "100% Verified" },
+        { label: "Cash Balance Diff", value: "$0.00 Variance" },
+        { label: "Missing Workpapers", value: "0 Invariant" },
+      ]}
+    />
   );
 }
 

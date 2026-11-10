@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -88,10 +89,19 @@ function IdempotencyHeroVisual() {
         </div>
         <p className="mt-2 text-xs text-text-secondary leading-relaxed">{curr.desc}</p>
 
-        <div className="mt-3 rounded-lg bg-black/60 p-3 font-mono text-[11px] text-indigo-300 border border-white/5 space-y-1">
-          <div><strong className="text-text-tertiary">Idempotency-Key:</strong> idemp_99a81f0284c</div>
-          <div><strong className="text-text-tertiary">Processing Latency:</strong> {curr.time}</div>
-          <div><strong className="text-text-tertiary">Side Effect Count:</strong> 1 (Preserved)</div>
+        <div className="mt-3 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+          <div className="relative h-28 w-full overflow-hidden bg-black/40">
+            <img src="/images/platform/work-engine.jpg"
+              alt="Idempotent State Protection"
+              className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+            <div className="absolute top-2 right-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+              {curr.badge}
+            </div>
+            <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+              Idempotency Key: idemp_99a81f0284c ({curr.time})
+            </div>
+          </div>
         </div>
       </div>
 
@@ -200,7 +210,7 @@ export default function IdempotencyPage() {
                 <li>• S3 Rate Limit / AWS SlowDown 503</li>
                 <li>• PostgreSQL Lock Acquisition Timeout</li>
               </ul>
-              <div className="mt-4 rounded-lg bg-black/40 p-3 font-mono text-[11px] text-indigo-300">
+              <div className="mt-4 rounded-lg bg-canvas p-3 font-mono text-[11px] text-text-secondary border border-border">
                 Strategy: Exponential backoff with jitter (1s, 2s, 4s, 8s, 16s)
               </div>
             </div>
@@ -215,7 +225,7 @@ export default function IdempotencyPage() {
                 <li>• HTTP 409 Conflict / State Invariant Violation</li>
                 <li>• HTTP 422 Unprocessable Entity / Schema Error</li>
               </ul>
-              <div className="mt-4 rounded-lg bg-black/40 p-3 font-mono text-[11px] text-red-300">
+              <div className="mt-4 rounded-lg bg-canvas p-3 font-mono text-[11px] text-text-secondary border border-border">
                 Strategy: Immediate abort, persist error envelope, alert operator
               </div>
             </div>

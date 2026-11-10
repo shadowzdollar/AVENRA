@@ -10,6 +10,7 @@ import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseComplianceMatrix } from "@/components/enterprise/EnterpriseComplianceMatrix";
 import { EnterpriseCaseStudy } from "@/components/enterprise/EnterpriseCaseStudy";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard } from "@/components/enterprise/EnterpriseImageCard";
 
 const COMPLIANCE_OFFICER_FAQS = [
   {
@@ -34,23 +35,19 @@ const COMPLIANCE_OFFICER_FAQS = [
 
 export function ComplianceOfficersHeroVisual() {
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Regulatory Invariant Enforcement</span>
-        <span className="text-emerald-400 font-bold">100% PASSING</span>
-      </div>
-      <div className="mt-3 space-y-1.5 text-[11px]">
-        <div className="text-emerald-400">Policy: Mandatory Corporate Beneficial Ownership Check</div>
-        <div className="text-[#7ee787]">✓ Invariant: Code-level guard prevents status write</div>
-        <div className="text-[#7ee787]">✓ Audit Ledger: Append-only event sequence (0 mutability)</div>
-        <div className="text-[#7ee787]">✓ Actor: usr_compliance_officer_42 (explicit RBAC)</div>
-        <div className="text-cyan-400">✓ Sealed Proof: FRE 902 certified self-contained package</div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>Zero Policy Bypasses</span>
-        <span className="text-emerald-400 font-bold">Continuous Audit Ready</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/solutions/compliance-officers.jpg"
+      alt="Regulatory Invariant Enforcement and Compliance Architecture"
+      title="Regulatory Invariant Enforcement"
+      subtitle="Transform policy documents into executable database constraints and unmodifiable audit records"
+      badge="100% PASSING"
+      badgeVariant="success"
+      highlights={[
+        { label: "Policy Invariant", value: "Code-Level Guard" },
+        { label: "Audit Ledger", value: "Append-Only Stream" },
+        { label: "Policy Bypasses", value: "0 Invariant" },
+      ]}
+    />
   );
 }
 

@@ -8,6 +8,7 @@ import {
   } from "lucide-react";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard } from "@/components/enterprise/EnterpriseImageCard";
 
 const REMINDER_FAQS = [
   {
@@ -32,23 +33,19 @@ const REMINDER_FAQS = [
 
 export function RemindersHeroVisual() {
   return (
-    <div className="rounded-2xl border border-cyan-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Adaptive Follow-up Scheduler</span>
-        <span className="text-cyan-400 font-bold">CADENCE_ACTIVE</span>
-      </div>
-      <div className="mt-3 space-y-1.5 text-[11px]">
-        <div className="text-[#8b949e]">{"// Automated Escalation Schedule"}</div>
-        <div className="text-[#7ee787]">Day 0: Initial Request Portal Dispatched (Sent) ✓</div>
-        <div className="text-[#7ee787]">Day 2: Gentle Nudge + Document Preview (Sent) ✓</div>
-        <div className="text-cyan-400">Day 5: Scheduled Follow-up (Queued for 09:00 UTC)</div>
-        <div className="text-[#8b949e]">Day 8: Operator Alert + Partner Escalation</div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>Instant Auto-Pause on Client Upload</span>
-        <span className="text-success font-bold">0 Duplicate Sends</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/platform/reminders.jpg"
+      alt="Adaptive Reminder Cadence and Follow-up Scheduler"
+      title="Adaptive Follow-up Scheduler"
+      subtitle="Automated respectful follow-up cadences with instant auto-pause on client upload"
+      badge="CADENCE ACTIVE"
+      badgeVariant="cyan"
+      highlights={[
+        { label: "Dispatch Cadence", value: "Smart Spaced" },
+        { label: "Auto-Pause", value: "Instant on Upload" },
+        { label: "Duplicate Sends", value: "0 Invariant" },
+      ]}
+    />
   );
 }
 

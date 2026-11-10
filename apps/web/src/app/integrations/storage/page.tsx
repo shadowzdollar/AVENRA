@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -90,9 +91,16 @@ function StorageHeroVisual() {
         </div>
       </div>
 
-      <div className="mt-3 rounded-lg bg-black/70 p-3 font-mono text-[11px] text-amber-300 border border-white/5 overflow-x-auto">
-        <div className="text-text-tertiary text-[10px] mb-1"># Presigned Upload Protocol Headers</div>
-        <pre className="overflow-x-auto whitespace-pre font-mono">{curr.code}</pre>
+      <div className="mt-3 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+        <div className="relative h-28 w-full overflow-hidden bg-black/40">
+          <img src="/images/integrations/storage.jpg"
+            alt="Presigned S3 Storage Cloud Upload"
+            className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+          <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+            Direct Storage Engine: {curr.name}
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-[11px] text-text-tertiary pt-2 border-t border-border/40">

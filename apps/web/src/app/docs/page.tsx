@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -104,8 +105,19 @@ async def verify_signature(request: Request, secret: str):
         ))}
       </div>
 
-      <div className="mt-4 rounded-xl border border-border/80 bg-black/70 p-4 font-mono text-xs text-purple-300 overflow-x-auto">
-        <pre className="overflow-x-auto whitespace-pre font-mono text-[11px] leading-relaxed">{code}</pre>
+      <div className="mt-4 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+        <div className="relative h-32 w-full overflow-hidden bg-black/40">
+          <img src="/images/docs/developer-workspace.jpg"
+            alt="Developer Contract SDK and Workspace"
+            className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+          <div className="absolute top-2 right-2 rounded-full bg-purple-500/90 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+            {tab.toUpperCase()}
+          </div>
+          <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+            Developer Spec: {tab === "quickstart" ? "Work Ingestion" : tab === "auth" ? "Bearer Token" : "HMAC Webhook"}
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-[11px] text-text-tertiary pt-2 border-t border-border/40">

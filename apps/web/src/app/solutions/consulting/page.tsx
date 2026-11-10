@@ -9,6 +9,7 @@ import {
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseCaseStudy } from "@/components/enterprise/EnterpriseCaseStudy";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard } from "@/components/enterprise/EnterpriseImageCard";
 
 const CONSULTING_FAQS = [
   {
@@ -33,23 +34,19 @@ const CONSULTING_FAQS = [
 
 export function ConsultingHeroVisual() {
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Milestone Sign-Off Gate</span>
-        <span className="text-emerald-400 font-bold">CLIENT_ACCEPTED</span>
-      </div>
-      <div className="mt-3 space-y-1.5 text-[11px]">
-        <div className="text-emerald-400">Milestone: Phase 2 Supply Chain Optimization Model</div>
-        <div className="text-[#7ee787]">✓ Final Deliverable Deck (v3.2) Reviewed</div>
-        <div className="text-[#7ee787]">✓ Client Executive Acceptance: signed by COO at 16:42 UTC</div>
-        <div className="text-[#7ee787]">✓ Automated Invoice Trigger Dispatched ($145,000 Milestone)</div>
-        <div className="text-cyan-400">✓ Sealed Proof Package Generated: evd_phase2_signoff.zip</div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>Zero Unbilled Milestone Drift</span>
-        <span className="text-emerald-400 font-bold">100% Margin Protected</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/solutions/consulting.jpg"
+      alt="Consulting Milestone Sign-Off and Governance"
+      title="Milestone Sign-Off Governance"
+      subtitle="Structured client acceptance gates, deliverable sign-offs, and automated milestone billing triggers"
+      badge="CLIENT ACCEPTED"
+      badgeVariant="success"
+      highlights={[
+        { label: "Executive Sign-Off", value: "Legally Verified" },
+        { label: "Milestone Billing", value: "Auto-Triggered" },
+        { label: "Margin Drift", value: "0 Invariant" },
+      ]}
+    />
   );
 }
 

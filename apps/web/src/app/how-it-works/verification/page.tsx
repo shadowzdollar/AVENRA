@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -104,12 +105,19 @@ function VerificationHeroVisual() {
         ))}
       </div>
 
-      <div className="mt-4 rounded-xl border border-border/70 bg-black/70 p-3.5 font-mono text-[11px] text-indigo-300">
-        <div className="flex justify-between items-center text-[10px] text-text-tertiary mb-1">
-          <span># Execution Log: {curr.name}</span>
-          <span className="text-emerald-400 font-bold">{curr.status}</span>
+      <div className="mt-4 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+        <div className="relative h-28 w-full overflow-hidden bg-black/40">
+          <img src="/images/how-it-works/verification-pipeline.jpg"
+            alt="Rule Execution Visual Inspection"
+            className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+          <div className="absolute top-2 right-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+            {curr.status}
+          </div>
+          <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+            Rule Execution: {curr.name} ({curr.latency})
+          </div>
         </div>
-        <pre className="overflow-x-auto whitespace-pre font-mono">{curr.payload}</pre>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-[11px] text-text-tertiary pt-2 border-t border-border/40">

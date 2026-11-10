@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -15,6 +16,7 @@ import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { InteractiveApiExplorer } from "@/components/enterprise/InteractiveApiExplorer";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseSectionImage } from "@/components/enterprise/EnterpriseImageCard";
 
 function ApiHeroVisual() {
   const [lang, setLang] = useState<"curl" | "ts" | "python" | "java">("curl");
@@ -111,8 +113,19 @@ WorkItem work = client.work().create(CreateWorkRequest.builder()
         ))}
       </div>
 
-      <div className="mt-4 rounded-xl border border-border/80 bg-black/70 p-4 font-mono text-xs text-amber-300 overflow-x-auto">
-        <pre className="overflow-x-auto whitespace-pre font-mono text-[11px] leading-relaxed">{code}</pre>
+      <div className="mt-4 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+        <div className="relative h-28 w-full overflow-hidden bg-black/40">
+          <img src="/images/integrations/openapi-sdk.jpg"
+            alt="Type-Safe Contract Client SDK"
+            className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+          <div className="absolute top-2 right-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+            OpenAPI 3.1
+          </div>
+          <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+            Client SDK Language: {lang.toUpperCase()}
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-[11px] text-text-tertiary pt-2 border-t border-border/40">
@@ -200,40 +213,21 @@ export default function ApiIntegrationsPage() {
           <InteractiveApiExplorer />
         </div>
 
-        {/* RFC 7807 Error Catalog Specification */}
-        <div className="rounded-3xl border border-border bg-canvas p-8 md:p-12">
-          <div className="max-w-3xl">
-            <div className="font-mono text-xs font-bold text-amber-400 uppercase tracking-widest">
-              Standardized Error Envelopes
-            </div>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-text-primary md:text-3xl">
-              RFC 7807 Problem Details Specification
-            </h2>
-            <p className="mt-4 text-sm leading-relaxed text-text-secondary md:text-base">
-              Avenra APIs never return opaque 500 HTML error pages or ambiguous JSON strings. Every error is machine-readable and actionable.
-            </p>
-          </div>
-
-          <div className="mt-6 rounded-2xl bg-black/70 p-6 font-mono text-xs text-amber-300 border border-white/5 overflow-x-auto">
-            <pre>{`HTTP/1.1 422 Unprocessable Entity
-Content-Type: application/problem+json
-
-{
-  "type": "https://api.avenra.com/errors/validation-failed",
-  "title": "Document Verification Preconditions Failed",
-  "status": 422,
-  "detail": "Deliverable wrk_01HZX8934A failed 1 of 5 verification rules.",
-  "instance": "/api/v1/work/wrk_01HZX8934A/verify",
-  "invalid_params": [
-    {
-      "field": "ein_number",
-      "reason": "EIN pattern must match ^[0-9]{2}-[0-9]{7}$, received '841928471'",
-      "code": "REGEX_MISMATCH"
-    }
-  ],
-  "timestamp": "2026-11-09T17:45:10.021Z"
-}`}</pre>
-          </div>
+        {/* RFC 7807 Problem Details Visual */}
+        <div>
+          <EnterpriseSectionImage
+            src="/images/integrations/rfc7807-errors.jpg"
+            alt="RFC 7807 Problem Details Specification Visual"
+            badge="Standard Error Contract"
+            title="RFC 7807 Deterministic Error Handling Protocol"
+            description="Avenra APIs never return opaque 500 HTML error pages or ambiguous string blobs. Every failure produces structured, machine-actionable problem details that client applications can programmatically triage."
+            bullets={[
+              "application/problem+json content-type with standardized type, title, and instance URIs",
+              "invalid_params array pinpoints exact field names, failure reasons, and error codes",
+              "ISO 8601 UTC microsecond timestamps included on every rejected transition response",
+              "Clear HTTP status mapping: 400 bad request, 403 authorization, 422 unprocessable verification",
+            ]}
+          />
         </div>
 
         {/* Technical FAQ */}

@@ -9,6 +9,7 @@ import {
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseCaseStudy } from "@/components/enterprise/EnterpriseCaseStudy";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard } from "@/components/enterprise/EnterpriseImageCard";
 
 const OPS_FAQS = [
   {
@@ -33,34 +34,19 @@ const OPS_FAQS = [
 
 export function OperationsHeroVisual() {
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Operations Control Plane</span>
-        <span className="text-emerald-400 font-bold">REAL_TIME_SLA</span>
-      </div>
-      <div className="mt-3 space-y-2 text-[11px]">
-        <div className="flex items-center justify-between">
-          <span className="text-emerald-400">Active Work Items</span>
-          <span className="text-white font-bold">1,420 Across 8 Teams</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-emerald-400">On-Time SLA Delivery</span>
-          <span className="text-success font-bold">99.1% (was 74.2%)</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-emerald-400">Exceptions Requiring Triage</span>
-          <span className="text-warning font-bold">6 Blocked Checkpoints</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-emerald-400">Median Intake Latency</span>
-          <span className="text-white font-bold">3.4 Hours (down from 7 days)</span>
-        </div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>Zero Hidden Spreadsheets</span>
-        <span className="text-emerald-400 font-bold">Full Telemetry Visibility</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/solutions/operations-leaders.jpg"
+      alt="Operations Control Plane and Velocity Metrics"
+      title="Operations Control Plane"
+      subtitle="Cross-team velocity tracking, automated exception triage, and real-time SLA compliance"
+      badge="REAL TIME SLA"
+      badgeVariant="success"
+      highlights={[
+        { label: "Active Work Items", value: "1,420 Tracked" },
+        { label: "On-Time SLA", value: "99.1% Compliance" },
+        { label: "Intake Latency", value: "3.4 Hours" },
+      ]}
+    />
   );
 }
 

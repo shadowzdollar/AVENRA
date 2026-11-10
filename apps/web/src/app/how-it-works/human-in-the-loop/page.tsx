@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -43,10 +44,19 @@ function HumanInTheLoopHeroVisual() {
           AI detected potential discrepancy between scanned Delaware Certificate and Schedule K-1 company suffix (&quot;LLC&quot; vs &quot;L.L.C.&quot;).
         </p>
 
-        <div className="mt-3 rounded-lg bg-black/60 p-3 font-mono text-[11px] text-indigo-300 border border-white/5 space-y-1">
-          <div><strong className="text-text-tertiary">Scanned Text:</strong> &quot;Northwind Partners, L.L.C.&quot;</div>
-          <div><strong className="text-text-tertiary">Intake Entity:</strong> &quot;Northwind Partners LLC&quot;</div>
-          <div className="text-amber-400">Action Required: Explicit Human Verification</div>
+        <div className="mt-3 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+          <div className="relative h-28 w-full overflow-hidden bg-black/40">
+            <img src="/images/platform/agent-execution.jpg"
+              alt="Human-in-the-Loop Approval Gateway"
+              className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+            <div className="absolute top-2 right-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+              AWAITING SIGN-OFF
+            </div>
+            <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+              Entity Suffix Triage: &quot;LLC&quot; vs &quot;L.L.C.&quot;
+            </div>
+          </div>
         </div>
 
         {status === "pending" ? (

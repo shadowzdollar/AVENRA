@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -87,12 +88,22 @@ function ComplianceHeroVisual() {
         ))}
       </div>
 
-      <div className="mt-4 rounded-xl border border-border/70 bg-black/70 p-3.5 font-mono text-[11px] text-emerald-300">
-        <div className="flex justify-between items-center text-[10px] text-text-tertiary mb-1">
-          <span># Automated Control Proof</span>
-          <span className="text-emerald-400 font-bold">{curr.status}</span>
+      <div className="mt-4 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+        <div className="relative h-28 w-full overflow-hidden bg-black/40">
+          <img src="/images/platform/compliance.jpg"
+            alt="Automated Security Compliance Control Proof"
+            className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+          <div className="absolute top-2 right-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+            {curr.status}
+          </div>
+          <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+            Security Control: {curr.framework} · Continuous Telemetry
+          </div>
         </div>
-        <p className="mt-1 text-xs text-text-secondary leading-relaxed font-sans">{curr.evidence}</p>
+        <div className="p-3 text-xs text-text-secondary bg-canvas-subtle border-t border-border">
+          {curr.evidence}
+        </div>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-[11px] text-text-tertiary pt-2 border-t border-border/40">

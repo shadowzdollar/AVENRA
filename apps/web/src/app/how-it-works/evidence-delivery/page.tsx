@@ -17,6 +17,7 @@ import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { InteractiveEvidenceInspector } from "@/components/enterprise/InteractiveEvidenceInspector";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseSectionImage } from "@/components/enterprise/EnterpriseImageCard";
 
 function EvidenceDeliveryHeroVisual() {
   const [copied, setCopied] = useState(false);
@@ -43,18 +44,18 @@ function EvidenceDeliveryHeroVisual() {
         </span>
       </div>
 
-      <div className="mt-4 rounded-xl border border-border/70 bg-black/70 p-4 font-mono text-xs">
+      <div className="mt-4 rounded-xl border border-border bg-canvas p-4 font-mono text-xs shadow-sm">
         <div className="flex items-center justify-between text-text-tertiary text-[11px]">
           <span>Root Package Checksum (SHA-256)</span>
           <button
             onClick={copyHash}
-            className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300"
+            className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 font-sans font-medium"
           >
             {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
             {copied ? "Copied" : "Copy"}
           </button>
         </div>
-        <div className="mt-1.5 break-all text-emerald-400 font-bold text-[11px]">
+        <div className="mt-1.5 break-all text-emerald-500 font-bold text-[11px]">
           {hash}
         </div>
       </div>
@@ -165,39 +166,21 @@ export default function EvidenceDeliveryPage() {
           <InteractiveEvidenceInspector />
         </div>
 
-        {/* Offline Auditor Terminal Walkthrough */}
-        <div className="rounded-3xl border border-border bg-canvas p-8 md:p-12">
-          <div className="max-w-3xl">
-            <div className="font-mono text-xs font-bold text-indigo-400 uppercase tracking-widest">
-              Zero-Trust Verification
-            </div>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-text-primary md:text-3xl">
-              Auditor Offline Verification Walkthrough
-            </h2>
-            <p className="mt-4 text-sm leading-relaxed text-text-secondary md:text-base">
-              Auditors do not need an Avenra account or internet access to verify a deliverable. Every package is completely self-proving using standard POSIX utilities.
-            </p>
-          </div>
-
-          <div className="mt-6 rounded-2xl bg-black/70 p-6 font-mono text-xs text-indigo-300 border border-white/5 overflow-x-auto">
-            <pre>{`# Step 1: Download package from your enterprise S3 bucket
-aws s3 cp s3://myfirm-evidence-vault/matter-2026-091a/evidence_package.zip .
-
-# Step 2: Unzip package contents
-unzip evidence_package.zip -d evidence/
-cd evidence/
-
-# Step 3: Run standard SHA-256 integrity verification
-sha256sum -c manifest.json
-
-# Terminal Output:
-# original_client_upload.pdf: OK
-# clamav_scan_receipt.json:   OK
-# pydantic_schema_output.json: OK
-# operator_signoff.sig:       OK
-# audit_summary.html:         OK
-# All 5 files match cryptographic checksums! Zero tampering detected.`}</pre>
-          </div>
+        {/* Auditor Offline Verification Visual */}
+        <div>
+          <EnterpriseSectionImage
+            src="/images/how-it-works/evidence-packaging.jpg"
+            alt="Auditor Offline Cryptographic Verification"
+            badge="Offline Verification"
+            title="Air-Gapped Auditor Verification Architecture"
+            description="Auditors do not need an Avenra account or internet access to verify a deliverable. Every package is completely self-proving using standard POSIX utilities directly from your private S3 bucket."
+            bullets={[
+              "Standard POSIX sha256sum verification against manifest.json with 0 external dependencies",
+              "Embedded standalone HTML viewer allows offline inspection in zero-network environments",
+              "All client exhibits, ClamAV antivirus logs, and operator signatures sealed together",
+              "100% court-admissible chain of custody under FRE 902(14)",
+            ]}
+          />
         </div>
 
         {/* Technical FAQ */}

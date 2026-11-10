@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -107,10 +108,19 @@ function InformationGatheringHeroVisual() {
         </div>
       </div>
 
-      <div className="mt-3 rounded-xl border border-border/70 bg-black/60 p-3 font-mono text-[11px] text-indigo-300">
-        <div className="text-text-tertiary text-[10px] mb-1"># Automated Reminder Daemon (Cron)</div>
-        <div>Active Schedule: [T+48h, T+96h, T+144h]</div>
-        <div className="text-emerald-400">Next Ping: Suppressed (Client activity detected)</div>
+      <div className="mt-3 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+        <div className="relative h-28 w-full overflow-hidden bg-black/40">
+          <img src="/images/platform/reminders.jpg"
+            alt="Automated Reminder Cadence Daemon"
+            className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+          <div className="absolute top-2 right-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+            AUTO-PAUSE ACTIVE
+          </div>
+          <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+            Smart Cadence: T+48h, T+96h · Suppressed on Client Activity
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-[11px] text-text-tertiary pt-2 border-t border-border/40">

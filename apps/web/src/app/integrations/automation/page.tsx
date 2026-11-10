@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -9,12 +10,12 @@ import {
   CheckCircle2,
   ArrowRight,
   ShieldCheck,
-  Code2,
   Send,
-  } from "lucide-react";
+} from "lucide-react";
 import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseSectionImage } from "@/components/enterprise/EnterpriseImageCard";
 
 function AutomationHeroVisual() {
   const [selectedEvent, setSelectedEvent] = useState<"created" | "verified" | "sealed">("verified");
@@ -87,11 +88,19 @@ function AutomationHeroVisual() {
         </div>
         <p className="mt-1 text-xs text-text-secondary">{curr.desc}</p>
 
-        <div className="mt-3 rounded-lg bg-black/70 p-3 font-mono text-[11px] text-amber-300 border border-white/5">
-          <div className="text-text-tertiary text-[10px] mb-1">
-            Headers: X-Avenra-Signature-SHA256: 4f1a...8e02 • Idempotency-Key: idemp_99a81f
+        <div className="mt-3 overflow-hidden rounded-xl border border-border bg-canvas shadow-sm">
+          <div className="relative h-28 w-full overflow-hidden bg-black/40">
+            <img src="/images/integrations/webhook-bus.jpg"
+              alt="Event-Driven Webhook Automation Bus"
+              className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+            <div className="absolute top-2 right-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+              HMAC-SHA256 SIGNED
+            </div>
+            <div className="absolute bottom-2 left-3 text-[11px] font-bold text-white">
+              Event Trigger: {curr.type}
+            </div>
           </div>
-          <pre className="overflow-x-auto whitespace-pre font-mono text-[10px]">{curr.payload}</pre>
         </div>
 
         {dispatched && (
@@ -184,42 +193,21 @@ export default function AutomationIntegrationsPage() {
       ]}
     >
       <div className="space-y-20">
-        {/* HMAC Verification Code Examples */}
-        <div className="rounded-3xl border border-border bg-canvas p-8 md:p-12">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
-              <Code2 className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-text-primary">HMAC-SHA256 Signature Verification</h3>
-              <p className="text-xs text-text-secondary">Node.js / Express implementation</p>
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-2xl bg-black/70 p-6 font-mono text-xs text-amber-300 border border-white/5 overflow-x-auto">
-            <pre>{`import crypto from 'node:crypto';
-
-export function verifyAvenraWebhook(req, secret) {
-  const signature = req.headers['x-avenra-signature-sha256'];
-  const timestamp = req.headers['x-avenra-timestamp'];
-  
-  // Replay attack protection (reject older than 5 minutes)
-  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) {
-    throw new Error('Webhook timestamp outside acceptable window');
-  }
-
-  // Calculate expected HMAC
-  const hmac = crypto.createHmac('sha256', secret);
-  hmac.update(\`\${timestamp}.\${req.rawBody}\`);
-  const expected = hmac.digest('hex');
-
-  // Constant-time comparison prevents timing attacks
-  const valid = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-  if (!valid) throw new Error('Invalid HMAC signature');
-  
-  return true;
-}`}</pre>
-          </div>
+        {/* HMAC Verification Visual */}
+        <div>
+          <EnterpriseSectionImage
+            src="/images/integrations/hmac-security.jpg"
+            alt="Cryptographic HMAC-SHA256 Webhook Verification"
+            badge="Webhook Security"
+            title="Cryptographic Webhook Signature Verification"
+            description="Every automated webhook payload is signed with a secret HMAC-SHA256 digest and Unix timestamp header to guarantee perimeter authenticity and prevent replay or tampering attacks."
+            bullets={[
+              "X-Avenra-Signature-SHA256 header computed across timestamp and raw request body",
+              "5-minute maximum timestamp tolerance prevents man-in-the-middle replay attacks",
+              "Constant-time string comparison algorithms eliminate side-channel timing vulnerabilities",
+              "Automatic exponential backoff retries with dead-letter queue recovery across 72 hours",
+            ]}
+          />
         </div>
 
         {/* Technical FAQ */}

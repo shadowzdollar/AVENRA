@@ -9,6 +9,7 @@ import {
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseCaseStudy } from "@/components/enterprise/EnterpriseCaseStudy";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard } from "@/components/enterprise/EnterpriseImageCard";
 
 const LEGAL_FAQS = [
   {
@@ -33,23 +34,19 @@ const LEGAL_FAQS = [
 
 export function LegalHeroVisual() {
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Legal Evidentiary Provenance</span>
-        <span className="text-emerald-400 font-bold">COURT_ADMISSIBLE</span>
-      </div>
-      <div className="mt-3 space-y-1.5 text-[11px]">
-        <div className="text-emerald-400">Matter: Cross-Border Asset Acquisition (wrk_99182)</div>
-        <div className="text-[#7ee787]">✓ Client KYC & Beneficial Owner Declarations Verified</div>
-        <div className="text-[#7ee787]">✓ Engagement Letter & Fee Disclosure Electronically Signed</div>
-        <div className="text-[#7ee787]">✓ Delaware Certificate of Good Standing Validated (Within 30d)</div>
-        <div className="text-cyan-400">✓ Sealed Closing Binder Generated (SHA-256 Hash Certified)</div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>FRE 902(14) Certified</span>
-        <span className="text-emerald-400 font-bold">0 Missing Exhibits</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/solutions/legal.jpg"
+      alt="Legal Evidentiary Provenance and Closing Binders"
+      title="Legal Evidentiary Provenance"
+      subtitle="Complete closing binders, KYC declarations, and verified legal chain of custody"
+      badge="COURT ADMISSIBLE"
+      badgeVariant="success"
+      highlights={[
+        { label: "Closing Binders", value: "SHA-256 Certified" },
+        { label: "Signatures", value: "Tamper-Evident" },
+        { label: "Missing Exhibits", value: "0 Invariant" },
+      ]}
+    />
   );
 }
 

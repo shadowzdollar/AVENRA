@@ -9,6 +9,7 @@ import {
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseCaseStudy } from "@/components/enterprise/EnterpriseCaseStudy";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard } from "@/components/enterprise/EnterpriseImageCard";
 
 const FIN_FAQS = [
   {
@@ -33,23 +34,19 @@ const FIN_FAQS = [
 
 export function FinancialHeroVisual() {
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Institutional Underwriting Dossier</span>
-        <span className="text-emerald-400 font-bold">BSA_CDD_VERIFIED</span>
-      </div>
-      <div className="mt-3 space-y-1.5 text-[11px]">
-        <div className="text-emerald-400">Dossier: $15M Commercial Credit Line (wrk_fin_88192)</div>
-        <div className="text-[#7ee787]">✓ Borrower Beneficial Ownership (4 Owners &gt; 25%) Verified</div>
-        <div className="text-[#7ee787]">✓ OFAC & Sanctions Screening: 0 Hits (Clearance Confirmed)</div>
-        <div className="text-[#7ee787]">✓ 3 Years Audited Financials + Tax Returns Parsed via AI</div>
-        <div className="text-cyan-400">✓ Sealed Underwriting Pack Exported to Sovereign S3</div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>SHA-256 Sealed Manifests</span>
-        <span className="text-emerald-400 font-bold">100% Audit Ready</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/solutions/financial-services.jpg"
+      alt="Institutional Underwriting and KYC Due Diligence"
+      title="Institutional Underwriting Dossier"
+      subtitle="Commercial credit underwriting, borrower beneficial ownership verification, and sovereign S3 export"
+      badge="BSA CDD VERIFIED"
+      badgeVariant="success"
+      highlights={[
+        { label: "Beneficial Owners", value: "100% Verified" },
+        { label: "Sanctions Clearance", value: "0 Hits Clear" },
+        { label: "Underwriting Pack", value: "SHA-256 Sealed" },
+      ]}
+    />
   );
 }
 

@@ -10,6 +10,7 @@ import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { InteractiveStateMachine } from "@/components/enterprise/InteractiveStateMachine";
 import { EnterpriseWorkflowTimeline } from "@/components/enterprise/EnterpriseWorkflowTimeline";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard, EnterpriseSectionImage } from "@/components/enterprise/EnterpriseImageCard";
 
 const WORK_ENGINE_FAQS = [
   {
@@ -34,28 +35,19 @@ const WORK_ENGINE_FAQS = [
 
 export function WorkEngineHeroVisual() {
   return (
-    <div className="rounded-2xl border border-cyan-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Finite State Machine Engine</span>
-        <span className="text-cyan-400 font-bold">STRICT_INVARIANT</span>
-      </div>
-      <div className="mt-3 space-y-1.5 text-[11px]">
-        <div className="text-text-secondary">{"// State Transition Matrix Guard"}</div>
-        <div className="text-[#ff7b72]">class <span className="text-[#79c0ff]">WorkStateMachine</span> &#123;</div>
-        <div className="text-[#79c0ff] pl-3">public TransitionResult <span className="text-[#d2a8ff]">advance</span>(</div>
-        <div className="text-[#c9d1d9] pl-6">WorkId id, WorkEvent event, Operator actor</div>
-        <div className="text-[#79c0ff] pl-3">) &#123;</div>
-        <div className="text-[#7ee787] pl-6">requireState(PENDING, AWAITING_INPUT);</div>
-        <div className="text-[#7ee787] pl-6">validateGuards(id, event.rules());</div>
-        <div className="text-[#7ee787] pl-6">auditLog.append(actor, event);</div>
-        <div className="text-[#79c0ff] pl-3">&#125;</div>
-        <div className="text-[#ff7b72]">&#125;</div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-cyan-400 flex justify-between">
-        <span>Guards Evaluated: 100% Deterministic</span>
-        <span>ACID Enforced</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/platform/work-engine.jpg"
+      alt="Avenra Work Engine State Machine Architecture"
+      title="Finite State Machine Engine"
+      subtitle="Strict transition guards, deterministic states & append-only audit trail"
+      badge="STRICT INVARIANT"
+      badgeVariant="cyan"
+      highlights={[
+        { label: "Guards Evaluated", value: "100% Deterministic" },
+        { label: "Audit Ledger", value: "Append-Only" },
+        { label: "Database Isolation", value: "PostgreSQL RLS" },
+      ]}
+    />
   );
 }
 
@@ -174,32 +166,21 @@ export default function WorkEnginePage() {
             </div>
           </div>
 
-          {/* DDL Snippet */}
-          <div className="mt-8 rounded-2xl border border-border bg-[#0d1117] p-6 font-mono text-xs text-[#c9d1d9] overflow-x-auto">
-            <span className="text-[#8b949e]">{"// PostgreSQL Schema Definition from apps/api/src/main/resources/db/migration/V4__work.sql"}</span>
-            <pre className="mt-2 text-[11px] leading-relaxed text-[#79c0ff]">
-{`CREATE TABLE work (
-    id UUID PRIMARY KEY,
-    organization_id UUID NOT NULL REFERENCES organizations(id),
-    client_identifier VARCHAR(120) NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    status VARCHAR(32) NOT NULL,
-    version BIGINT NOT NULL DEFAULT 0,
-    sealed_at TIMESTAMPTZ,
-    package_sha256 VARCHAR(64),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_valid_work_status CHECK (
-        status IN ('PENDING', 'AWAITING_CLIENT_INPUT', 'EVALUATING_CHECKS', 'AWAITING_APPROVAL', 'COMPLETED', 'CANCELLED')
-    ),
-    CONSTRAINT chk_completed_has_seal CHECK (
-        status != 'COMPLETED' OR (sealed_at IS NOT NULL AND package_sha256 IS NOT NULL)
-    )
-);
-
-ALTER TABLE work ENABLE ROW LEVEL SECURITY;
-CREATE POLICY work_tenant_isolation ON work
-    USING (organization_id = current_setting('app.current_organization_id')::UUID);`}
-            </pre>
+          {/* PostgreSQL Invariant Schema Visual */}
+          <div className="mt-8">
+            <EnterpriseSectionImage
+              src="/images/platform/work-schema.jpg"
+              alt="PostgreSQL Invariant Schema Architecture"
+              badge="Database Invariants"
+              title="Physical PostgreSQL Constraints & RLS Enforced"
+              description="Native PostgreSQL CHECK constraints prevent invalid status values, while Row-Level Security ensures tenant boundaries cannot be breached under any runtime conditions."
+              bullets={[
+                "chk_valid_work_status rejects illegal transition states at the storage engine level",
+                "chk_completed_has_seal guarantees sealed evidence package and SHA-256 digest exist before completion",
+                "Row-Level Security isolates multi-tenant data dynamically via current_setting('app.current_organization_id')",
+                "Append-only audit triggers block all UPDATE and DELETE mutations on historical records",
+              ]}
+            />
           </div>
         </div>
 

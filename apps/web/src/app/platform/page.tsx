@@ -12,7 +12,7 @@ import { VisualWorkflowSimulator } from "@/components/enterprise/VisualWorkflowS
 import { VisualDocumentScannerMockup } from "@/components/enterprise/VisualDocumentScannerMockup";
 import { EnterpriseArchitectureDiagram } from "@/components/enterprise/EnterpriseArchitectureDiagram";
 import { EnterpriseComparisonTable } from "@/components/enterprise/EnterpriseComparisonTable";
-import { EnterpriseTerminalConsole } from "@/components/enterprise/EnterpriseTerminalConsole";
+import { EnterpriseSectionImage } from "@/components/enterprise/EnterpriseImageCard";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 
@@ -199,9 +199,21 @@ export default function PlatformPage() {
           <EnterpriseArchitectureDiagram />
         </div>
 
-        {/* Interactive Terminal Simulator */}
+        {/* Platform Command Center Visual */}
         <div>
-          <EnterpriseTerminalConsole />
+          <EnterpriseSectionImage
+            src="/images/platform/command-center.jpg"
+            alt="Avenra Unified Enterprise Platform Command Center"
+            badge="Unified Platform"
+            title="Unified Enterprise Operations & Delivery Command Center"
+            description="Manage client intake, automated verification rules, continuous compliance ledgers, and sovereign evidence lockers across your entire firm through a unified high-throughput control plane."
+            bullets={[
+              "End-to-end auditability from initial client engagement to final sealed archive",
+              "Sub-second deterministic rule execution without human bottlenecks",
+              "PostgreSQL Row-Level Security ensuring strict multi-tenant boundary isolation",
+              "Direct sovereign cloud export to AWS S3, Azure Blob, or on-premise storage",
+            ]}
+          />
         </div>
 
         {/* Technical FAQ */}

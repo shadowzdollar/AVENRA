@@ -10,6 +10,7 @@ import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { EnterpriseComplianceMatrix } from "@/components/enterprise/EnterpriseComplianceMatrix";
 import { EnterpriseSecurityAuditViewer } from "@/components/enterprise/EnterpriseSecurityAuditViewer";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseImageCard } from "@/components/enterprise/EnterpriseImageCard";
 
 const COMPLIANCE_FAQS = [
   {
@@ -34,23 +35,19 @@ const COMPLIANCE_FAQS = [
 
 export function ComplianceHeroVisual() {
   return (
-    <div className="rounded-2xl border border-cyan-500/20 bg-[#0d1117] p-5 shadow-2xl text-[#c9d1d9] font-mono text-xs">
-      <div className="flex items-center justify-between border-b border-[#30363d] pb-2 text-[11px] text-[#8b949e]">
-        <span>Continuous Compliance Ledger</span>
-        <span className="text-success font-bold">AUDIT_READY</span>
-      </div>
-      <div className="mt-3 space-y-1.5 text-[11px]">
-        <div className="text-cyan-400">✓ Access Isolation: PostgreSQL Row-Level Security</div>
-        <div className="text-cyan-400">✓ Explicit Permissions: Action-Level RBAC Capabilities</div>
-        <div className="text-cyan-400">✓ Integrity Verification: SHA-256 Sealed Manifests</div>
-        <div className="text-cyan-400">✓ Malware Defense: ClamAV Stream Scanning</div>
-        <div className="text-success font-bold">→ Architectural Controls Enforced: 100%</div>
-      </div>
-      <div className="mt-3 pt-2 border-t border-[#30363d] text-[10px] text-[#8b949e] flex justify-between">
-        <span>Merkle Hash-Chained Audit Stream</span>
-        <span className="text-cyan-400 font-bold">Zero Mutable Records</span>
-      </div>
-    </div>
+    <EnterpriseImageCard
+      src="/images/platform/compliance.jpg"
+      alt="Continuous Compliance Ledger and Architectural Controls"
+      title="Continuous Compliance Ledger"
+      subtitle="Architectural controls enforced directly in database schemas and capability guards"
+      badge="AUDIT READY"
+      badgeVariant="success"
+      highlights={[
+        { label: "Tenant Isolation", value: "PostgreSQL RLS" },
+        { label: "Capability RBAC", value: "Action-Level" },
+        { label: "Audit Stream", value: "Append-Only" },
+      ]}
+    />
   );
 }
 

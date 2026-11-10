@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { Clock, ShieldCheck } from "lucide-react";
@@ -196,25 +197,35 @@ export function EnterpriseWorkflowTimeline() {
           </div>
         </div>
 
-        {/* Right: Event Payload */}
-        <div className="md:col-span-5 rounded-2xl border border-border bg-[#0d1117] p-5 text-[#c9d1d9] font-mono text-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between border-b border-[#30363d] pb-3 text-[#8b949e] text-[10px]">
-              <span>Event Name: {activeEvent.dataTrace.event}</span>
-              <span className="text-success font-bold">VERIFIED</span>
+        {/* Right: Visual Event Inspector */}
+        <div className="md:col-span-5 overflow-hidden rounded-2xl border border-border bg-canvas shadow-lg flex flex-col justify-between">
+          <div className="relative h-32 w-full overflow-hidden bg-black/40">
+            <img src="/images/platform/work-engine.jpg"
+              alt="Workflow Event Inspection"
+              className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+            <div className="absolute top-2 right-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+              VERIFIED EVENT
             </div>
-            <div className="mt-4">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#8b949e] block mb-1">
-                Committed JSON Event Payload
-              </span>
-              <pre className="text-[11px] text-[#79c0ff] leading-relaxed overflow-x-auto whitespace-pre-wrap">
-                {activeEvent.dataTrace.payloadSummary}
-              </pre>
+            <div className="absolute bottom-2 left-3 text-white text-xs font-bold">
+              {activeEvent.dataTrace.event}
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-[#30363d] text-[10px] text-[#8b949e]">
-            Timestamp: 2026-11-09T17:15:00Z · Actor: {activeEvent.actor}
+          <div className="p-4 space-y-3">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary block mb-1">
+                Committed State Transition
+              </span>
+              <p className="text-xs text-text-secondary leading-relaxed bg-canvas-subtle p-2.5 rounded-xl border border-border">
+                {activeEvent.dataTrace.payloadSummary}
+              </p>
+            </div>
+
+            <div className="pt-2 border-t border-border flex items-center justify-between text-[11px] text-text-tertiary">
+              <span>Actor: <strong className="text-text-primary">{activeEvent.actor}</strong></span>
+              <span className="text-emerald-500 font-semibold">100% Invariant Pass</span>
+            </div>
           </div>
         </div>
       </div>

@@ -10,12 +10,12 @@ import {
   Database,
   ArrowRight,
   ShieldCheck,
-  Code2,
 } from "lucide-react";
 import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { InteractiveStateMachine } from "@/components/enterprise/InteractiveStateMachine";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
+import { EnterpriseSectionImage } from "@/components/enterprise/EnterpriseImageCard";
 
 function StateTransitionHeroVisual() {
   const [selectedFrom, setSelectedFrom] = useState("DRAFT");
@@ -317,54 +317,21 @@ export default function StateMachinesPage() {
           <InteractiveStateMachine />
         </div>
 
-        {/* Database Check Constraints Code Callout */}
-        <div className="rounded-3xl border border-border bg-canvas p-8 md:p-12">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
-              <Code2 className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-text-primary">PostgreSQL Invariant DDL</h3>
-              <p className="text-xs text-text-secondary">Enforced at the relational storage layer</p>
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-2xl bg-black/70 p-6 font-mono text-xs text-indigo-300 border border-white/5 overflow-x-auto">
-            <pre>{`-- Invariant schema: Illegal transitions are physically rejected by PostgreSQL
-ALTER TABLE work_items
-  ADD CONSTRAINT chk_valid_state_transitions
-  CHECK (
-    (status = 'DRAFT') OR
-    (status = 'AWAITING_INPUT' AND client_token_hash IS NOT NULL) OR
-    (status = 'VERIFYING' AND input_payload IS NOT NULL) OR
-    (status = 'EXCEPTION_REVIEW' AND exception_reason IS NOT NULL) OR
-    (status = 'SEALING' AND verification_passed_at IS NOT NULL) OR
-    (status = 'COMPLETED' AND sealed_manifest_sha256 IS NOT NULL)
-  );
-
--- Row-level locking transition function with atomic audit insertion
-CREATE OR REPLACE FUNCTION transition_work_state(
-  p_work_id UUID,
-  p_expected_status work_status,
-  p_new_status work_status,
-  p_actor_id UUID
-) RETURNS VOID AS $$
-BEGIN
-  -- Acquire row lock
-  PERFORM id FROM work_items WHERE id = p_work_id AND status = p_expected_status FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Concurrency conflict: Work item % is not in expected status %', p_work_id, p_expected_status;
-  END IF;
-
-  -- Advance state
-  UPDATE work_items SET status = p_new_status, updated_at = NOW() WHERE id = p_work_id;
-
-  -- Atomic audit ledger insert
-  INSERT INTO work_transition_ledger (work_id, from_status, to_status, actor_id, committed_at)
-  VALUES (p_work_id, p_expected_status, p_new_status, p_actor_id, NOW());
-END;
-$$ LANGUAGE plpgsql;`}</pre>
-          </div>
+        {/* Database Check Constraints Visual */}
+        <div>
+          <EnterpriseSectionImage
+            src="/images/how-it-works/state-machines.jpg"
+            alt="PostgreSQL State Transition Engine Invariants"
+            badge="Database Invariants"
+            title="Relational Storage-Level Transition Invariants"
+            description="Native PostgreSQL CHECK constraints physically reject illegal transitions, while atomic PL/pgSQL functions enforce row locks and immutable audit ledger insertions."
+            bullets={[
+              "CHECK constraints reject skipped intermediate phases at the disk controller",
+              "SELECT ... FOR UPDATE locks prevent race conditions during rapid concurrent client uploads",
+              "Atomic audit ledger rows commit synchronously inside the exact same database transaction",
+              "Deterministic finite state machine guarantees 100% mathematical reproducibility",
+            ]}
+          />
         </div>
 
         {/* Technical FAQ */}
