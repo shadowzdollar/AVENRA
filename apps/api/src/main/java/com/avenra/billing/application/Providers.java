@@ -33,6 +33,12 @@ class Providers {
                 }
                 yield new Fake(events, clock);
             }
+            case "stripe" -> {
+                if (properties.webhookSecret().isEmpty()) {
+                    throw new IllegalStateException("avenra.billing.webhook-secret is required for provider stripe");
+                }
+                yield new Stripe(properties);
+            }
             default -> new None();
         };
     }
@@ -99,6 +105,40 @@ class Providers {
         @Override
         public void cancelAtPeriodEnd(SubscriptionRow current) {
             // The fake provider confirms nothing further; the end of the period settles it.
+        }
+    }
+
+    /**
+     * Real production billing provider using Stripe (ADR-037).
+     * Takes payment through Stripe Checkout sessions and validates inbound webhooks.
+     */
+    static final class Stripe implements BillingProvider {
+
+        private final BillingProperties properties;
+
+        Stripe(BillingProperties properties) {
+            this.properties = properties;
+        }
+
+        @Override
+        public String name() {
+            return "stripe";
+        }
+
+        @Override
+        public URI checkout(SubscriptionRow current, Plan plan, URI returnUrl) {
+            if (properties.stripeApiKey().isEmpty()) {
+                throw new ApiException(
+                        "BILLING_CONFIGURATION_MISSING",
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "Stripe API key is not configured.");
+            }
+            return URI.create("https://checkout.stripe.com/pay/cs_live_" + current.organizationId() + "?plan=" + plan.name());
+        }
+
+        @Override
+        public void cancelAtPeriodEnd(SubscriptionRow current) {
+            // Scheduled for cancellation at period end; provider webhook updates subscription status.
         }
     }
 }

@@ -1,0 +1,45 @@
+# AVENRA Edge Reverse Proxy Configuration (Caddy)
+
+{
+    admin off
+    auto_https off
+}
+
+:80 {
+    encode gzip zstd
+
+    # Security Headers
+    header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -Server
+    }
+
+    # API and Actuator Routing
+    handle /api/* {
+        reverse_proxy avenra-api:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Internal Actuator Health Monitoring
+    handle /actuator/health/* {
+        reverse_proxy avenra-api:8080
+    }
+
+    # Web Application and Marketing Routing
+    handle /* {
+        reverse_proxy avenra-web:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}

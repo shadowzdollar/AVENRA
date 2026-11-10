@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: avenra
+  labels:
+    name: avenra
+    app.kubernetes.io/part-of: avenra-platform
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: avenra-config
+  namespace: avenra
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  SPRING_PROFILES_ACTIVE: "production"
+  AVENRA_ENVIRONMENT: "PRODUCTION"
+  AVENRA_AI_ENVIRONMENT: "PRODUCTION"
+  AVENRA_AI_MODEL: "claude-sonnet-5-5"
+  S3_REGION: "us-east-1"
+  S3_BUCKET: "avenra-evidence"
+  AVENRA_BILLING_PROVIDER: "stripe"

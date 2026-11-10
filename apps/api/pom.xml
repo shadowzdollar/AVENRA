@@ -243,8 +243,8 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>[25,26)</version>
-                                    <message>Avenra requires JDK 25 (ADR-006). Check JAVA_HOME.</message>
+                                    <version>[25,28)</version>
+                                    <message>Avenra requires JDK 25+ (ADR-006). Check JAVA_HOME.</message>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
                                     <version>[3.9.16,4)</version>

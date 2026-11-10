@@ -46,11 +46,11 @@ naming the phase that will close it. A deferral is never silent.
 | 3 | [Core business objects](phase-03-core-objects.md) | Complete (2026-10-14) |
 | 4 | [Work execution](phase-04-execution.md) | Complete (2026-10-14) |
 | 5 | [Verification](phase-05-verification.md) | Complete (2026-10-15) |
-| 6 | AI foundation | Not started |
-| 7 | Agent execution | Not started |
-| 8 | Integrations | Not started |
-| 9 | Notifications | Not started |
-| 10 | Audit and administration | Not started |
-| 11 | Billing | Not started |
-| 12 | Analytics | Not started |
-| 13 | Production hardening | Not started |
+| 6 | [AI foundation](phase-06-ai-foundation.md) | Complete (2026-10-20) |
+| 7 | [Agent execution](phase-07-agent-execution.md) | Complete (2026-10-20) |
+| 8 | [Integrations](phase-08-integrations.md) | Complete (2026-10-20) |
+| 9 | [Notifications](phase-09-notifications.md) | Complete (2026-10-20) |
+| 10 | [Audit and administration](phase-10-administration.md) | Complete (2026-10-20) |
+| 11 | [Billing](phase-11-billing.md) | Complete (2026-10-29) |
+| 12 | [Analytics](phase-12-analytics.md) | Complete (2026-10-29) |
+| 13 | [Production hardening](phase-13-production-hardening.md) | Complete (2026-11-10) |
