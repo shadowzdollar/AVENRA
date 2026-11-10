@@ -2,6 +2,7 @@
 
 import { Check, Eye, EyeOff, History, Lock, Mail, ShieldCheck, Smartphone } from "lucide-react";
 import { useId, useRef, useState, type ClipboardEvent, type InputHTMLAttributes, type KeyboardEvent } from "react";
+import { SiApple, SiGoogle } from "react-icons/si";
 import { INPUT_CLASS } from "@/components/ui";
 import { emailSuggestion, passwordChecks, strength } from "@/lib/password";
 
@@ -237,5 +238,51 @@ export function TrustRow() {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Social login and sign-up with Google and Apple. */
+export function SocialAuthButtons({ mode = "sign-in" }: { mode?: "sign-in" | "sign-up" }) {
+  const [busyProvider, setBusyProvider] = useState<"google" | "apple" | null>(null);
+
+  function handleOAuth(provider: "google" | "apple") {
+    setBusyProvider(provider);
+    // Direct OAuth entrypoint (redirects to OAuth flow or provider callback)
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.href = `/api/v1/auth/oauth/${provider}?mode=${mode}`;
+  }
+
+  const actionText = mode === "sign-up" ? "Sign up" : "Continue";
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => handleOAuth("google")}
+          disabled={busyProvider !== null}
+          className="inline-flex h-10 items-center justify-center gap-2.5 rounded-lg border border-border bg-background px-4 text-[13px] font-medium text-text-primary shadow-sm transition-colors hover:bg-canvas disabled:opacity-50"
+        >
+          <SiGoogle className="size-4 shrink-0 text-[#EA4335]" aria-hidden />
+          <span>{actionText} with Google</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleOAuth("apple")}
+          disabled={busyProvider !== null}
+          className="inline-flex h-10 items-center justify-center gap-2.5 rounded-lg border border-border bg-background px-4 text-[13px] font-medium text-text-primary shadow-sm transition-colors hover:bg-canvas disabled:opacity-50"
+        >
+          <SiApple className="size-4 shrink-0 text-current" aria-hidden />
+          <span>{actionText} with Apple</span>
+        </button>
+      </div>
+      <div className="relative my-2 flex items-center justify-center text-xs text-text-secondary">
+        <span className="w-full border-t border-border" />
+        <span className="bg-background px-3 text-[11px] font-medium uppercase tracking-wider text-text-secondary shrink-0">
+          or continue with email
+        </span>
+        <span className="w-full border-t border-border" />
+      </div>
+    </div>
   );
 }

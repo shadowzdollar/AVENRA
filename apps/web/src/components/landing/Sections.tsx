@@ -2,9 +2,25 @@
 
 import { useState } from "react";
 import {
-  ArrowRight, Sparkles, Send, CheckCircle2, AlertTriangle, ShieldCheck, Clock, MoreHorizontal,
-  Check, User, Building2, Landmark, UserPlus, FolderOpen, BarChart3, FileSearch, Target,
-  MousePointer2, Play,
+  AlertTriangle,
+  ArrowRight,
+  BarChart3,
+  Building2,
+  Check,
+  CheckCircle2,
+  Clock,
+  FileSearch,
+  FolderOpen,
+  Landmark,
+  MoreHorizontal,
+  MousePointer2,
+  Play,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  User,
+  UserPlus,
   type LucideIcon,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand";
@@ -325,7 +341,7 @@ export function IntegrationsOrbit() {
 const plans = [
   { icon: User, name: "Starter", desc: "For smaller teams beginning with a few workflows.", monthly: 49, features: ["Up to 3 active workflows", "Client onboarding & document collection", "Verification checks", "Evidence trail (90 days)", "5 integrations", "Email support"] },
   { icon: Building2, name: "Business", desc: "For firms running Avenra across projects and teams.", monthly: 129, featured: true, features: ["Unlimited workflows", "Exception routing & approvals", "Recurring reporting", "Full evidence history", "All standard integrations", "Role-based access", "Priority support"] },
-  { icon: Landmark, name: "Enterprise", desc: "For organizations needing governance and isolation.", monthly: null, features: ["Everything in Business", "Advanced governance controls", "SSO & SAML", "Custom integrations", "Dedicated isolation options", "Dedicated success manager"] },
+  { icon: Landmark, name: "Enterprise", desc: "For organizations needing governance and isolation.", monthly: null, features: ["Everything in Business", "Advanced governance controls", "Custom governance controls", "Custom integrations", "Dedicated isolation options", "Dedicated success manager"] },
 ];
 
 export function Pricing() {

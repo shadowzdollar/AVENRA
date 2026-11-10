@@ -88,8 +88,15 @@ function Billing({ id }: { id: string }) {
                     {amount(entitlement.limit, entitlement.used)} of {amount(entitlement.limit, entitlement.allowed)}
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-brand-surface" aria-hidden>
-                  <div className="h-1.5 rounded-full bg-brand" style={{ width: `${fullness(entitlement.used, entitlement.allowed)}%` }} />
+                <div className="mt-1 h-1.5 w-full rounded-full bg-brand-surface overflow-hidden" aria-hidden>
+                  <svg className="h-full w-full" aria-hidden="true">
+                    <rect
+                      height="100%"
+                      width={`${fullness(entitlement.used, entitlement.allowed)}%`}
+                      className="fill-brand"
+                      rx="3"
+                    />
+                  </svg>
                 </div>
               </li>
             ))}

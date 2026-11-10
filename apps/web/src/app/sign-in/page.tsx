@@ -4,7 +4,7 @@ import { LogIn, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
-import { CodeInput, EmailField, PasswordField, TrustRow } from "@/components/auth";
+import { CodeInput, EmailField, PasswordField, SocialAuthButtons, TrustRow } from "@/components/auth";
 import { Alert, AuthLayout, Button } from "@/components/ui";
 import { api, ApiError, unwrap } from "@/lib/api";
 import { safeNext } from "@/lib/session";
@@ -85,31 +85,34 @@ function SignInForm() {
 
   return (
     <AuthLayout icon={LogIn} title="Sign in to your workspace" subtitle="Enter your email and password to continue.">
-      <form onSubmit={signIn} className="flex flex-col gap-4">
-        {error ? (
-          <Alert tone="error">
-            {error.message}
-            {error.code === "EMAIL_NOT_VERIFIED" ? (
-              <>
-                {" "}
-                <Link className="font-medium underline" href={`/sign-up?resend=${encodeURIComponent(email)}`}>
-                  Send the confirmation again
-                </Link>
-              </>
-            ) : null}
-          </Alert>
-        ) : null}
-        <EmailField label="Email" autoComplete="email" required autoFocus value={email} onChange={setEmail} placeholder="you@firm.com" />
-        <div className="flex flex-col gap-1">
-          <PasswordField label="Password" autoComplete="current-password" required value={password} onChange={setPassword} />
-          <Link className="self-end text-[12px] font-medium text-brand hover:underline" href="/forgot-password">
-            Forgot password?
-          </Link>
-        </div>
-        <Button type="submit" busy={busy} className="h-10 w-full">
-          Sign in
-        </Button>
-      </form>
+      <div className="flex flex-col gap-4">
+        <SocialAuthButtons mode="sign-in" />
+        <form onSubmit={signIn} className="flex flex-col gap-4">
+          {error ? (
+            <Alert tone="error">
+              {error.message}
+              {error.code === "EMAIL_NOT_VERIFIED" ? (
+                <>
+                  {" "}
+                  <Link className="font-medium underline" href={`/sign-up?resend=${encodeURIComponent(email)}`}>
+                    Send the confirmation again
+                  </Link>
+                </>
+              ) : null}
+            </Alert>
+          ) : null}
+          <EmailField label="Email" autoComplete="email" required autoFocus value={email} onChange={setEmail} placeholder="you@firm.com" />
+          <div className="flex flex-col gap-1">
+            <PasswordField label="Password" autoComplete="current-password" required value={password} onChange={setPassword} />
+            <Link className="self-end text-[12px] font-medium text-brand hover:underline" href="/forgot-password">
+              Forgot password?
+            </Link>
+          </div>
+          <Button type="submit" busy={busy} className="h-10 w-full">
+            Sign in
+          </Button>
+        </form>
+      </div>
       <p className="mt-6 text-center text-[13px] text-text-secondary">
         New to Avenra?{" "}
         <Link className="font-medium text-brand hover:underline" href="/sign-up">

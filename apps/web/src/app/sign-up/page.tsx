@@ -4,7 +4,7 @@ import { Inbox, MailCheck, User, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, useSyncExternalStore, type FormEvent } from "react";
-import { EmailField, PasswordField, PasswordGuidance, TrustRow } from "@/components/auth";
+import { EmailField, PasswordField, PasswordGuidance, SocialAuthButtons, TrustRow } from "@/components/auth";
 import { Alert, AuthLayout, Button, Field } from "@/components/ui";
 import { api, ApiError, unwrap } from "@/lib/api";
 
@@ -128,7 +128,9 @@ function SignUpForm() {
       title={resend ? "Send the confirmation again" : "Create your account"}
       subtitle={resend ? "We will send a new confirmation link." : "Set up Avenra for your firm in a few minutes. Your organization comes next."}
     >
-      <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
+        {!resend ? <SocialAuthButtons mode="sign-up" /> : null}
+        <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
         {error && !error.fieldProblem("password") ? <Alert tone="error">{error.message}</Alert> : null}
         {resend ? null : <Field label="Name" icon={User} autoComplete="name" required maxLength={100} placeholder="Jane Mugisha" value={name} onChange={(e) => setName(e.target.value)} />}
         <EmailField label="Work email" autoComplete="email" required value={email} onChange={setEmail} placeholder="you@firm.com" />
@@ -151,6 +153,7 @@ function SignUpForm() {
           {resend ? "Send confirmation" : "Create account"}
         </Button>
       </form>
+      </div>
       <p className="mt-6 text-center text-[13px] text-text-secondary">
         Already have an account?{" "}
         <Link className="font-medium text-brand hover:underline" href="/sign-in">
