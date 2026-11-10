@@ -47,7 +47,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
 
   seaweedfs:
-    image: chrislusf/seaweedfs:4.48
+    image: chrislusf/seaweedfs:4.52
     environment:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:?set in .env}
       S3_SECRET_KEY: ${S3_SECRET_KEY:?set in .env}
@@ -70,7 +70,7 @@ services:
       retries: 30
 
   seaweedfs-init:
-    image: chrislusf/seaweedfs:4.48
+    image: chrislusf/seaweedfs:4.52
     depends_on:
       seaweedfs:
         condition: service_healthy
