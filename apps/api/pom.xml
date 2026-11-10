@@ -38,7 +38,7 @@
         <archunit.version>1.5.1</archunit.version>
         <spotless-maven-plugin.version>3.10.4</spotless-maven-plugin.version>
         <palantir-java-format.version>2.102.0</palantir-java-format.version>
-        <openapi-generator.version>7.26.0</openapi-generator.version>
+        <openapi-generator.version>7.27.0</openapi-generator.version>
         <datasource-micrometer.version>2.3.0</datasource-micrometer.version>
         <bouncycastle.version>1.86</bouncycastle.version>
         <!-- S3 client for document storage (ADR-019). -->
