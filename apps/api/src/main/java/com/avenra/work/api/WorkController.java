@@ -75,6 +75,12 @@ class WorkController implements WorkApi {
     }
 
     @Override
+    public ResponseEntity<List<com.avenra.contract.v1.model.Evidence>> listOrganizationEvidence(
+            UUID organizationId, @Nullable String kind) {
+        return ResponseEntity.ok(work.organizationEvidence(userId(), organizationId, kind));
+    }
+
+    @Override
     public ResponseEntity<com.avenra.contract.v1.model.CompletionManifest> getCompletion(
             UUID organizationId, UUID workId) {
         return ResponseEntity.ok(work.completion(userId(), organizationId, workId));
@@ -87,11 +93,16 @@ class WorkController implements WorkApi {
 
     @Override
     public ResponseEntity<List<WorkSummary>> listWork(
-            UUID organizationId, @Nullable UUID projectId, @Nullable UUID clientId, @Nullable WorkStatus status) {
+            UUID organizationId,
+            @Nullable UUID projectId,
+            @Nullable UUID clientId,
+            @Nullable WorkStatus status,
+            @Nullable String q) {
         var filter = new WorkFilter(
                 projectId,
                 clientId,
-                status == null ? null : com.avenra.work.domain.WorkStatus.valueOf(status.getValue()));
+                status == null ? null : com.avenra.work.domain.WorkStatus.valueOf(status.getValue()),
+                q == null || q.isBlank() ? null : q.strip());
         return ResponseEntity.ok(work.list(userId(), organizationId, filter));
     }
 

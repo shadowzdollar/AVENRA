@@ -18,12 +18,14 @@ test("the assistant proposes, people approve, the gateway decides", async ({ pag
   await page.getByLabel("Name").fill("Planned Advisors");
   await page.getByRole("button", { name: "Create" }).click();
   await page.getByRole("link", { name: /Planned Advisors/ }).click();
+  await page.getByRole("link", { name: "Settings" }).click();
 
   await expect(page.getByTestId("planning-status")).toHaveText("Planning is off.");
   await page.getByRole("button", { name: "Switch planning on" }).click();
   await expect(page.getByTestId("planning-status")).toHaveText("Planning is on.");
 
   await page.getByRole("link", { name: "Work", exact: true }).click();
+  await page.getByRole("link", { name: "New work" }).first().click();
   await page.getByLabel("Title").fill("Onboarding Jane Doe");
   await page.getByRole("button", { name: "Create" }).click();
   await expect(page.getByRole("heading", { name: "Onboarding Jane Doe" })).toBeVisible();

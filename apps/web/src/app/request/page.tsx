@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useSyncExternalStore, type FormEvent } from "react";
 import type { components } from "@avenra/contracts";
+import { BrandLogo } from "@/components/brand";
 import { Alert, Button } from "@/components/ui";
 import { api, ApiError, unwrap } from "@/lib/api";
 import { readRequestToken } from "@/lib/request-token";
@@ -33,16 +34,16 @@ export default function RequestPage() {
   const token = useSyncExternalStore(noSubscription, tokenSnapshot, () => undefined);
 
   return (
-    <main className="mx-auto min-h-dvh max-w-2xl px-4 py-10">
-      <div className="mb-8 flex items-center gap-2">
-        {/* eslint-disable-next-line @next/next/no-img-element -- the CSP blocks next/image's inline style */}
-        <img src="/avenra-symbol.png" alt="" width={28} height={28} />
-        <span className="text-base font-semibold tracking-tight">Avenra</span>
-      </div>
-      {token === undefined ? <p className="text-sm text-text-secondary">Loading…</p> : null}
-      {token === null ? <Alert tone="error">This link is incomplete. Open it again from the email you received.</Alert> : null}
-      {token ? <Request token={token} /> : null}
-    </main>
+    <div className="min-h-dvh bg-auth-wash p-4 md:p-8">
+      <main className="mx-auto max-w-2xl rounded-3xl bg-background p-6 shadow-float md:p-10">
+        <div className="mb-8">
+          <BrandLogo />
+        </div>
+        {token === undefined ? <p className="text-[13px] text-text-secondary">Loading…</p> : null}
+        {token === null ? <Alert tone="error">This link is incomplete. Open it again from the email you received.</Alert> : null}
+        {token ? <Request token={token} /> : null}
+      </main>
+    </div>
   );
 }
 
@@ -69,7 +70,7 @@ function Request({ token }: { token: string }) {
         <p className="mt-2 text-sm text-text-secondary">
           For “{data.workTitle}”. Sent to {data.recipient}. This link works until {new Date(data.expiresAt).toLocaleDateString()}.
         </p>
-        {data.message ? <p className="mt-4 rounded-md border border-border px-3 py-2 text-sm">{data.message}</p> : null}
+        {data.message ? <p className="mt-4 rounded-xl border-l-2 border-brand bg-brand-surface px-3 py-2 text-[13px]">{data.message}</p> : null}
       </div>
       {remaining === 0 ? (
         <Alert tone="success">Thank you — everything requested has been sent. You can close this page.</Alert>

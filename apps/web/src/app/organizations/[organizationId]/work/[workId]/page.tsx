@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import type { components } from "@avenra/contracts";
-import { AppShell } from "@/components/app-shell";
-import { Alert, Button, Card, Field } from "@/components/ui";
+import { ArrowLeft, CheckCircle2, Circle, CircleDashed } from "lucide-react";
+import { Alert, Button, Card, Field, Panel, Pill } from "@/components/ui";
 import { AgentRuns } from "@/components/agent-run";
 import { useAiSettings } from "@/components/ai-settings";
 import { ChecksView } from "@/components/checks-view";
@@ -15,6 +15,7 @@ import { ExceptionRow } from "@/components/exception-row";
 import { cleanRule, RuleEditor } from "@/components/rule-editor";
 import { ValueInput } from "@/components/value-input";
 import { api, idempotencyKey, unwrap } from "@/lib/api";
+import { usePermissions } from "@/lib/permissions";
 import {
   completenessSummary,
   errorText,
@@ -22,9 +23,12 @@ import {
   formatBytes,
   KIND_LABELS,
   needsReason,
+  STAGES,
+  stageIndex,
   stateLabel,
   stateTone,
   statusLabel,
+  statusTone,
   type RequirementKind,
   type WorkStatus,
 } from "@/lib/work";
@@ -36,18 +40,7 @@ type Acceptance = components["schemas"]["Acceptance"];
 type Risk = components["schemas"]["Risk"];
 type Ids = { organizationId: string; workId: string };
 
-const SELECT = "h-9 rounded-md border border-border bg-background px-2 text-sm";
-const LINK_VALIDITY_DAYS = 14;
-
-function usePermissions(organizationId: string): Set<string> {
-  const session = useQuery({
-    queryKey: ["auth", "session"],
-    queryFn: async () => unwrap(await api.GET("/api/v1/auth/session")),
-  });
-  return new Set(
-    session.data?.organizations.find((membership) => membership.organization.id === organizationId)?.permissions ?? [],
-  );
-}
+const SELECT = "h-9 rounded-lg border border-border bg-background px-2 text-[13px]";
 
 function useRefresh({ organizationId, workId }: Ids) {
   const queries = useQueryClient();
@@ -676,6 +669,12 @@ function RequestLinks({ ids, work, closed }: { ids: Ids; work: WorkDetail; close
     queryKey: key,
     queryFn: async () => unwrap(await api.GET("/api/v1/organizations/{organizationId}/work/{workId}/request-links", { params: { path: ids } })),
   });
+  // Links last as long as the organization decided, unless a request says otherwise (ADR-036).
+  const organization = useQuery({
+    queryKey: ["organization", ids.organizationId],
+    queryFn: async () => unwrap(await api.GET("/api/v1/organizations/{organizationId}", { params: { path: { organizationId: ids.organizationId } } })),
+  });
+  const validityDays = organization.data?.requestLinkDays;
   const open = work.requirements.filter((requirement) => requirement.state !== "ACCEPTED");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -689,7 +688,6 @@ function RequestLinks({ ids, work, closed }: { ids: Ids; work: WorkDetail; close
           body: {
             recipientEmail: email,
             requirementIds: [...selected],
-            expiresInDays: LINK_VALIDITY_DAYS,
             ...(message ? { message } : {}),
           },
         }),
@@ -767,7 +765,7 @@ function RequestLinks({ ids, work, closed }: { ids: Ids; work: WorkDetail; close
               Send request
             </Button>
           </div>
-          <p className="text-sm text-text-secondary">The client gets a secure link by email. It needs no account and expires in {LINK_VALIDITY_DAYS} days.</p>
+          <p className="text-sm text-text-secondary">The client gets a secure link by email. It needs no account and expires in {validityDays ?? "a few"} days.</p>
         </form>
       ) : null}
       {errorText(create.error ?? revoke.error) ? (
@@ -932,63 +930,100 @@ function Work({ ids }: { ids: Ids }) {
   const data = work.data;
   const closed = data.allowedTransitions.length === 0;
 
+  const stage = stageIndex(data.status);
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <Link href={`/organizations/${ids.organizationId}/work`} className="text-sm text-text-secondary hover:text-text-primary">
-          ← All work
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">{data.title}</h1>
-        {data.description ? <p className="mt-1 text-sm text-text-secondary">{data.description}</p> : null}
+    <div className="space-y-5">
+      <Link href={`/organizations/${ids.organizationId}/work`} className="inline-flex items-center gap-1.5 text-[13px] text-text-secondary hover:text-text-primary">
+        <ArrowLeft className="size-4" />
+        All work
+      </Link>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 text-[12px] text-text-secondary">
+            {data.type ? <span>{data.type}</span> : null}
+            <span>· {data.priority.toLowerCase()} priority</span>
+            <Pill tone={statusTone(data.status)}>{statusLabel(data.status)}</Pill>
+          </div>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{data.title}</h1>
+          {data.description ? <p className="mt-1 max-w-3xl text-[13px] text-text-secondary">{data.description}</p> : null}
+        </div>
       </div>
-      <Lifecycle
-        ids={ids}
-        work={data}
-        canUpdate={permissions.has("work.update")}
-        owner={members.data?.find((member) => member.membershipId === data.ownerMembershipId)?.displayName}
-      />
-      <Exceptions ids={ids} canUpdate={permissions.has("work.update")} />
-      {!closed ? (
-        <AgentRuns
-          ids={ids}
-          canStart={permissions.has("work.update")}
-          canApprove={permissions.has("work.approve")}
-          planningEnabled={aiSettings.data?.workPlanning ?? false}
-        />
-      ) : null}
-      <Card title="What is required">
-        {data.requirements.length === 0 ? <p className="text-sm text-text-secondary">Nothing is required yet.</p> : null}
-        <ul className="divide-y divide-border">
-          {data.requirements.map((requirement) => (
-            <RequirementRow
-              key={requirement.id}
+
+      <Panel>
+        <div className="flex items-center justify-between text-[13px]">
+          <span className="font-medium">Progress to a verified result</span>
+          <span className="text-text-secondary">{completenessSummary(data.completeness).text}</span>
+        </div>
+        <ol className="mt-4 grid grid-cols-5 gap-2" aria-label="Stages">
+          {STAGES.map((name, index) => {
+            const done = index < stage || data.status === "COMPLETED";
+            const current = index === stage && data.status !== "COMPLETED";
+            return (
+              <li key={name} className="flex flex-col items-center gap-1 text-center text-[11px]" aria-current={current ? "step" : undefined}>
+                {done ? (
+                  <CheckCircle2 className="size-4 text-success" />
+                ) : current ? (
+                  <CircleDashed className={`size-4 ${data.status === "BLOCKED" || data.status === "FAILED" ? "text-warning" : "text-brand"}`} />
+                ) : (
+                  <Circle className="size-4 text-border" />
+                )}
+                <span className={current ? "font-medium text-text-primary" : "text-text-secondary"}>{name}</span>
+              </li>
+            );
+          })}
+        </ol>
+      </Panel>
+
+      <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
+        <div className="min-w-0 space-y-5">
+          <Card title="What is required">
+            {data.requirements.length === 0 ? <p className="text-[13px] text-text-secondary">Nothing is required yet.</p> : null}
+            <ul className="divide-y divide-border">
+              {data.requirements.map((requirement) => (
+                <RequirementRow
+                  key={requirement.id}
+                  ids={ids}
+                  requirement={requirement}
+                  closed={closed}
+                  permissions={permissions}
+                  others={data.requirements.filter((other) => other.id !== requirement.id).map((other) => ({ id: other.id, title: other.title, kind: other.kind }))}
+                />
+              ))}
+            </ul>
+            {permissions.has("work.update") && !closed ? (
+              <AddRequirement ids={ids} others={data.requirements.map((other) => ({ id: other.id, title: other.title, kind: other.kind }))} />
+            ) : null}
+          </Card>
+          {permissions.has("information.collect") ? <RequestLinks ids={ids} work={data} closed={closed} /> : null}
+          <Tasks ids={ids} work={data} permissions={permissions} closed={closed} />
+          {data.status === "COMPLETED" ? <CompletionProof ids={ids} /> : null}
+          <EvidenceList ids={ids} />
+        </div>
+        <div className="min-w-0 space-y-5">
+          <Lifecycle
+            ids={ids}
+            work={data}
+            canUpdate={permissions.has("work.update")}
+            owner={members.data?.find((member) => member.membershipId === data.ownerMembershipId)?.displayName}
+          />
+          <Exceptions ids={ids} canUpdate={permissions.has("work.update")} />
+          {!closed ? (
+            <AgentRuns
               ids={ids}
-              requirement={requirement}
-              closed={closed}
-              permissions={permissions}
-              others={data.requirements.filter((other) => other.id !== requirement.id).map((other) => ({ id: other.id, title: other.title, kind: other.kind }))}
+              canStart={permissions.has("work.update")}
+              canApprove={permissions.has("work.approve")}
+              planningEnabled={aiSettings.data?.workPlanning ?? false}
             />
-          ))}
-        </ul>
-        {permissions.has("work.update") && !closed ? (
-          <AddRequirement ids={ids} others={data.requirements.map((other) => ({ id: other.id, title: other.title, kind: other.kind }))} />
-        ) : null}
-      </Card>
-      {permissions.has("information.collect") ? <RequestLinks ids={ids} work={data} closed={closed} /> : null}
-      <Tasks ids={ids} work={data} permissions={permissions} closed={closed} />
-      {data.status === "COMPLETED" ? <CompletionProof ids={ids} /> : null}
-      <EvidenceList ids={ids} />
-      <Executions ids={ids} />
-      <History ids={ids} />
+          ) : null}
+          <Executions ids={ids} />
+          <History ids={ids} />
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function WorkDetailPage() {
   const { organizationId, workId } = useParams<{ organizationId: string; workId: string }>();
-  return (
-    <AppShell>
-      <Work ids={{ organizationId, workId }} />
-    </AppShell>
-  );
+  return <Work ids={{ organizationId, workId }} />;
 }

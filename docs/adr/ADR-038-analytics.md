@@ -1,6 +1,6 @@
 # ADR-038: Analytics
 
-**Status:** Accepted
+**Status:** Accepted; amended by ADR-039 (no cache)
 
 ## Context
 

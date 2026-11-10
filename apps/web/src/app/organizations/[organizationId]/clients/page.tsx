@@ -1,11 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { AppShell } from "@/components/app-shell";
-import { Alert, Button, Card, Field } from "@/components/ui";
+import { Alert, Button, Card, Field, PageHeader } from "@/components/ui";
 import { api, idempotencyKey, unwrap } from "@/lib/api";
 import { errorText } from "@/lib/work";
 
@@ -58,13 +56,8 @@ function Clients({ organizationId }: { organizationId: string }) {
   const clientName = (id: string | undefined) => clients.data?.find((client) => client.id === id)?.name;
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Clients and projects</h1>
-        <Link href={`/organizations/${organizationId}/work`} className="text-sm text-brand hover:underline">
-          Work →
-        </Link>
-      </div>
+    <div className="space-y-5">
+      <PageHeader title="Clients and projects" subtitle="Who the work is for, and the projects it belongs to." />
 
       <Card title="Clients">
         {clients.error ? <Alert tone="error">{errorText(clients.error)}</Alert> : null}
@@ -156,8 +149,8 @@ function Clients({ organizationId }: { organizationId: string }) {
 export default function ClientsPage() {
   const { organizationId } = useParams<{ organizationId: string }>();
   return (
-    <AppShell>
+    <>
       <Clients organizationId={organizationId} />
-    </AppShell>
+    </>
   );
 }

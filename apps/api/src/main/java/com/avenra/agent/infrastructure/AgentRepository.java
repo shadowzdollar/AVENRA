@@ -147,6 +147,16 @@ public class AgentRepository {
                 .list();
     }
 
+    public List<RunRow> runsOfOrganization(UUID organizationId, @org.jspecify.annotations.Nullable String status) {
+        return jdbc.sql("select " + RUN_COLUMNS + " from agent_runs where organization_id = :org"
+                        + " and (cast(:status as text) is null or status = :status)"
+                        + " order by created_at desc, id limit 100")
+                .param("org", organizationId)
+                .param("status", status)
+                .query(AgentRepository::run)
+                .list();
+    }
+
     public void insertStep(StepRow step, OffsetDateTime now) {
         jdbc.sql("""
                         insert into agent_steps (id, organization_id, run_id, position, tool, risk, input, reason,

@@ -116,7 +116,7 @@ export function AgentRuns({
   );
 }
 
-function RunView({
+export function RunView({
   ids,
   run,
   canApprove,

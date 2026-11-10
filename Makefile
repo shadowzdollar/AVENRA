@@ -28,6 +28,10 @@ setup: .env js-install ## Prepare a fresh clone for local development
 dev: .env ## Start infrastructure, API, web and AI service together (Ctrl-C stops the apps)
 	scripts/dev.sh
 
+.PHONY: demo-data
+demo-data: ## Local only: a demo account (printed at the end) with clients and work, through the API
+	python3 scripts/demo-data.py
+
 .PHONY: check
 check: contract-check api-verify web-check ai-check ## Run every check CI runs on the code (not images)
 

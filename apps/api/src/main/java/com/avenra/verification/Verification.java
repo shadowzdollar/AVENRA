@@ -61,6 +61,7 @@ public class Verification {
 
     public record EvidenceView(
             UUID id,
+            UUID workId,
             @Nullable UUID requirementId,
             String kind,
             String referenceType,
@@ -222,16 +223,29 @@ public class Verification {
     @Transactional(propagation = Propagation.MANDATORY)
     public List<EvidenceView> evidence(UUID organizationId, UUID workId) {
         return store.evidence(organizationId, workId).stream()
-                .map(row -> new EvidenceView(
-                        row.id(),
-                        row.requirementId(),
-                        row.kind(),
-                        row.referenceType(),
-                        row.referenceId(),
-                        row.description(),
-                        row.fingerprint(),
-                        row.createdAt()))
+                .map(Verification::view)
                 .toList();
+    }
+
+    /** The organization's newest evidence across all work, optionally of one kind (ADR-039). */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public List<EvidenceView> organizationEvidence(UUID organizationId, @Nullable String kind) {
+        return store.organizationEvidence(organizationId, kind).stream()
+                .map(Verification::view)
+                .toList();
+    }
+
+    private static EvidenceView view(VerificationStore.EvidenceRow row) {
+        return new EvidenceView(
+                row.id(),
+                row.workId(),
+                row.requirementId(),
+                row.kind(),
+                row.referenceType(),
+                row.referenceId(),
+                row.description(),
+                row.fingerprint(),
+                row.createdAt());
     }
 
     /** Stores the completion manifest as canonical JSON with its SHA-256 (ADR-028). */

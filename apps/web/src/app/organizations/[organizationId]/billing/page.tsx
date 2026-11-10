@@ -1,12 +1,10 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import type { components } from "@avenra/contracts";
-import { AppShell } from "@/components/app-shell";
-import { Alert, Button, Card } from "@/components/ui";
+import { Alert, Button, Card, PageHeader } from "@/components/ui";
 import { api, ApiError, idempotencyKey, unwrap } from "@/lib/api";
 import { amount, fullness, standingText } from "@/lib/billing";
 
@@ -55,15 +53,8 @@ function Billing({ id }: { id: string }) {
   const subscription = billing.data?.subscription;
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-baseline justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Billing</h1>
-        <nav className="flex gap-4 text-sm">
-          <Link href={`/organizations/${id}`} className="text-brand hover:underline">
-            Organization
-          </Link>
-        </nav>
-      </div>
+    <div className="space-y-5">
+      <PageHeader title="Billing" subtitle="Your plan, how much of it you use, and your subscription." />
       {billing.error ? <Alert tone="error">{errorText(billing.error)}</Alert> : null}
       {checkout.error ?? cancel.error ? <Alert tone="error">{errorText(checkout.error ?? cancel.error)}</Alert> : null}
       {returned && subscription && subscription.status !== "ACTIVE" ? <Alert tone="info">Confirming your payment…</Alert> : null}
@@ -97,8 +88,15 @@ function Billing({ id }: { id: string }) {
                     {amount(entitlement.limit, entitlement.used)} of {amount(entitlement.limit, entitlement.allowed)}
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-brand-surface" aria-hidden>
-                  <div className="h-1.5 rounded-full bg-brand" style={{ width: `${fullness(entitlement.used, entitlement.allowed)}%` }} />
+                <div className="mt-1 h-1.5 w-full rounded-full bg-brand-surface overflow-hidden" aria-hidden>
+                  <svg className="h-full w-full" aria-hidden="true">
+                    <rect
+                      height="100%"
+                      width={`${fullness(entitlement.used, entitlement.allowed)}%`}
+                      className="fill-brand"
+                      rx="3"
+                    />
+                  </svg>
                 </div>
               </li>
             ))}
@@ -142,10 +140,10 @@ function BillingRoute() {
 
 export default function BillingPage() {
   return (
-    <AppShell>
+    <>
       <Suspense>
         <BillingRoute />
       </Suspense>
-    </AppShell>
+    </>
   );
 }

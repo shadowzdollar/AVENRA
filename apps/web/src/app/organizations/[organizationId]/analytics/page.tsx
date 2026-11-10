@@ -1,13 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import type { components } from "@avenra/contracts";
-import { AppShell } from "@/components/app-shell";
 import { BarChart } from "@/components/bar-chart";
-import { Alert, Card } from "@/components/ui";
+import { Alert, Card, PageHeader } from "@/components/ui";
 import { change, formatValue } from "@/lib/analytics";
 import { api, ApiError, unwrap } from "@/lib/api";
 
@@ -64,10 +62,12 @@ function Analytics({ id }: { id: string }) {
   const usage = report.data?.series.filter((series) => series.key.startsWith("usage.")) ?? [];
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-baseline justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-        <div className="flex items-center gap-4 text-sm">
+    <div className="space-y-5">
+      <PageHeader
+        title="Analytics"
+        subtitle="Is work finishing faster, with fewer interventions and quicker answers?"
+        actions={
+        <div className="flex items-center gap-3 text-[13px]">
           <label htmlFor="analytics-period" className="text-text-secondary">
             Period
           </label>
@@ -75,17 +75,15 @@ function Analytics({ id }: { id: string }) {
             id="analytics-period"
             value={days}
             onChange={(event) => setDays(Number(event.target.value) as Days)}
-            className="h-9 rounded-md border border-border bg-background px-2"
+            className="h-9 rounded-lg border border-border bg-background px-2"
           >
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>
             <option value={90}>Last 90 days</option>
           </select>
-          <Link href={`/organizations/${id}`} className="text-brand hover:underline">
-            Organization
-          </Link>
         </div>
-      </div>
+        }
+      />
       {report.error ? <Alert tone="error">{errorText(report.error)}</Alert> : null}
 
       {report.data ? (
@@ -151,8 +149,8 @@ function Analytics({ id }: { id: string }) {
 export default function AnalyticsPage() {
   const { organizationId } = useParams<{ organizationId: string }>();
   return (
-    <AppShell>
+    <>
       <Analytics id={organizationId} />
-    </AppShell>
+    </>
   );
 }

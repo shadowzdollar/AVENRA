@@ -94,9 +94,7 @@ class FollowUps {
     @Bean
     JobHandler reminderHandler(
             RequestLinkRepository links,
-            RequirementRepository requirements,
             WorkGate work,
-            InformationViews views,
             RequestLinkService linkService,
             OrganizationAccess organizations,
             SecretBox box,
@@ -120,18 +118,7 @@ class FollowUps {
             if (target == null || target.finished()) {
                 return;
             }
-            var covered = links.requirementIds(List.of(linkId)).getOrDefault(linkId, List.of());
-            var rows = requirements.byIds(covered);
-            var loaded = views.load(rows);
-            List<String> outstanding = rows.stream()
-                    .filter(row -> row.required())
-                    .filter(row -> {
-                        var state = loaded.state(row);
-                        return state == Completeness.RequirementState.MISSING
-                                || state == Completeness.RequirementState.REJECTED;
-                    })
-                    .map(RequirementRepository.RequirementRow::title)
-                    .toList();
+            List<String> outstanding = linkService.outstanding(linkId);
             if (outstanding.isEmpty()) {
                 return; // everything asked for has been answered
             }

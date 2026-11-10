@@ -30,11 +30,12 @@ test("define work, collect from a client through a link, review to complete", as
   await team.getByRole("link", { name: /Northwind Advisors/ }).click();
 
   // A client, then work for that client.
-  await team.getByRole("link", { name: "Clients and projects" }).click();
+  await team.getByRole("link", { name: "Clients", exact: true }).click();
   await team.getByLabel("Client name").fill("Acme Ltd");
   await team.getByRole("button", { name: "Add client" }).click();
   await expect(team.getByRole("listitem").getByText("Acme Ltd")).toBeVisible();
-  await team.getByRole("link", { name: "Work →" }).click();
+  await team.getByRole("link", { name: "Work", exact: true }).click();
+  await team.getByRole("link", { name: "New work" }).first().click();
   await team.getByLabel("Title").fill("Onboarding Acme");
   await team.getByLabel("Client").selectOption({ label: "Acme Ltd" });
   await team.getByRole("button", { name: "Create" }).click();

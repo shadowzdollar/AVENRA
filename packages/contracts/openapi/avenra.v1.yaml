@@ -1118,6 +1118,13 @@ paths:
         required: false
         schema:
           $ref: '#/components/schemas/WorkStatus'
+      - name: q
+        in: query
+        required: false
+        description: Only work whose title contains this (case-insensitive).
+        schema:
+          type: string
+          maxLength: 200
       responses:
         '200':
           description: Work with its completeness, most recently updated first (at most 200).
@@ -3038,6 +3045,147 @@ paths:
           $ref: '#/components/responses/ClientError'
         5XX:
           $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/request-links:
+    get:
+      operationId: listOrganizationRequestLinks
+      summary: Requests sent to clients, across all work
+      tags:
+      - requests
+      x-avenra-permission: information.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - EXPIRED
+          - REVOKED
+      responses:
+        '200':
+          description: Newest first, at most 200.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RequestLink'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/work/{workId}/request-links/{requestLinkId}/reminders:
+    post:
+      operationId: remindRequestLink
+      summary: Remind the recipient now
+      tags:
+      - requests
+      x-avenra-permission: information.collect
+      x-avenra-audit: required
+      x-avenra-idempotency: idempotent
+      x-avenra-rate-limit: request-links
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/WorkId'
+      - $ref: '#/components/parameters/RequestLinkId'
+      description: Only for active links with items still missing (`REQUEST_LINK_INACTIVE`, `NOTHING_TO_REMIND`),
+        and at most once an hour (`REMINDER_TOO_SOON`). Uses the same job as the scheduled reminders,
+        so a reminder is never sent twice.
+      responses:
+        '202':
+          description: The reminder is queued; it counts as one of the reminders the request gets.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestLink'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/agent-runs:
+    get:
+      operationId: listOrganizationAgentRuns
+      summary: Assistant runs across all work
+      tags:
+      - agents
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/AgentRunStatus'
+      responses:
+        '200':
+          description: Newest first, at most 100. With `status=AWAITING_APPROVAL` this is the approvals
+            inbox.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentRun'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
+  /api/v1/organizations/{organizationId}/evidence:
+    get:
+      operationId: listOrganizationEvidence
+      summary: Evidence across all work
+      tags:
+      - work
+      x-avenra-permission: work.read
+      x-avenra-audit: none
+      x-avenra-idempotency: safe
+      x-avenra-rate-limit: default
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - name: kind
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - ANSWER
+          - DOCUMENT_VERSION
+          - VERIFICATION
+          - HUMAN_DECISION
+          - SYSTEM_DECISION
+      responses:
+        '200':
+          description: Newest first, at most 200.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Evidence'
+        4XX:
+          $ref: '#/components/responses/ClientError'
+        5XX:
+          $ref: '#/components/responses/ServerError'
 components:
   headers:
     RequestId:
@@ -4255,6 +4403,7 @@ components:
       - createdAt
       - expiresAt
       - remindersSent
+      - workId
       properties:
         id:
           type: string
@@ -4298,6 +4447,16 @@ components:
         lastRemindedAt:
           type: string
           format: date-time
+        workId:
+          type: string
+          format: uuid
+        workTitle:
+          type: string
+          description: In organization-wide lists.
+        answeredCount:
+          type: integer
+          minimum: 0
+          description: Requested items the recipient has answered through this link.
     ClientRequest:
       type: object
       additionalProperties: false
@@ -4975,6 +5134,12 @@ components:
         createdAt:
           type: string
           format: date-time
+        workId:
+          type: string
+          format: uuid
+        workTitle:
+          type: string
+          description: In organization-wide lists.
     CompletionManifest:
       type: object
       additionalProperties: false
@@ -5441,6 +5606,9 @@ components:
         finishedAt:
           type: string
           format: date-time
+        workTitle:
+          type: string
+          description: In organization-wide lists.
     AgentApprovalRequest:
       type: object
       additionalProperties: false

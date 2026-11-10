@@ -28,6 +28,14 @@ class AgentController implements AgentsApi {
     }
 
     @Override
+    public ResponseEntity<List<AgentRun>> listOrganizationAgentRuns(
+            UUID organizationId,
+            com.avenra.contract.v1.model.@org.jspecify.annotations.Nullable AgentRunStatus status) {
+        return ResponseEntity.ok(
+                agents.organizationRuns(userId(), organizationId, status == null ? null : status.getValue()));
+    }
+
+    @Override
     public ResponseEntity<AgentRun> startAgentRun(UUID organizationId, UUID workId, String idempotencyKey) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(agents.start(userId(), organizationId, workId, idempotencyKey));

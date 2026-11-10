@@ -246,7 +246,8 @@ public class InformationViews {
                         status,
                         utc(row.createdAt()),
                         utc(row.expiresAt()),
-                        row.remindersSent())
+                        row.remindersSent(),
+                        row.workId())
                 .lastRemindedAt(utcOrNull(row.lastRemindedAt()))
                 .recipientName(row.recipientName())
                 .message(row.message())

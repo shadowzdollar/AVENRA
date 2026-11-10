@@ -1,12 +1,10 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import type { components } from "@avenra/contracts";
-import { AppShell } from "@/components/app-shell";
-import { Alert, Button, Card, Field } from "@/components/ui";
+import { Alert, Button, Card, Field, PageHeader } from "@/components/ui";
 import { api, ApiError, idempotencyKey, unwrap } from "@/lib/api";
 import { destination, EVENT_LABELS, PROVIDER_LABELS, statusText } from "@/lib/integrations";
 
@@ -253,16 +251,8 @@ function Integrations({ organizationId }: { organizationId: string }) {
     queryFn: async () => unwrap(await api.GET("/api/v1/organizations/{organizationId}/integrations", { params: { path: { organizationId } } })),
   });
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <Link href={`/organizations/${organizationId}`} className="text-sm text-text-secondary hover:text-text-primary">
-          ← Organization
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">Integrations</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          Tell other systems when things happen, and file the proof of completed work where you keep records.
-        </p>
-      </div>
+    <div className="space-y-5">
+      <PageHeader title="Integrations" subtitle="Tell other systems when things happen, and file the proof of completed work where you keep records." />
       {connections.error ? <Alert tone="error">{errorText(connections.error)}</Alert> : null}
       {secret ? <SecretOnce secret={secret} /> : null}
       <Card title="Connections">
@@ -291,8 +281,8 @@ function Integrations({ organizationId }: { organizationId: string }) {
 export default function IntegrationsPage() {
   const { organizationId } = useParams<{ organizationId: string }>();
   return (
-    <AppShell>
+    <>
       <Integrations organizationId={organizationId} />
-    </AppShell>
+    </>
   );
 }

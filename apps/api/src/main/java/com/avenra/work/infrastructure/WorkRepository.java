@@ -141,6 +141,20 @@ public class WorkRepository {
                 .optional();
     }
 
+    /** Titles of the organization's work, by id; unknown ids are left out. */
+    public java.util.Map<UUID, String> titles(UUID organizationId, java.util.Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            return java.util.Map.of();
+        }
+        var titles = new java.util.HashMap<UUID, String>();
+        jdbc.sql("select id, title from work where organization_id = :org and id in (:ids)")
+                .param("org", organizationId)
+                .param("ids", java.util.List.copyOf(ids))
+                .query((rs, row) -> titles.put(rs.getObject("id", UUID.class), rs.getString("title")))
+                .list();
+        return titles;
+    }
+
     public List<WorkRow> list(UUID organizationId, WorkFilter filter) {
         return jdbc.sql("select " + WORK + """
                          from work
@@ -148,6 +162,7 @@ public class WorkRepository {
                           and (cast(:project as uuid) is null or project_id = :project)
                           and (cast(:client as uuid) is null or client_id = :client)
                           and (cast(:status as text) is null or status = :status)
+                          and (cast(:q as text) is null or position(lower(:q) in lower(title)) > 0)
                         order by updated_at desc, id
                         limit :limit
                         """)
@@ -157,6 +172,7 @@ public class WorkRepository {
                 .param(
                         "status",
                         filter.status() == null ? null : filter.status().name())
+                .param("q", filter.titleContains())
                 .param("limit", LIST_LIMIT)
                 .query(WorkRow.class)
                 .list();

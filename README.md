@@ -48,6 +48,11 @@ make check      # every code check CI runs: contract, API, web, AI service
 make help       # lists every command
 ```
 
+Locally, no email leaves your machine: sign-up confirmations, invitations and
+client requests all land in the local mail catcher at http://127.0.0.1:18025.
+With the apps running, `make demo-data` creates a demo account (its email and
+password are printed) with clients and work in several states.
+
 Individual pieces: `make infra-up`, `make api-run`, `make web-dev`,
 `make ai-run`. Container images: `make images-build` then `make images-test`
 (needs Docker buildx).

@@ -27,6 +27,17 @@ class RequestLinksController implements RequestsApi {
     }
 
     @Override
+    public ResponseEntity<List<RequestLink>> listOrganizationRequestLinks(
+            UUID organizationId, @org.jspecify.annotations.Nullable String status) {
+        return ResponseEntity.ok(links.organizationList(userId(), organizationId, status));
+    }
+
+    @Override
+    public ResponseEntity<RequestLink> remindRequestLink(UUID organizationId, UUID workId, UUID requestLinkId) {
+        return ResponseEntity.accepted().body(links.remind(userId(), organizationId, workId, requestLinkId));
+    }
+
+    @Override
     public ResponseEntity<RequestLink> createRequestLink(
             UUID organizationId, UUID workId, String idempotencyKey, CreateRequestLinkRequest body) {
         return ResponseEntity.status(HttpStatus.CREATED)

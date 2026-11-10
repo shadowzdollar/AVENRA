@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useState } from "react";
 import type { components } from "@avenra/contracts";
 import { Alert, Button, Card } from "@/components/ui";
 import { api, ApiError, unwrap } from "@/lib/api";
@@ -102,6 +103,9 @@ export function NotificationPreferences() {
     queryFn: async () => unwrap(await api.GET("/api/v1/account/notification-preferences")),
   });
   type Preferences = components["schemas"]["NotificationPreferences"];
+  // What the person just chose, shown at once: the mutation's own update runs a tick later,
+  // and a controlled box would spring back in between.
+  const [chosen, setChosen] = useState<Partial<Record<Category, boolean>>>({});
   const save = useMutation({
     mutationFn: async (change: { category: Category; email: boolean }) =>
       unwrap(await api.PUT("/api/v1/account/notification-preferences", { body: { preferences: [change] } })),
@@ -115,7 +119,14 @@ export function NotificationPreferences() {
           : current,
       );
     },
-    onSettled: () => void queries.invalidateQueries({ queryKey: key }),
+    onSettled: async (_result, _error, change) => {
+      await queries.invalidateQueries({ queryKey: key });
+      setChosen((current) => {
+        const next = { ...current };
+        delete next[change.category];
+        return next;
+      });
+    },
   });
   return (
     <Card title="Notifications by email">
@@ -126,8 +137,12 @@ export function NotificationPreferences() {
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={preference.email}
-                onChange={(event) => save.mutate({ category: preference.category, email: event.target.checked })}
+                checked={chosen[preference.category] ?? preference.email}
+                onChange={(event) => {
+                  const email = event.target.checked;
+                  setChosen((current) => ({ ...current, [preference.category]: email }));
+                  save.mutate({ category: preference.category, email });
+                }}
               />
               {CATEGORY_LABELS[preference.category]}
             </label>

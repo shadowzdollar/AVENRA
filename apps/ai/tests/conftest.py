@@ -11,7 +11,12 @@ SERVICE_TOKEN = "test-service-token-0123456789abcdef"  # a test value
 
 
 def settings(**overrides: object) -> Settings:
-    values: dict[str, object] = {"environment": Environment.LOCAL, "service_token": SERVICE_TOKEN, "provider": "fake"}
+    values: dict[str, object] = {
+        "environment": Environment.LOCAL,
+        "service_token": SERVICE_TOKEN,
+        "provider": "fake",
+        "log_json": True,
+    }
     values.update(overrides)
     return Settings.model_validate(values)
 

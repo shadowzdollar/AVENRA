@@ -4,12 +4,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
+import { BrandLogo } from "@/components/brand";
 import { NotificationBell } from "@/components/notifications";
-import { Alert } from "@/components/ui";
+import { Alert, Avatar } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useRequiredSession } from "@/lib/session";
 
-/** Header and frame for signed-in pages; shows nothing until the session is known. */
+/**
+ * The frame of signed-in pages outside an organization (the list of
+ * organizations, the account, notifications); shows nothing until the session
+ * is known.
+ */
 export function AppShell({ children }: { children: ReactNode }) {
   const session = useRequiredSession();
   const router = useRouter();
@@ -22,16 +27,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-dvh">
-      <header className="border-b border-border">
-        <div className="mx-auto flex h-14 max-w-5xl items-center gap-6 px-6">
-          <Link href="/" className="flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element -- the CSP blocks next/image's inline style */}
-            <img src="/avenra-symbol.png" alt="" width={28} height={28} />
-            <span className="text-base font-semibold tracking-tight">Avenra</span>
+    <div className="min-h-dvh bg-canvas">
+      <header className="sticky top-0 z-30 border-b border-border bg-background">
+        <div className="mx-auto flex h-16 max-w-5xl items-center gap-6 px-6">
+          <Link href="/organizations" aria-label="Avenra">
+            <BrandLogo />
           </Link>
-          <nav className="flex gap-4 text-sm text-text-secondary">
-            <Link href="/" className="hover:text-text-primary">
+          <nav className="flex items-center gap-4 text-[13px] text-text-secondary">
+            <Link href="/organizations" className="hover:text-text-primary">
               Organizations
             </Link>
             <Link href="/account" className="hover:text-text-primary">
@@ -39,8 +42,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
             {session.data ? <NotificationBell /> : null}
           </nav>
-          <div className="ml-auto flex items-center gap-3 text-sm">
-            {session.data ? <span className="text-text-secondary">{session.data.displayName}</span> : null}
+          <div className="ml-auto flex items-center gap-3 text-[13px]">
+            {session.data ? (
+              <span className="flex items-center gap-2">
+                <Avatar name={session.data.displayName} className="size-8 bg-text-primary text-[11px] text-background" />
+                <span className="hidden font-medium sm:inline">{session.data.displayName}</span>
+              </span>
+            ) : null}
             <button type="button" onClick={() => void signOut()} className="text-text-secondary hover:text-text-primary">
               Sign out
             </button>
@@ -48,7 +56,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-6 py-10">
-        {session.isPending ? <p className="text-sm text-text-secondary">Loading…</p> : null}
+        {session.isPending ? <p className="text-[13px] text-text-secondary">Loading…</p> : null}
         {session.isError && !(session.error && "status" in session.error && session.error.status === 401) ? (
           <Alert tone="error">The application could not reach Avenra. Try again in a moment.</Alert>
         ) : null}

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /**
- * The colour tokens must match Guidelines §144.2 exactly, and no other colour
+ * The colour tokens must match Guidelines §144.2 (as amended by ADR-039) exactly, and no other colour
  * may exist, so the design system cannot drift one component at a time.
  */
 const approvedTokens: Record<string, string> = {
@@ -15,6 +15,11 @@ const approvedTokens: Record<string, string> = {
   "--color-success": "#16a34a",
   "--color-warning": "#d97706",
   "--color-error": "#dc2626",
+  // ADR-039 amends §144.2 with these four.
+  "--color-canvas": "#f8f9fb",
+  "--color-success-surface": "#ecfdf3",
+  "--color-warning-surface": "#fffaeb",
+  "--color-error-surface": "#fef3f2",
 };
 
 // Vitest runs from apps/web; under jsdom import.meta.url is not a file URL.

@@ -18,6 +18,7 @@ test("an owner sees how the organization's work is going", async ({ page }) => {
   const organization = page.url();
 
   await page.getByRole("link", { name: "Work", exact: true }).click();
+  await page.getByRole("link", { name: "New work" }).first().click();
   await page.getByLabel("Title").fill("Quarterly filing");
   await page.getByRole("button", { name: "Create" }).click();
   await expect(page.getByRole("heading", { name: "Quarterly filing" })).toBeVisible();
