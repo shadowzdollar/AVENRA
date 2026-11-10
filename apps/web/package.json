@@ -19,7 +19,7 @@
     "@tanstack/react-query": "5.104.2",
     "lucide-react": "1.61.0",
     "next": "16.4.2",
-    "react": "19.3.0",
+    "react": "19.3.1",
     "react-dom": "19.3.0",
     "react-icons": "5.5.0",
     "zod": "4.6.7"
