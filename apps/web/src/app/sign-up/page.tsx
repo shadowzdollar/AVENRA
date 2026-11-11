@@ -149,7 +149,7 @@ function SignUpForm() {
             <PasswordGuidance password={password} email={email} />
           </>
         )}
-        <Button type="submit" busy={busy} className="h-10 w-full">
+        <Button type="submit" busy={busy} className="h-11 w-full rounded-xl text-[14px] font-medium shadow-sm hover:shadow-brand transition-all">
           {resend ? "Send confirmation" : "Create account"}
         </Button>
       </form>

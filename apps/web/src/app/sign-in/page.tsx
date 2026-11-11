@@ -63,7 +63,7 @@ function SignInForm() {
         <form onSubmit={verify} className="flex flex-col gap-5">
           {error ? <Alert tone="error">{error.message}</Alert> : null}
           <CodeInput value={code} onChange={setCode} recovery={recovery} onRecoveryChange={setRecovery} />
-          <Button type="submit" busy={busy} disabled={!complete} className="h-10 w-full">
+          <Button type="submit" busy={busy} disabled={!complete} className="h-11 w-full rounded-xl text-[14px] font-medium">
             Verify and sign in
           </Button>
           <button
@@ -102,23 +102,30 @@ function SignInForm() {
             </Alert>
           ) : null}
           <EmailField label="Email" autoComplete="email" required autoFocus value={email} onChange={setEmail} placeholder="you@firm.com" />
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1.5">
             <PasswordField label="Password" autoComplete="current-password" required value={password} onChange={setPassword} />
             <Link className="self-end text-[12px] font-medium text-brand hover:underline" href="/forgot-password">
               Forgot password?
             </Link>
           </div>
-          <Button type="submit" busy={busy} className="h-10 w-full">
+          <Button type="submit" busy={busy} className="h-11 w-full rounded-xl text-[14px] font-medium shadow-sm hover:shadow-brand transition-all">
             Sign in
           </Button>
         </form>
       </div>
       <p className="mt-6 text-center text-[13px] text-text-secondary">
         New to Avenra?{" "}
-        <Link className="font-medium text-brand hover:underline" href="/sign-up">
+        <Link className="font-semibold text-brand hover:underline" href="/sign-up">
           Create an account
         </Link>
       </p>
+      <div className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-text-secondary">
+        <ShieldCheck className="size-3.5 text-text-secondary" />
+        <span>Enterprise SSO?</span>
+        <Link className="font-medium text-brand hover:underline" href="/docs#sso">
+          Sign in with Okta or Entra
+        </Link>
+      </div>
       <TrustRow />
     </AuthLayout>
   );
