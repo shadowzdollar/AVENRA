@@ -1,155 +1,153 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import {
   Check,
   ShieldCheck,
-  DollarSign,
+  Sparkles,
+  ArrowRight,
+  Building2,
+  User,
+  Landmark,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { InteractiveRoiCalculator } from "@/components/enterprise/InteractiveRoiCalculator";
 import { EnterpriseFaqAccordion } from "@/components/enterprise/EnterpriseFaqAccordion";
 
-function PricingHeroVisual() {
-  const [billingCycle, setBillingCycle] = useState<"annual" | "monthly">("annual");
-
-  return (
-    <div className="w-full max-w-xl rounded-2xl border border-yellow-500/20 bg-canvas-subtle p-6 shadow-2xl backdrop-blur-md">
-      <div className="flex items-center justify-between border-b border-border pb-4">
-        <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-yellow-400" />
-          <span className="font-mono text-xs font-semibold tracking-wider text-text-secondary">
-            ENTERPRISE ROI ESTIMATOR
-          </span>
-        </div>
-        <div className="flex items-center rounded-lg bg-canvas p-1 border border-border">
-          <button
-            onClick={() => setBillingCycle("monthly")}
-            className={`rounded px-2.5 py-1 font-mono text-[11px] transition-colors ${
-              billingCycle === "monthly" ? "bg-yellow-500 text-black font-bold" : "text-text-secondary"
-            }`}
-          >
-            Monthly
-          </button>
-          <button
-            onClick={() => setBillingCycle("annual")}
-            className={`rounded px-2.5 py-1 font-mono text-[11px] transition-colors flex items-center gap-1 ${
-              billingCycle === "annual" ? "bg-yellow-500 text-black font-bold" : "text-text-secondary"
-            }`}
-          >
-            Annual <span className="text-[9px] text-emerald-400 font-bold">(-20%)</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-4 rounded-xl border border-border/80 bg-canvas p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs font-bold text-text-primary">Average Firm Transformation (40 Staff)</div>
-            <div className="text-[11px] text-text-secondary">Based on Top 50 CPA & Law telemetry</div>
-          </div>
-          <span className="font-mono text-sm font-bold text-emerald-400">+$248,000 / yr</span>
-        </div>
-
-        <div className="mt-3 grid grid-cols-3 gap-2 text-center font-mono text-[11px]">
-          <div className="rounded-lg bg-canvas-subtle p-2 border border-border/60">
-            <div className="text-text-tertiary text-[10px]">Turnaround</div>
-            <div className="text-emerald-400 font-bold text-xs">-68%</div>
-          </div>
-          <div className="rounded-lg bg-canvas-subtle p-2 border border-border/60">
-            <div className="text-text-tertiary text-[10px]">Follow-up Time</div>
-            <div className="text-emerald-400 font-bold text-xs">-14 hrs/wk</div>
-          </div>
-          <div className="rounded-lg bg-canvas-subtle p-2 border border-border/60">
-            <div className="text-text-tertiary text-[10px]">Audit Prep</div>
-            <div className="text-emerald-400 font-bold text-xs">Instant</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 flex items-center justify-between text-[11px] text-text-tertiary pt-2 border-t border-border/40">
-        <span className="flex items-center gap-1.5 font-mono">
-          <ShieldCheck className="h-3.5 w-3.5 text-yellow-400" /> Transparent Seat Pricing • No Hidden Ingestion Fees
-        </span>
-        <span className="font-mono">Enterprise Grade</span>
-      </div>
-    </div>
-  );
+interface PricingTier {
+  id: string;
+  name: string;
+  badge?: string;
+  icon: typeof User;
+  monthlyPrice: number | null;
+  annualPrice: number | null;
+  periodText: string;
+  description: string;
+  idealFor: string;
+  features: string[];
+  cta: string;
+  href: string;
+  highlight: boolean;
 }
 
-const TIERS = [
+const PRICING_TIERS: PricingTier[] = [
   {
+    id: "starter",
     name: "Starter",
-    badge: "STARTER",
-    price: "$49",
-    period: "per organization / month",
-    description: "For boutique legal and accounting practices standardizing client intake and document verification.",
+    badge: "BOUTIQUE PRACTICES",
+    icon: User,
+    monthlyPrice: 49,
+    annualPrice: 39,
+    periodText: "per seat / month",
+    description: "For boutique legal, accounting, and advisory teams standardizing client intake and document verification.",
+    idealFor: "Up to 5 operators standardizing early onboarding pipelines",
     features: [
-      "Up to 3 active workflows",
-      "Client onboarding & document collection",
-      "Expiring passwordless client request links",
-      "Automated cadence follow-up reminders",
-      "Standard verification checks (regex, schema, ClamAV)",
-      "Tamper-proof evidence trail (90 days)",
-      "Signed webhook events delivery",
+      "Up to 5 active automated workflows",
+      "Unlimited external client magic links (100% free)",
+      "Automated follow-up cadence reminders",
+      "Standard document verification (Regex, schema, format)",
+      "ClamAV inline virus & malware scanning",
+      "Tamper-proof evidence audit trail (90 days)",
+      "Signed webhook delivery with HMAC signatures",
+      "Standard email technical support",
     ],
-    cta: "Start 30-Day Free Trial",
+    cta: "Start 14-Day Free Trial",
     href: "/sign-up",
     highlight: false,
   },
   {
+    id: "business",
     name: "Business",
     badge: "MOST POPULAR",
-    price: "$129",
-    period: "per organization / month",
-    description: "For firms running Avenra across projects with exception management and storage export.",
+    icon: Building2,
+    monthlyPrice: 129,
+    annualPrice: 99,
+    periodText: "per seat / month",
+    description: "For established practices running multi-party client deliverables with AI OCR, approvals, and direct storage export.",
+    idealFor: "Growing firms needing end-to-end exception resolution and audit trails",
     features: [
-      "Unlimited active workflows",
-      "AI document reading (opt-in per organization)",
-      "Export to your S3-compatible bucket",
-      "Webhook delivery with automated retries and HMAC",
-      "Exception routing, human tasks & approvals",
-      "Full immutable evidence history & sealed manifests",
-      "Role-based capabilities and team invitations",
+      "Unlimited active workflows and parallel execution",
+      "Unlimited external client magic links (100% free)",
+      "AI document reading & automated OCR extraction",
+      "Direct export to your cloud storage (S3 / R2 / Wasabi)",
+      "Human-in-the-loop exception routing & approvals",
+      "Continuous immutable evidence ledger & sealed manifests",
+      "Role-based access control (Partner, Ops Lead, Reviewer)",
+      "Automated webhook retries with replay protection",
+      "Priority email & Slack technical support",
     ],
     cta: "Start Business Trial",
     href: "/sign-up",
     highlight: true,
   },
   {
+    id: "enterprise",
     name: "Enterprise",
-    badge: "CUSTOM",
-    price: "Custom",
-    period: "annual commitment",
-    description: "For organizations needing advanced governance, higher limits, and custom onboarding.",
+    badge: "INSTITUTIONAL GRADE",
+    icon: Landmark,
+    monthlyPrice: null,
+    annualPrice: null,
+    periodText: "annual institutional contract",
+    description: "For organizations requiring custom volume scaling, dedicated tenant isolation, SOC2 compliance packs, and custom MSAs.",
+    idealFor: "Large legal, financial, and accounting firms with strict compliance",
     features: [
-      "Everything in Business",
-      "Custom limits for workflows and storage",
-      "Dedicated organization isolation controls",
-      "Priority assistance with custom schema modeling",
-      "Advanced audit export and analytics reporting",
-      "Tailored migration and team onboarding",
-      "Direct engineer-led technical support",
+      "Everything in Business, with customized workflow throughput",
+      "Dedicated PostgreSQL schema & tenant isolation",
+      "Custom Master Services Agreement (MSA) & DPA",
+      "Custom SSO / SAML 2.0 integration (Okta, Entra ID)",
+      "Custom verification rule engines & declarative checks",
+      "24/7 engineer-led technical escalation SLA (99.95%)",
+      "White-glove migration and dedicated solutions engineer",
+      "Quarterly compliance & evidence verification reviews",
     ],
-    cta: "Talk to our team",
+    cta: "Talk to Enterprise Sales",
     href: "/solutions",
     highlight: false,
   },
 ];
 
-const COMPARISON_DIMENSIONS = [
-  { category: "Core Platform", feature: "Finite State Machine Engine", starter: "Yes", pro: "Yes", enterprise: "Yes" },
-  { category: "Core Platform", feature: "Unlimited Client Magic Links", starter: "Yes", pro: "Yes", enterprise: "Yes" },
-  { category: "Core Platform", feature: "Inline ClamAV Virus Scanning", starter: "Yes", pro: "Yes", enterprise: "Yes" },
-  { category: "Verification", feature: "Rule & Schema Verification", starter: "Standard", pro: "Advanced", enterprise: "Custom Declarative" },
-  { category: "Verification", feature: "AI Document Reading (Opt-In)", starter: "—", pro: "Included", enterprise: "High Volume" },
-  { category: "Storage", feature: "S3 Storage Export (Your Bucket)", starter: "—", pro: "Yes", enterprise: "Yes" },
-  { category: "Storage", feature: "Sealed Completion Manifests", starter: "90 Days", pro: "Unlimited", enterprise: "Unlimited" },
-  { category: "Security", feature: "PostgreSQL Row-Level Security", starter: "Yes", pro: "Yes", enterprise: "Yes" },
-  { category: "Security", feature: "Append-Only Audit Ledger", starter: "Yes", pro: "Yes", enterprise: "Yes" },
-  { category: "Security", feature: "TOTP Two-Step Verification", starter: "Yes", pro: "Yes", enterprise: "Yes" },
-  { category: "Support", feature: "Support Channels", starter: "Email", pro: "Priority Email", enterprise: "Dedicated Team" },
+const COMPARISON_CATEGORIES = [
+  {
+    name: "Core Platform & Execution",
+    features: [
+      { name: "Deterministic State Machine Engine", starter: "Included", business: "Included", enterprise: "Dedicated Cluster" },
+      { name: "Parallel Active Workflows", starter: "5 Workflows", business: "Unlimited", enterprise: "Custom Volume" },
+      { name: "External Client Magic Portals", starter: "Unlimited (Free)", business: "Unlimited (Free)", enterprise: "Unlimited (Free)" },
+      { name: "Automated Cadence Reminders", starter: "Included", business: "Included", enterprise: "Custom Branding" },
+      { name: "Idempotency & Replay Protection", starter: "Included", business: "Included", enterprise: "Included" },
+    ],
+  },
+  {
+    name: "Verification & Intelligence",
+    features: [
+      { name: "Schema & Rule-Based Checks", starter: "Standard", business: "Advanced", enterprise: "Custom Declarative" },
+      { name: "AI Document Reading & OCR", starter: "—", business: "Included", enterprise: "High-Volume Pipeline" },
+      { name: "Cross-Record Reconciliation", starter: "—", business: "Included", enterprise: "Custom Systems" },
+      { name: "Human-in-the-Loop Approvals", starter: "Basic", business: "Multi-Role Routing", enterprise: "Custom Hierarchy" },
+      { name: "Inline ClamAV Virus Scanning", starter: "Included", business: "Included", enterprise: "Included" },
+    ],
+  },
+  {
+    name: "Evidence, Storage & Custody",
+    features: [
+      { name: "Direct Storage Export (Your S3/R2)", starter: "—", business: "Included", enterprise: "Dedicated Bucket" },
+      { name: "Cryptographic Evidence Trail", starter: "90 Days", business: "Unlimited", enterprise: "Immutable WORM" },
+      { name: "Sealed Completion Manifests", starter: "Standard PDF", business: "PDF + JSON-LD", enterprise: "Auditor Export API" },
+      { name: "PostgreSQL Row-Level Security", starter: "Shared Tenant RLS", business: "Shared Tenant RLS", enterprise: "Dedicated Schema" },
+    ],
+  },
+  {
+    name: "Security, Governance & Support",
+    features: [
+      { name: "Two-Factor Auth (TOTP)", starter: "Included", business: "Included", enterprise: "Enforced Policy" },
+      { name: "Enterprise SSO (SAML 2.0)", starter: "—", business: "Add-on", enterprise: "Included (Okta/Entra)" },
+      { name: "Uptime SLA Guarantee", starter: "99.5%", business: "99.9%", enterprise: "99.95% Contractual" },
+      { name: "Support Channels", starter: "Standard Email", business: "Priority Email & Slack", enterprise: "Dedicated Engineer 24/7" },
+      { name: "Procurement Legal MSA & DPA", starter: "Standard Terms", business: "Standard Terms", enterprise: "Custom Negotiated" },
+    ],
+  },
 ];
 
 const FAQ_ITEMS = [
@@ -161,21 +159,98 @@ const FAQ_ITEMS = [
   {
     category: "Overages",
     question: "Are there unexpected per-gigabyte or per-deliverable overage fees?",
-    answer: "No. Avenra does not charge arbitrary data ingestion penalties. Because client files stream directly to your own private cloud S3 bucket on Professional and Enterprise plans, you pay cloud storage costs directly to your provider (e.g. AWS or Cloudflare) at true wholesale rates.",
+    answer: "No. Avenra does not charge arbitrary data ingestion penalties. Because client files stream directly to your own private cloud S3 bucket on Business and Enterprise plans, you pay cloud storage costs directly to your provider (e.g. AWS or Cloudflare) at true wholesale rates.",
   },
   {
     category: "Trials",
-    question: "What is included during the 30-day free trial?",
-    answer: "The 30-day free trial provides full access to all Professional tier capabilities, including client magic portals, the verification engine, AI document extraction, and webhook integrations, with zero credit card required upfront.",
+    question: "What is included during the 14-day free trial?",
+    answer: "The 14-day free trial provides full access to all Business tier capabilities, including client magic portals, the verification engine, AI document extraction, and webhook integrations, with zero credit card required upfront.",
   },
   {
     category: "Enterprise MSAs",
     question: "Can enterprise clients negotiate custom Master Services Agreements (MSAs)?",
     answer: "Yes. Enterprise accounts include procurement review, custom legal and security MSAs, custom Data Processing Addendums (DPAs), and direct vendor onboarding support.",
   },
+  {
+    category: "Billing Cycles",
+    question: "How does annual billing work?",
+    answer: "Annual billing gives you two months free (a 20% discount across all operator seats). You can add or remove operator seats during the year with prorated adjustments.",
+  },
 ];
 
+function PricingHeroVisual({ billingCycle, onToggle }: { billingCycle: "annual" | "monthly"; onToggle: (cycle: "annual" | "monthly") => void }) {
+  return (
+    <div className="w-full max-w-xl rounded-3xl border border-border bg-background p-6 shadow-float">
+      <div className="flex items-center justify-between border-b border-border pb-4">
+        <div className="flex items-center gap-2">
+          <Sparkles className="size-4 text-brand" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-text-primary">
+            Plan Estimator &amp; ROI
+          </span>
+        </div>
+        <div className="flex items-center rounded-xl bg-canvas p-1 border border-border">
+          <button
+            type="button"
+            onClick={() => onToggle("monthly")}
+            className={`rounded-lg px-3 py-1 text-xs font-medium transition-all ${
+              billingCycle === "monthly" ? "bg-text-primary text-background shadow-soft" : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            type="button"
+            onClick={() => onToggle("annual")}
+            className={`rounded-lg px-3 py-1 text-xs font-medium transition-all flex items-center gap-1.5 ${
+              billingCycle === "annual" ? "bg-text-primary text-background shadow-soft" : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            <span>Annual</span>
+            <span className="rounded bg-success/20 px-1 py-0.2 text-[9px] font-bold text-success">-20%</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-border/80 bg-canvas p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-semibold text-text-primary">Firm Benchmark (25 Operators)</div>
+            <div className="text-[11px] text-text-secondary">Based on Top 50 CPA &amp; Law telemetry</div>
+          </div>
+          <span className="font-mono text-sm font-bold text-success">+$168,000 / yr net gain</span>
+        </div>
+
+        <div className="mt-3.5 grid grid-cols-3 gap-2.5 text-center font-mono text-[11px]">
+          <div className="rounded-xl bg-background p-2.5 border border-border/60 shadow-soft">
+            <div className="text-text-secondary text-[10px] font-sans">Turnaround</div>
+            <div className="text-success font-bold text-xs mt-0.5">-68%</div>
+          </div>
+          <div className="rounded-xl bg-background p-2.5 border border-border/60 shadow-soft">
+            <div className="text-text-secondary text-[10px] font-sans">Chasing Time</div>
+            <div className="text-success font-bold text-xs mt-0.5">-14 hrs/wk</div>
+          </div>
+          <div className="rounded-xl bg-background p-2.5 border border-border/60 shadow-soft">
+            <div className="text-text-secondary text-[10px] font-sans">Audit Readiness</div>
+            <div className="text-brand font-bold text-xs mt-0.5">Instant</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 flex items-center justify-between text-[11px] text-text-secondary pt-3 border-t border-border">
+        <span className="flex items-center gap-1.5">
+          <ShieldCheck className="size-3.5 text-brand" />
+          <span>Transparent Seat Pricing · Zero Ingestion Fees</span>
+        </span>
+        <span className="font-semibold text-brand">Client Portals Free</span>
+      </div>
+    </div>
+  );
+}
+
 export default function PricingPage() {
+  const [billingCycle, setBillingCycle] = useState<"annual" | "monthly">("annual");
+  const isAnnual = billingCycle === "annual";
+
   return (
     <MarketingLayout
       category="Transparent Investment"
@@ -184,115 +259,218 @@ export default function PricingPage() {
       title="Predictable Pricing for Institutional Trust"
       subtitle="Invest in mathematical correctness, client speed, and zero audit risk. Unlimited client magic links and zero hidden ingestion penalties."
       breadcrumbs={[{ label: "Pricing" }]}
-      heroVisual={<PricingHeroVisual />}
+      heroVisual={<PricingHeroVisual billingCycle={billingCycle} onToggle={setBillingCycle} />}
       stats={[
         { value: "$0", label: "Client Surcharge", detail: "Clients access links 100% free" },
-        { value: "Direct S3", label: "No Storage Markups", detail: "Files go straight to your bucket" },
-        { value: "14 Days", label: "Free Trial", detail: "No credit card required" },
-        { value: "Continuous", label: "Uptime SLA", detail: "Enterprise contract backed" },
+        { value: "Direct S3", label: "No Storage Markups", detail: "Files stream directly to your bucket" },
+        { value: "14 Days", label: "Free Trial", detail: "Zero credit card required upfront" },
+        { value: "99.95%", label: "Uptime SLA", detail: "Enterprise contract backed" },
       ]}
     >
-      <div className="space-y-20">
-        {/* Tier Cards Grid */}
-        <div className="grid gap-8 lg:grid-cols-3">
-          {TIERS.map((tier) => (
-            <div
-              key={tier.name}
-              className={`relative flex flex-col justify-between rounded-3xl border p-8 md:p-10 transition-all ${
-                tier.highlight
-                  ? "border-yellow-500/50 bg-canvas shadow-2xl ring-1 ring-yellow-500/20"
-                  : "border-border bg-canvas hover:border-border-hover"
+      <div className="space-y-24">
+        {/* Interactive Billing Toggle */}
+        <div className="flex flex-col items-center justify-center gap-3">
+          <div className="inline-flex items-center rounded-2xl border border-border bg-canvas p-1.5 shadow-soft">
+            <button
+              type="button"
+              onClick={() => setBillingCycle("monthly")}
+              className={`rounded-xl px-5 py-2 text-xs font-semibold transition-all ${
+                !isAnnual
+                  ? "bg-text-primary text-background shadow-ink"
+                  : "text-text-secondary hover:text-text-primary"
               }`}
             >
-              {tier.highlight && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-yellow-500 px-4 py-1 text-[11px] font-bold text-black uppercase tracking-wider">
-                  {tier.badge}
-                </div>
-              )}
+              Monthly billing
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingCycle("annual")}
+              className={`flex items-center gap-2 rounded-xl px-5 py-2 text-xs font-semibold transition-all ${
+                isAnnual
+                  ? "bg-text-primary text-background shadow-ink"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              <span>Annual billing</span>
+              <span className="rounded-full bg-success-surface px-2 py-0.5 text-[10px] font-bold text-success">
+                SAVE 20%
+              </span>
+            </button>
+          </div>
+          <p className="text-xs text-text-secondary">
+            {isAnnual ? "Billed annually · 2 months free applied" : "Billed monthly · Switch to annual anytime"}
+          </p>
+        </div>
 
-              <div>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-text-primary">{tier.name}</h3>
-                  {!tier.highlight && (
-                    <span className="font-mono text-[10px] font-bold text-text-tertiary uppercase">
-                      {tier.badge}
-                    </span>
-                  )}
-                </div>
-                <p className="mt-3 text-xs leading-relaxed text-text-secondary min-h-[3rem]">
-                  {tier.description}
-                </p>
+        {/* Tier Cards Grid */}
+        <div className="grid gap-8 lg:grid-cols-3 lg:items-stretch">
+          {PRICING_TIERS.map((tier) => {
+            const TierIcon = tier.icon;
+            const price = isAnnual ? tier.annualPrice : tier.monthlyPrice;
+            const savingsText = isAnnual && tier.monthlyPrice && tier.annualPrice
+              ? `Save $${(tier.monthlyPrice - tier.annualPrice) * 12}/yr per seat`
+              : null;
 
-                <div className="mt-6 border-y border-border py-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-mono text-4xl font-extrabold tracking-tight text-text-primary">
-                      {tier.price}
-                    </span>
-                    <span className="text-xs text-text-tertiary font-mono">{tier.period}</span>
+            return (
+              <div
+                key={tier.id}
+                className={`relative flex flex-col justify-between rounded-3xl p-8 transition-all duration-300 ${
+                  tier.highlight
+                    ? "border-2 border-brand bg-background shadow-float ring-4 ring-brand/10 lg:-translate-y-2 z-10"
+                    : "border border-border bg-canvas hover:border-brand/30 hover:bg-background hover:shadow-card"
+                }`}
+              >
+                {tier.highlight && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-background shadow-brand">
+                    <Sparkles className="size-3" />
+                    <span>{tier.badge}</span>
                   </div>
+                )}
+
+                <div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className={`flex size-8 items-center justify-center rounded-xl ${tier.highlight ? "bg-brand text-background" : "bg-brand-surface text-brand"}`}>
+                        <TierIcon className="size-4" />
+                      </span>
+                      <h3 className="text-xl font-bold text-text-primary">{tier.name}</h3>
+                    </div>
+                    {!tier.highlight && tier.badge && (
+                      <span className="rounded-full bg-canvas-subtle px-2.5 py-0.5 text-[10px] font-bold uppercase text-text-secondary">
+                        {tier.badge}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-3 text-xs leading-relaxed text-text-secondary min-h-[2.5rem]">
+                    {tier.description}
+                  </p>
+
+                  <div className="mt-5 border-y border-border py-4">
+                    <div className="flex items-baseline gap-2">
+                      {price !== null ? (
+                        <>
+                          <span className="text-4xl font-extrabold tracking-tight text-text-primary">
+                            ${price}
+                          </span>
+                          <span className="text-xs text-text-secondary">{tier.periodText}</span>
+                        </>
+                      ) : (
+                        <span className="text-3xl font-bold tracking-tight text-text-primary">Custom</span>
+                      )}
+                    </div>
+                    {savingsText && (
+                      <p className="mt-1 text-[11px] font-semibold text-success">{savingsText}</p>
+                    )}
+                  </div>
+
+                  <div className="mt-3 text-[11px] font-medium text-text-secondary">
+                    <span className="font-semibold text-text-primary">Ideal for: </span>
+                    {tier.idealFor}
+                  </div>
+
+                  <ul className="mt-6 space-y-3 text-xs text-text-secondary">
+                    {tier.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5">
+                        <Check className="size-4 shrink-0 text-brand mt-0.5" />
+                        <span className="leading-relaxed">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
-                <ul className="mt-6 space-y-3 text-xs text-text-secondary">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5">
-                      <Check className="h-4 w-4 shrink-0 text-yellow-400 mt-0.5" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="mt-8 pt-4 border-t border-border/60">
+                  <Link
+                    href={tier.href}
+                    className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl text-center text-xs font-bold transition-all shadow-soft active:scale-[0.985] ${
+                      tier.highlight
+                        ? "bg-brand text-background hover:bg-brand/90 hover:shadow-brand font-semibold"
+                        : "border border-border bg-background text-text-primary hover:bg-canvas hover:border-text-secondary/40"
+                    }`}
+                  >
+                    <span>{tier.cta}</span>
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                </div>
               </div>
+            );
+          })}
+        </div>
 
-              <div className="mt-8">
-                <Link
-                  href={tier.href}
-                  className={`block w-full rounded-xl py-3 text-center text-xs font-bold transition-all shadow-sm ${
-                    tier.highlight
-                      ? "bg-yellow-500 text-black hover:bg-yellow-400 font-extrabold"
-                      : "bg-canvas-subtle border border-border text-text-primary hover:bg-border/40"
-                  }`}
-                >
-                  {tier.cta}
-                </Link>
-              </div>
+        {/* Client Guarantee Callout */}
+        <div className="rounded-3xl border border-brand/30 bg-brand-surface p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-soft">
+          <div className="flex items-center gap-4">
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-background shadow-brand">
+              <Zap className="size-6" />
+            </span>
+            <div>
+              <h4 className="text-base font-bold text-text-primary">
+                External Client Magic Links Are Always 100% Free &amp; Unlimited
+              </h4>
+              <p className="mt-0.5 text-xs text-text-secondary">
+                You never pay per-client fees or upload surcharges. Only internal team operators who configure workflows and verify deliverables require a seat.
+              </p>
             </div>
-          ))}
+          </div>
+          <Link
+            href="/sign-up"
+            className="shrink-0 rounded-xl bg-text-primary px-5 py-2.5 text-xs font-semibold text-background shadow-ink hover:bg-black transition-all"
+          >
+            Start Free Trial
+          </Link>
         </div>
 
         {/* Feature Comparison Matrix */}
-        <div className="rounded-3xl border border-border bg-canvas p-8 md:p-12">
+        <div className="rounded-3xl border border-border bg-canvas p-6 sm:p-10 shadow-card">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border pb-6">
             <div>
-              <div className="font-mono text-xs font-bold text-yellow-400 uppercase tracking-widest">
-                Comprehensive Comparison
+              <div className="text-xs font-bold uppercase tracking-wider text-brand">
+                Comprehensive Plan Breakdown
               </div>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-text-primary md:text-3xl">
+              <h2 className="mt-1.5 text-2xl font-bold tracking-tight text-text-primary md:text-3xl">
                 Compare Plan Capabilities
               </h2>
             </div>
-            <span className="font-mono text-xs text-text-tertiary">All prices in USD</span>
+            <span className="text-xs text-text-secondary">All prices in USD · Zero hidden data charges</span>
           </div>
 
           <div className="mt-6 overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-border text-text-tertiary uppercase tracking-wider font-mono">
-                  <th className="py-3 px-4">Feature</th>
-                  <th className="py-3 px-4 text-center">Starter</th>
-                  <th className="py-3 px-4 text-center text-yellow-400 font-bold">Professional</th>
-                  <th className="py-3 px-4 text-center">Enterprise</th>
+                <tr className="border-b border-border text-text-secondary uppercase tracking-wider text-[11px]">
+                  <th className="py-3 px-4 font-semibold">Capability</th>
+                  <th className="py-3 px-4 text-center font-semibold">Starter</th>
+                  <th className="py-3 px-4 text-center font-bold text-brand bg-brand-surface/40 rounded-t-xl">
+                    Business (Most Popular)
+                  </th>
+                  <th className="py-3 px-4 text-center font-semibold">Enterprise</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/60 font-mono text-[11px]">
-                {COMPARISON_DIMENSIONS.map((row) => (
-                  <tr key={row.feature} className="hover:bg-canvas-subtle">
-                    <td className="py-3.5 px-4 font-sans text-xs font-medium text-text-primary">
-                      <span className="text-[10px] text-text-tertiary block font-mono uppercase">{row.category}</span>
-                      {row.feature}
-                    </td>
-                    <td className="py-3.5 px-4 text-center text-text-secondary">{row.starter}</td>
-                    <td className="py-3.5 px-4 text-center font-bold text-yellow-400">{row.pro}</td>
-                    <td className="py-3.5 px-4 text-center font-bold text-emerald-400">{row.enterprise}</td>
-                  </tr>
+              <tbody className="divide-y divide-border/60 text-[12px]">
+                {COMPARISON_CATEGORIES.map((cat) => (
+                  <Fragment key={cat.name}>
+                    <tr className="bg-canvas/80">
+                      <td colSpan={4} className="py-2.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-brand">
+                        {cat.name}
+                      </td>
+                    </tr>
+                    {cat.features.map((f) => (
+                      <tr key={f.name} className="hover:bg-background/60 transition-colors">
+                        <td className="py-3 px-4 font-medium text-text-primary">
+                          {f.name}
+                        </td>
+                        <td className="py-3 px-4 text-center text-text-secondary">
+                          {f.starter === "Included" ? <Check className="size-4 text-brand mx-auto" /> : f.starter}
+                        </td>
+                        <td className="py-3 px-4 text-center font-semibold text-text-primary bg-brand-surface/20">
+                          {f.business === "Included" ? <Check className="size-4 text-brand mx-auto" /> : f.business}
+                        </td>
+                        <td className="py-3 px-4 text-center text-text-secondary">
+                          {f.enterprise === "Included" ? <Check className="size-4 text-brand mx-auto" /> : f.enterprise}
+                        </td>
+                      </tr>
+                    ))}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -304,11 +482,11 @@ export default function PricingPage() {
           <InteractiveRoiCalculator />
         </div>
 
-        {/* Technical FAQ */}
-        <div className="rounded-3xl border border-border bg-canvas p-8 md:p-12">
+        {/* Technical & Procurement FAQ */}
+        <div>
           <EnterpriseFaqAccordion
-            title="Pricing & Procurement FAQ"
-            subtitle="Straightforward answers regarding seat licensing, storage custody, and custom enterprise contracts."
+            title="Pricing, Licensing &amp; Procurement FAQ"
+            subtitle="Straightforward answers regarding operator seats, client magic portals, private cloud S3 custody, and custom enterprise contracts."
             items={FAQ_ITEMS}
           />
         </div>
