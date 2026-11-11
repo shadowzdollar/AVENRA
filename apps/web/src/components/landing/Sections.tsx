@@ -1,17 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
+  Activity,
   AlertTriangle,
-  ArrowRight,
+  ArrowUpRight,
   BarChart3,
   Building2,
   Check,
+  CheckCheck,
   CheckCircle2,
   Clock,
+  FileCheck,
   FileSearch,
   FolderOpen,
   Landmark,
+  Lock,
   MoreHorizontal,
   MousePointer2,
   Play,
@@ -228,30 +233,321 @@ function FlowCanvas() {
   );
 }
 
-/* ---------------- Use cases ---------------- */
-const useCases = [
-  { icon: UserPlus, title: "Client onboarding made reliable.", body: "Collect, verify, and approve everything a new client engagement needs — without chasing." },
-  { icon: FolderOpen, title: "Document collection, finished.", body: "Request, track, and validate documents across clients until every requirement is met." },
-  { icon: BarChart3, title: "Recurring reporting on time.", body: "Gather inputs from people and systems each cycle, reconcile them, and deliver with evidence." },
-  { icon: FileSearch, title: "Compliance evidence, ready.", body: "Assemble verifiable evidence for audits and reviews, with a complete trail of every check." },
+/* ---------------- Use cases & Real-World Workflows ---------------- */
+
+type IndustryCategory = "all" | "legal" | "accounting" | "compliance";
+
+interface WorkflowCardData {
+  id: string;
+  category: "legal" | "accounting" | "compliance";
+  categoryLabel: string;
+  icon: LucideIcon;
+  title: string;
+  body: string;
+  href: string;
+  renderMockup: () => React.ReactNode;
+}
+
+const workflowCases: WorkflowCardData[] = [
+  {
+    id: "onboarding",
+    category: "legal",
+    categoryLabel: "Legal & Advisory Intake",
+    icon: UserPlus,
+    title: "Client onboarding made reliable.",
+    body: "Collect, verify, and approve everything a new client engagement needs — without chasing documents, missed IDs, or stalled billing.",
+    href: "/solutions/legal",
+    renderMockup: () => (
+      <div className="flex h-full flex-col justify-between rounded-2xl border border-border bg-canvas p-4 text-xs shadow-soft">
+        <div className="flex items-center justify-between border-b border-border/80 pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="flex size-6 items-center justify-center rounded-lg bg-brand-surface text-brand">
+              <UserPlus className="size-3.5" />
+            </span>
+            <span className="font-semibold text-text-primary">Engagement Intake #ONB-419</span>
+          </div>
+          <span className="rounded-full bg-success-surface px-2 py-0.5 text-[10px] font-semibold text-success">
+            3/3 Verified
+          </span>
+        </div>
+        <div className="space-y-2 py-2">
+          <div className="flex items-center justify-between rounded-lg border border-border bg-background px-2.5 py-1.5">
+            <span className="text-[11px] font-medium text-text-primary">Engagement Letter</span>
+            <span className="flex items-center gap-1.5 font-mono text-[10px] text-text-secondary">
+              DocuSign · <CheckCircle2 className="size-3.5 text-success" />
+            </span>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border bg-background px-2.5 py-1.5">
+            <span className="text-[11px] font-medium text-text-primary">Beneficial Ownership (BOI)</span>
+            <span className="flex items-center gap-1.5 font-mono text-[10px] text-text-secondary">
+              Okta Verify · <CheckCircle2 className="size-3.5 text-success" />
+            </span>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border bg-background px-2.5 py-1.5">
+            <span className="text-[11px] font-medium text-text-primary">Retainer Payment</span>
+            <span className="flex items-center gap-1.5 font-mono text-[10px] text-text-secondary">
+              $7,500 · Stripe · <CheckCircle2 className="size-3.5 text-success" />
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center justify-between border-t border-border/80 pt-2 text-[10px] text-text-secondary">
+          <span>Turnaround: <strong className="font-semibold text-text-primary">4.8 hrs</strong> (was 14 days)</span>
+          <span className="font-medium text-brand">Matter Live</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "collection",
+    category: "accounting",
+    categoryLabel: "Document Intelligence",
+    icon: FolderOpen,
+    title: "Document collection, finished.",
+    body: "Request, track, and validate client records across practice systems, inspecting signatures, tax IDs, and statements on arrival.",
+    href: "/platform/document-intelligence",
+    renderMockup: () => (
+      <div className="flex h-full flex-col justify-between rounded-2xl border border-border bg-canvas p-4 text-xs shadow-soft">
+        <div className="flex items-center justify-between border-b border-border/80 pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="flex size-6 items-center justify-center rounded-lg bg-brand-surface text-brand">
+              <FileCheck className="size-3.5" />
+            </span>
+            <span className="font-semibold text-text-primary">Form_1040_Sched_C.pdf</span>
+          </div>
+          <span className="rounded-full bg-brand-surface px-2 py-0.5 text-[10px] font-semibold text-brand">
+            Auto-Extracted
+          </span>
+        </div>
+        <div className="space-y-2 py-2">
+          <div className="rounded-lg border border-border bg-background p-2">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-text-secondary">EIN Validation:</span>
+              <span className="font-mono font-medium text-text-primary">84-XXXX129 · Match ✓</span>
+            </div>
+            <div className="mt-1 flex items-center justify-between text-[11px]">
+              <span className="text-text-secondary">Gross Receipts:</span>
+              <span className="font-mono font-medium text-text-primary">$1,420,850 · Verified ✓</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-[10px] text-text-secondary">
+            <Lock className="size-3 text-brand" />
+            <span>Encrypted in iManage &amp; SeaweedFS</span>
+          </div>
+        </div>
+        <div className="flex items-center justify-between border-t border-border/80 pt-2 text-[10px] text-text-secondary">
+          <span>Confidence: <strong className="font-semibold text-text-primary">99.8%</strong></span>
+          <span className="font-mono text-[9px] text-text-secondary">SHA-256: 8f4a...92b1</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "reporting",
+    category: "accounting",
+    categoryLabel: "Operations & Month-End",
+    icon: BarChart3,
+    title: "Recurring reporting on time.",
+    body: "Gather cross-system inputs each cycle, reconcile variances, route exceptions to the right reviewer, and deliver with evidence.",
+    href: "/solutions/accounting",
+    renderMockup: () => (
+      <div className="flex h-full flex-col justify-between rounded-2xl border border-border bg-canvas p-4 text-xs shadow-soft">
+        <div className="flex items-center justify-between border-b border-border/80 pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="flex size-6 items-center justify-center rounded-lg bg-warning-surface text-warning">
+              <Activity className="size-3.5" />
+            </span>
+            <span className="font-semibold text-text-primary">Q3 Distribution Cycle</span>
+          </div>
+          <span className="rounded-full bg-warning-surface px-2 py-0.5 text-[10px] font-semibold text-warning">
+            Exception Handled
+          </span>
+        </div>
+        <div className="space-y-2 py-2">
+          <div>
+            <div className="flex justify-between text-[11px] font-medium">
+              <span className="text-text-secondary">Reconciliation Progress</span>
+              <span className="text-text-primary">94%</span>
+            </div>
+            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-border">
+              <div className="h-full w-[94%] rounded-full bg-brand" />
+            </div>
+          </div>
+          <div className="rounded-lg border border-border bg-background p-2 text-[10px]">
+            <p className="font-medium text-text-primary">Variance Solved · Rate Discrepancy</p>
+            <p className="mt-0.5 text-text-secondary">Routed to Ops Lead (Marcus O.) · Approved in 4m</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between border-t border-border/80 pt-2 text-[10px] text-text-secondary">
+          <span>Sources: <strong className="font-semibold text-text-primary">Xero + Karbon</strong></span>
+          <span className="font-medium text-success">Balanced ✓</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "compliance",
+    category: "compliance",
+    categoryLabel: "Continuous Audit Vault",
+    icon: FileSearch,
+    title: "Compliance evidence, ready.",
+    body: "Assemble verifiable evidence for audits and statutory reviews, with a cryptographic trail linking every check to its origin.",
+    href: "/platform/evidence-locker",
+    renderMockup: () => (
+      <div className="flex h-full flex-col justify-between rounded-2xl border border-border bg-canvas p-4 text-xs shadow-soft">
+        <div className="flex items-center justify-between border-b border-border/80 pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="flex size-6 items-center justify-center rounded-lg bg-success-surface text-success">
+              <ShieldCheck className="size-3.5" />
+            </span>
+            <span className="font-semibold text-text-primary">Audit Bundle #EV-2026-881</span>
+          </div>
+          <span className="rounded-full bg-success-surface px-2 py-0.5 text-[10px] font-semibold text-success">
+            SOC2 / ISO Ready
+          </span>
+        </div>
+        <div className="space-y-2 py-2">
+          <div className="rounded-lg border border-border bg-background p-2">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-text-secondary">Security Controls:</span>
+              <span className="font-mono font-medium text-text-primary">18 of 18 Passed ✓</span>
+            </div>
+            <div className="mt-1 flex items-center justify-between text-[11px]">
+              <span className="text-text-secondary">Sign-off Chain:</span>
+              <span className="font-mono font-medium text-text-primary">3 Partners Signed ✓</span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border bg-background px-2.5 py-1.5 text-[10px] text-text-secondary">
+            <span className="flex items-center gap-1.5">
+              <CheckCheck className="size-3.5 text-success" /> Tamper Seal Intact
+            </span>
+            <span className="font-mono text-[9px]">ed25519</span>
+          </div>
+        </div>
+        <div className="flex items-center justify-between border-t border-border/80 pt-2 text-[10px] text-text-secondary">
+          <span>Audit Export: <strong className="font-semibold text-text-primary">PDF + JSON-LD</strong></span>
+          <span className="font-semibold text-brand">1-Click Export →</span>
+        </div>
+      </div>
+    ),
+  },
+];
+
+const categoryTabs: { id: IndustryCategory; label: string }[] = [
+  { id: "all", label: "All Engagements" },
+  { id: "legal", label: "Legal & Advisory" },
+  { id: "accounting", label: "Accounting & Tax" },
+  { id: "compliance", label: "Compliance & Audit" },
 ];
 
 export function UseCases() {
+  const [activeCategory, setActiveCategory] = useState<IndustryCategory>("all");
+
+  const visibleCases = activeCategory === "all"
+    ? workflowCases
+    : workflowCases.filter((w) => w.category === activeCategory);
+
   return (
     <section id="use-cases" className="mx-auto max-w-[1680px] w-full px-4 sm:px-6 lg:px-8 py-24">
-      <h2 className="max-w-md text-3xl font-semibold tracking-[-0.03em] md:text-[34px] md:leading-[1.15]">Discover how Avenra moves client work forward.</h2>
-      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {useCases.map((u) => (
-          <div key={u.title} className="flex h-[300px] flex-col rounded-2xl border border-border bg-background p-6 transition-shadow hover:shadow-card">
-            <u.icon className="size-11 text-brand" strokeWidth={1.25} />
-            <div className="flex-1" />
-            <h3 className="text-[15px] font-semibold">{u.title}</h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-text-secondary">{u.body}</p>
-            <a href="#how-it-works" className="mt-6 inline-flex items-center gap-2 text-[13px] font-medium">
-              Explore more <span className="flex size-5 items-center justify-center rounded-full bg-text-primary text-background"><ArrowRight className="size-3" /></span>
-            </a>
+      {/* Header with Eyebrow, Title & Interactive Filters */}
+      <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-canvas px-3.5 py-1 text-xs font-semibold text-text-secondary shadow-soft">
+            <Sparkles className="size-3.5 text-brand" />
+            <span className="tracking-wide uppercase">Real-World Execution</span>
+          </div>
+          <h2 className="mt-3.5 text-3xl font-semibold tracking-[-0.03em] text-text-primary sm:text-4xl md:text-[42px] md:leading-[1.12]">
+            Discover how Avenra moves client work forward.
+          </h2>
+          <p className="mt-3.5 text-[15px] leading-relaxed text-text-secondary">
+            Explore how modern legal, accounting, and consulting firms eliminate document chasing, orchestrate multi-party sign-offs, and seal every client outcome with verifiable proof.
+          </p>
+        </div>
+
+        {/* Category Filter Pills */}
+        <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-border bg-canvas p-1.5 shadow-soft">
+          {categoryTabs.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all ${
+                activeCategory === cat.id
+                  ? "bg-text-primary text-background shadow-ink"
+                  : "text-text-secondary hover:text-text-primary hover:bg-background"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Bento Grid of 4 Interactive Workflow Cards */}
+      <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {visibleCases.map((u) => (
+          <div
+            key={u.id}
+            className="group flex flex-col justify-between rounded-3xl border border-border bg-background p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-card"
+          >
+            {/* Top Interactive Software Micro-UI */}
+            <div className="h-[210px] w-full overflow-hidden">
+              {u.renderMockup()}
+            </div>
+
+            {/* Bottom Content Narrative */}
+            <div className="mt-5 flex flex-1 flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold tracking-wider uppercase text-brand">
+                    {u.categoryLabel}
+                  </span>
+                  <u.icon className="size-4 text-text-secondary transition-colors group-hover:text-brand" />
+                </div>
+                <h3 className="mt-2 text-[16px] font-semibold leading-snug text-text-primary group-hover:text-brand transition-colors">
+                  {u.title}
+                </h3>
+                <p className="mt-2 text-[13px] leading-relaxed text-text-secondary">
+                  {u.body}
+                </p>
+              </div>
+
+              <Link
+                href={u.href}
+                className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-semibold text-text-primary transition-colors group-hover:text-brand"
+              >
+                <span>Explore workflow</span>
+                <span className="flex size-5 items-center justify-center rounded-full bg-canvas text-text-primary group-hover:bg-brand group-hover:text-background transition-all">
+                  <ArrowUpRight className="size-3" />
+                </span>
+              </Link>
+            </div>
           </div>
         ))}
+      </div>
+
+      {/* Executive KPI Strip */}
+      <div className="mt-14 rounded-3xl border border-border bg-canvas p-6 sm:p-8 shadow-soft">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex flex-col border-b border-border pb-5 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-6">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Intake Turnaround</span>
+            <span className="mt-2 text-3xl font-bold tracking-tight text-text-primary lg:text-4xl">4.8 hrs</span>
+            <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">Reduced from 14-day manual email chasing cycles</p>
+          </div>
+          <div className="flex flex-col border-b border-border pb-5 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-6">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Verification Coverage</span>
+            <span className="mt-2 text-3xl font-bold tracking-tight text-text-primary lg:text-4xl">100%</span>
+            <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">Every deliverable sealed with immutable audit trail</p>
+          </div>
+          <div className="flex flex-col border-b border-border pb-5 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-6">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Ecosystem Partners</span>
+            <span className="mt-2 text-3xl font-bold tracking-tight text-text-primary lg:text-4xl">32+</span>
+            <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">Live enterprise integrations across CRM, docs, and billing</p>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">Missed Deadlines</span>
+            <span className="mt-2 text-3xl font-bold tracking-tight text-text-primary lg:text-4xl">0</span>
+            <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">Zero dropped requirements or unverified completions</p>
+          </div>
+        </div>
       </div>
     </section>
   );
