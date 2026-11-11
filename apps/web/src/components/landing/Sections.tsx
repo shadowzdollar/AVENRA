@@ -40,7 +40,7 @@ function SectionTitle({ title, sub, align = "center" }: { title: string; sub: st
 /* ---------------- Platform (bento) ---------------- */
 export function Platform() {
   return (
-    <section id="platform" className="mx-auto max-w-6xl px-6 py-24">
+    <section id="platform" className="mx-auto max-w-[1680px] w-full px-4 sm:px-6 lg:px-8 py-24">
       <SectionTitle
         title="Why operations teams trust Avenra"
         sub="Built around the state of the work — not triggers and rules. Every step is explained, verified, and backed by evidence."
@@ -167,7 +167,7 @@ export function Workflow() {
   const [active, setActive] = useState(0);
   const s = steps[active]!;
   return (
-    <section id="how-it-works" className="mx-auto max-w-6xl px-6 py-24">
+    <section id="how-it-works" className="mx-auto max-w-[1680px] w-full px-4 sm:px-6 lg:px-8 py-24">
       <SectionTitle title="Your work, carried to completion" sub="Four stages from intent to a verified outcome — with people informed and in control at every step." />
       <div className="mt-12 grid grid-cols-2 gap-2 md:grid-cols-4">
         {steps.map((st, i) => (
@@ -238,7 +238,7 @@ const useCases = [
 
 export function UseCases() {
   return (
-    <section id="use-cases" className="mx-auto max-w-6xl px-6 py-24">
+    <section id="use-cases" className="mx-auto max-w-[1680px] w-full px-4 sm:px-6 lg:px-8 py-24">
       <h2 className="max-w-md text-3xl font-semibold tracking-[-0.03em] md:text-[34px] md:leading-[1.15]">Discover how Avenra moves client work forward.</h2>
       <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {useCases.map((u) => (
@@ -268,7 +268,7 @@ const quotes = [
 export function Testimonials() {
   return (
     <section id="customers" className="bg-canvas py-24">
-      <div className="mx-auto max-w-6xl px-6">
+      <div className="mx-auto max-w-[1680px] w-full px-4 sm:px-6 lg:px-8">
         <SectionTitle align="left" title="Trusted by operations leaders" sub="Early design partners on what changed when work started finishing itself — verifiably." />
         <div className="mt-12 grid gap-4 md:grid-cols-4">
           <QuoteCard q={quotes[0]!} />
@@ -317,9 +317,9 @@ const orbit = [
 
 export function IntegrationsOrbit() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-24">
+    <section className="mx-auto max-w-[1680px] w-full px-4 sm:px-6 lg:px-8 py-24">
       <SectionTitle title="Connected to the systems you already use" sub="Avenra doesn't replace your CRM, documents, or email. It connects them — and turns the information inside them into finished work." />
-      <div className="relative mx-auto mt-10 h-[460px] max-w-5xl overflow-hidden">
+      <div className="relative mx-auto mt-10 h-[460px] max-w-6xl overflow-hidden">
         <div className="absolute left-1/2 top-10 size-[900px] -translate-x-1/2 rounded-full border border-border" />
         <div className="absolute left-1/2 top-[110px] size-[700px] -translate-x-1/2 rounded-full border border-border" />
         <div className="absolute left-1/2 top-[190px] size-[540px] -translate-x-1/2 rounded-full border border-dashed border-brand/20" />
@@ -347,7 +347,7 @@ const plans = [
 export function Pricing() {
   const [yearly, setYearly] = useState(false);
   return (
-    <section id="pricing" className="mx-auto max-w-6xl px-6 py-24">
+    <section id="pricing" className="mx-auto max-w-[1680px] w-full px-4 sm:px-6 lg:px-8 py-24">
       <SectionTitle title="Simple, transparent pricing" sub="Start with one workflow. Expand as Avenra proves its value. No surprises." />
       <div className="mt-8 flex justify-center">
         <div className="inline-flex rounded-xl bg-canvas p-1">
@@ -410,8 +410,8 @@ export function Footer() {
     Company: ["About", "Careers", "Privacy policy", "Terms of service", "Contact"],
   };
   return (
-    <footer className="bg-canvas px-6 pb-10 pt-16">
-      <div className="mx-auto max-w-6xl">
+    <footer className="bg-canvas px-4 sm:px-6 lg:px-8 pb-10 pt-16">
+      <div className="mx-auto max-w-[1680px] w-full">
         <div className="flex items-start justify-between gap-6">
           <BrandLogo markOnly className="size-10" />
           <span className="select-none text-[18vw] font-semibold leading-[0.8] tracking-[-0.06em] text-text-primary md:text-[150px]">avenra</span>

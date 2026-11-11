@@ -29,7 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-canvas">
       <header className="sticky top-0 z-30 border-b border-border bg-background">
-        <div className="mx-auto flex h-16 max-w-5xl items-center gap-6 px-6">
+        <div className="mx-auto flex h-16 max-w-[1680px] w-full items-center gap-6 px-4 sm:px-6 lg:px-8">
           <Link href="/organizations" aria-label="Avenra">
             <BrandLogo />
           </Link>
@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-10">
+      <main className="mx-auto max-w-[1680px] w-full px-4 sm:px-6 lg:px-8 py-10">
         {session.isPending ? <p className="text-[13px] text-text-secondary">Loading…</p> : null}
         {session.isError && !(session.error && "status" in session.error && session.error.status === 401) ? (
           <Alert tone="error">The application could not reach Avenra. Try again in a moment.</Alert>

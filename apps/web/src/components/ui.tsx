@@ -282,8 +282,8 @@ export function AuthLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-dvh bg-auth-wash p-4 md:p-8">
-      <div className="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-6xl gap-4 rounded-3xl bg-background p-4 shadow-float md:grid-cols-2">
+    <div className="min-h-dvh bg-auth-wash p-3 sm:p-6 lg:p-8">
+      <div className="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-[1536px] w-full gap-4 rounded-3xl bg-background p-4 shadow-float md:grid-cols-2">
         <div className="flex flex-col p-4 md:p-6">
           <Link href="/" aria-label="Avenra home" className="self-start">
             <BrandLogo />

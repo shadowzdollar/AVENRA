@@ -152,7 +152,7 @@ export function Header() {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
           }}
           onMouseLeave={handleMouseLeave}
-          className="absolute left-1/2 top-[calc(100%+8px)] z-50 w-[min(96vw,1080px)] -translate-x-1/2 overflow-hidden rounded-2xl border border-border bg-background/95 backdrop-blur-xl shadow-2xl transition-all duration-200 animate-in fade-in slide-in-from-top-2"
+          className="absolute left-1/2 top-[calc(100%+8px)] z-50 w-[min(96vw,1560px)] -translate-x-1/2 overflow-hidden rounded-2xl border border-border bg-background/95 backdrop-blur-xl shadow-2xl transition-all duration-200 animate-in fade-in slide-in-from-top-2"
         >
           {activeCategory === "platform" && (
             <PlatformMenu onClose={() => setActiveCategory(null)} />

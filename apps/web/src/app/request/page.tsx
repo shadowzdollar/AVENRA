@@ -34,8 +34,8 @@ export default function RequestPage() {
   const token = useSyncExternalStore(noSubscription, tokenSnapshot, () => undefined);
 
   return (
-    <div className="min-h-dvh bg-auth-wash p-4 md:p-8">
-      <main className="mx-auto max-w-2xl rounded-3xl bg-background p-6 shadow-float md:p-10">
+    <div className="min-h-dvh bg-auth-wash p-3 sm:p-6 lg:p-8">
+      <main className="mx-auto max-w-4xl rounded-3xl bg-background p-6 shadow-float md:p-10">
         <div className="mb-8">
           <BrandLogo />
         </div>

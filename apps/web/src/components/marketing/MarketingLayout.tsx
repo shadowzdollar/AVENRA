@@ -118,14 +118,14 @@ export function MarketingLayout({
       </div>
 
       {/* Hero Section */}
-      <section className={`relative overflow-hidden border-b border-border/60 ${styles.heroGlow} px-6 pb-20 pt-12 md:pb-28 md:pt-16`}>
+      <section className={`relative overflow-hidden border-b border-border/60 ${styles.heroGlow} px-4 sm:px-6 lg:px-8 pb-20 pt-12 md:pb-28 md:pt-16`}>
         {/* Subtle patterned background grid */}
         <div
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(#888_1px,transparent_1px)] bg-size-[28px_28px] opacity-[0.03] dark:opacity-[0.07]"
           aria-hidden="true"
         />
 
-        <div className="relative mx-auto max-w-6xl">
+        <div className="relative mx-auto max-w-[1680px] w-full">
           {/* Breadcrumbs */}
           <nav aria-label="Breadcrumbs" className="mb-8 flex items-center gap-1.5 text-xs text-text-secondary">
             <Link href="/" className="hover:text-text-primary transition-colors">
@@ -234,7 +234,7 @@ export function MarketingLayout({
       </section>
 
       {/* Main Content Area */}
-      <main className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+      <main className="mx-auto max-w-[1680px] w-full px-4 sm:px-6 lg:px-8 py-14 md:py-20">
         {/* Highlight Feature Cards (if provided) */}
         {features && features.length > 0 && (
           <section className="mb-20">
@@ -335,8 +335,8 @@ export function MarketingLayout({
       </section>
 
       {/* Signature Landing Page Giant Footer */}
-      <footer className="bg-canvas border-t border-border px-6 pb-12 pt-16">
-        <div className="mx-auto max-w-6xl">
+      <footer className="bg-canvas border-t border-border px-4 sm:px-6 lg:px-8 pb-12 pt-16">
+        <div className="mx-auto max-w-[1680px] w-full">
           {/* Top Wordmark Row */}
           <div className="flex items-start justify-between gap-6 border-b border-border/80 pb-12">
             <BrandLogo markOnly className="size-12 shrink-0 text-brand" />

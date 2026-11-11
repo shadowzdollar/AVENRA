@@ -83,7 +83,7 @@ function NewWork({ organizationId }: { organizationId: string }) {
 
   const select = `${INPUT_CLASS} mt-1.5`;
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <PageHeader title="Define new work" subtitle="Say what needs to be true, for whom and by when. Avenra tracks it to a verified result." />
       <form onSubmit={submit}>
         <Panel>
