@@ -1,11 +1,59 @@
 "use client";
 
 import { CheckCircle2, MoreVertical, Star, ShieldCheck } from "lucide-react";
-import { SiAmazons3, SiBackblaze, SiCloudflare, SiDigitalocean, SiGmail, SiMake, SiMinio, SiN8N, SiWasabi, SiZapier } from "react-icons/si";
+import { SiGmail } from "react-icons/si";
 import { LinkButton } from "./button";
 import { Header } from "./Header";
 
 const portrait = "/landing/testimonial.jpg";
+
+interface PartnerLogo {
+  id: string;
+  name: string;
+  logo: string;
+  posClass: string;
+}
+
+const OUTER_PARTNERS: PartnerLogo[] = [
+  { id: "microsoft365", name: "Microsoft 365", logo: "/logos/microsoft365.svg", posClass: "orbit-pos-12-0" },
+  { id: "aws", name: "Amazon Web Services", logo: "/logos/aws.svg", posClass: "orbit-pos-12-1" },
+  { id: "cloudflare", name: "Cloudflare", logo: "/logos/cloudflare.svg", posClass: "orbit-pos-12-2" },
+  { id: "google-workspace", name: "Google Workspace", logo: "/logos/google-workspace.svg", posClass: "orbit-pos-12-3" },
+  { id: "openai", name: "OpenAI", logo: "/logos/openai.svg", posClass: "orbit-pos-12-4" },
+  { id: "anthropic", name: "Anthropic", logo: "/logos/anthropic.svg", posClass: "orbit-pos-12-5" },
+  { id: "stripe", name: "Stripe", logo: "/logos/stripe.svg", posClass: "orbit-pos-12-6" },
+  { id: "salesforce", name: "Salesforce", logo: "/logos/salesforce.svg", posClass: "orbit-pos-12-7" },
+  { id: "okta", name: "Okta", logo: "/logos/okta.svg", posClass: "orbit-pos-12-8" },
+  { id: "entra", name: "Microsoft Entra ID", logo: "/logos/entra.svg", posClass: "orbit-pos-12-9" },
+  { id: "digitalocean", name: "DigitalOcean", logo: "/logos/digitalocean.svg", posClass: "orbit-pos-12-10" },
+  { id: "backblaze", name: "Backblaze B2", logo: "/logos/backblaze.svg", posClass: "orbit-pos-12-11" },
+];
+
+const MIDDLE_PARTNERS: PartnerLogo[] = [
+  { id: "sharepoint", name: "Microsoft SharePoint", logo: "/logos/sharepoint.svg", posClass: "orbit-pos-10m-0" },
+  { id: "onedrive", name: "Microsoft OneDrive", logo: "/logos/onedrive.svg", posClass: "orbit-pos-10m-1" },
+  { id: "box", name: "Box", logo: "/logos/box.svg", posClass: "orbit-pos-10m-2" },
+  { id: "wasabi", name: "Wasabi", logo: "/logos/wasabi.svg", posClass: "orbit-pos-10m-3" },
+  { id: "minio", name: "MinIO", logo: "/logos/minio.svg", posClass: "orbit-pos-10m-4" },
+  { id: "zapier", name: "Zapier", logo: "/logos/zapier.svg", posClass: "orbit-pos-10m-5" },
+  { id: "make", name: "Make", logo: "/logos/make.svg", posClass: "orbit-pos-10m-6" },
+  { id: "n8n", name: "n8n", logo: "/logos/n8n.svg", posClass: "orbit-pos-10m-7" },
+  { id: "twilio", name: "Twilio", logo: "/logos/twilio.svg", posClass: "orbit-pos-10m-8" },
+  { id: "sendgrid", name: "Twilio SendGrid", logo: "/logos/sendgrid.svg", posClass: "orbit-pos-10m-9" },
+];
+
+const INNER_PARTNERS: PartnerLogo[] = [
+  { id: "imanage", name: "iManage", logo: "/logos/imanage.svg", posClass: "orbit-pos-10i-0" },
+  { id: "netdocuments", name: "NetDocuments", logo: "/logos/netdocuments.svg", posClass: "orbit-pos-10i-1" },
+  { id: "karbon", name: "Karbon", logo: "/logos/karbon.svg", posClass: "orbit-pos-10i-2" },
+  { id: "wolters-kluwer", name: "Wolters Kluwer / CCH Axcess", logo: "/logos/wolters-kluwer.svg", posClass: "orbit-pos-10i-3" },
+  { id: "xero", name: "Xero", logo: "/logos/xero.svg", posClass: "orbit-pos-10i-4" },
+  { id: "clio", name: "Clio", logo: "/logos/clio.svg", posClass: "orbit-pos-10i-5" },
+  { id: "smokeball", name: "Smokeball", logo: "/logos/smokeball.svg", posClass: "orbit-pos-10i-6" },
+  { id: "hubspot", name: "HubSpot", logo: "/logos/hubspot.svg", posClass: "orbit-pos-10i-7" },
+  { id: "vanta", name: "Vanta", logo: "/logos/vanta.svg", posClass: "orbit-pos-10i-8" },
+  { id: "drata", name: "Drata", logo: "/logos/drata.svg", posClass: "orbit-pos-10i-9" },
+];
 
 export function Hero() {
   return (
@@ -17,66 +65,40 @@ export function Hero() {
           <div className="hero-orbit hero-orbit-outer orbit-rev-outer">
             <span className="orbit-point point-left" />
             <span className="orbit-point point-bottom-right" />
-            <div className="orbit-pos-top-left">
-              <div className="hero-app-bubble counter-outer" title="Zapier">
-                <SiZapier className="hero-app-icon logo-zapier" aria-label="Zapier" />
+            {OUTER_PARTNERS.map((partner) => (
+              <div key={partner.id} className={partner.posClass}>
+                <div className="hero-app-bubble counter-outer" title={partner.name}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- CSP nonce rules apply */}
+                  <img src={partner.logo} alt={partner.name} className="hero-app-img" loading="eager" />
+                </div>
               </div>
-            </div>
-            <div className="orbit-pos-top-right">
-              <div className="hero-app-bubble counter-outer" title="Cloudflare R2">
-                <SiCloudflare className="hero-app-icon logo-cloudflare" aria-label="Cloudflare R2" />
-              </div>
-            </div>
-            <div className="orbit-pos-bottom-right">
-              <div className="hero-app-bubble counter-outer" title="Wasabi">
-                <SiWasabi className="hero-app-icon logo-wasabi" aria-label="Wasabi" />
-              </div>
-            </div>
-            <div className="orbit-pos-bottom-left">
-              <div className="hero-app-bubble counter-outer" title="Backblaze B2">
-                <SiBackblaze className="hero-app-icon logo-backblaze" aria-label="Backblaze B2" />
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* Middle Orbit (Counter-Clockwise revolution) */}
           <div className="hero-orbit hero-orbit-middle orbit-rev-middle">
             <span className="orbit-point point-top-right" />
-            <div className="orbit-pos-top">
-              <div className="hero-app-bubble counter-middle" title="Amazon S3">
-                <SiAmazons3 className="hero-app-icon logo-s3" aria-label="Amazon S3" />
+            {MIDDLE_PARTNERS.map((partner) => (
+              <div key={partner.id} className={partner.posClass}>
+                <div className="hero-app-bubble counter-middle" title={partner.name}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- CSP nonce rules apply */}
+                  <img src={partner.logo} alt={partner.name} className="hero-app-img" loading="eager" />
+                </div>
               </div>
-            </div>
-            <div className="orbit-pos-right">
-              <div className="hero-app-bubble counter-middle" title="n8n">
-                <SiN8N className="hero-app-icon logo-n8n" aria-label="n8n" />
-              </div>
-            </div>
-            <div className="orbit-pos-bottom">
-              <div className="hero-app-bubble counter-middle" title="MinIO">
-                <SiMinio className="hero-app-icon logo-minio" aria-label="MinIO" />
-              </div>
-            </div>
-            <div className="orbit-pos-left">
-              <div className="hero-app-bubble counter-middle" title="Make">
-                <SiMake className="hero-app-icon logo-make" aria-label="Make" />
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* Inner Orbit (Clockwise revolution) */}
           <div className="hero-orbit hero-orbit-inner orbit-rev-inner">
             <span className="orbit-point point-bottom-left" />
-            <div className="orbit-pos-top-right">
-              <div className="hero-app-bubble counter-inner" title="Gmail">
-                <SiGmail className="hero-app-icon logo-gmail" aria-label="Gmail" />
+            {INNER_PARTNERS.map((partner) => (
+              <div key={partner.id} className={partner.posClass}>
+                <div className="hero-app-bubble counter-inner" title={partner.name}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- CSP nonce rules apply */}
+                  <img src={partner.logo} alt={partner.name} className="hero-app-img" loading="eager" />
+                </div>
               </div>
-            </div>
-            <div className="orbit-pos-bottom-left">
-              <div className="hero-app-bubble counter-inner" title="DigitalOcean Spaces">
-                <SiDigitalocean className="hero-app-icon logo-digitalocean" aria-label="DigitalOcean Spaces" />
-              </div>
-            </div>
+            ))}
           </div>
         </div>
         <div className="hero-copy">

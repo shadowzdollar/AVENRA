@@ -129,9 +129,9 @@ progress.completeness::-moz-progress-bar {
 .hero-actions { display: flex; justify-content: center; gap: 16px; margin-top: 23px; }
 .hero-orbits { position: absolute; inset: 0; pointer-events: none; }
 .hero-orbit { position: absolute; left: 50%; top: 41%; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--hero-orbit-border); pointer-events: none; }
-.hero-orbit-outer { width: 84%; aspect-ratio: 1; }
-.hero-orbit-middle { width: 70%; aspect-ratio: 1; border-style: dashed; opacity: .75; }
-.hero-orbit-inner { width: 55%; aspect-ratio: 1; border-style: dashed; opacity: .65; }
+.hero-orbit-outer { width: 92%; aspect-ratio: 1; }
+.hero-orbit-middle { width: 75%; aspect-ratio: 1; border-style: dashed; opacity: .75; }
+.hero-orbit-inner { width: 58%; aspect-ratio: 1; border-style: dashed; opacity: .65; }
 
 /* Orbit revolution animations */
 @keyframes orbit-cw {
@@ -151,13 +151,13 @@ progress.completeness::-moz-progress-bar {
   to { transform: rotate(360deg); }
 }
 
-.orbit-rev-outer { animation: orbit-cw 55s linear infinite; }
-.orbit-rev-middle { animation: orbit-ccw 42s linear infinite; }
-.orbit-rev-inner { animation: orbit-cw 32s linear infinite; }
+.orbit-rev-outer { animation: orbit-cw 65s linear infinite; }
+.orbit-rev-middle { animation: orbit-ccw 48s linear infinite; }
+.orbit-rev-inner { animation: orbit-cw 36s linear infinite; }
 
-.counter-outer { animation: icon-counter-cw 55s linear infinite; }
-.counter-middle { animation: icon-counter-ccw 42s linear infinite; }
-.counter-inner { animation: icon-counter-cw 32s linear infinite; }
+.counter-outer { animation: icon-counter-cw 65s linear infinite; }
+.counter-middle { animation: icon-counter-ccw 48s linear infinite; }
+.counter-inner { animation: icon-counter-cw 36s linear infinite; }
 
 .hero-orbit:hover,
 .hero-orbit:hover .hero-app-bubble,
@@ -165,7 +165,45 @@ progress.completeness::-moz-progress-bar {
   animation-play-state: paused;
 }
 
-/* Orbit position anchors */
+/* 12-point clock positions for outer orbit (0 to 11) */
+.orbit-pos-12-0 { position: absolute; top: 0.00%; left: 50.00%; transform: translate(-50%, -50%); }
+.orbit-pos-12-1 { position: absolute; top: 6.70%; left: 75.00%; transform: translate(-50%, -50%); }
+.orbit-pos-12-2 { position: absolute; top: 25.00%; left: 93.30%; transform: translate(-50%, -50%); }
+.orbit-pos-12-3 { position: absolute; top: 50.00%; left: 100.00%; transform: translate(-50%, -50%); }
+.orbit-pos-12-4 { position: absolute; top: 75.00%; left: 93.30%; transform: translate(-50%, -50%); }
+.orbit-pos-12-5 { position: absolute; top: 93.30%; left: 75.00%; transform: translate(-50%, -50%); }
+.orbit-pos-12-6 { position: absolute; top: 100.00%; left: 50.00%; transform: translate(-50%, -50%); }
+.orbit-pos-12-7 { position: absolute; top: 93.30%; left: 25.00%; transform: translate(-50%, -50%); }
+.orbit-pos-12-8 { position: absolute; top: 75.00%; left: 6.70%; transform: translate(-50%, -50%); }
+.orbit-pos-12-9 { position: absolute; top: 50.00%; left: 0.00%; transform: translate(-50%, -50%); }
+.orbit-pos-12-10 { position: absolute; top: 25.00%; left: 6.70%; transform: translate(-50%, -50%); }
+.orbit-pos-12-11 { position: absolute; top: 6.70%; left: 25.00%; transform: translate(-50%, -50%); }
+
+/* 10-point positions for middle orbit */
+.orbit-pos-10m-0 { position: absolute; top: 2.45%; left: 65.45%; transform: translate(-50%, -50%); }
+.orbit-pos-10m-1 { position: absolute; top: 20.61%; left: 90.45%; transform: translate(-50%, -50%); }
+.orbit-pos-10m-2 { position: absolute; top: 50.00%; left: 100.00%; transform: translate(-50%, -50%); }
+.orbit-pos-10m-3 { position: absolute; top: 79.39%; left: 90.45%; transform: translate(-50%, -50%); }
+.orbit-pos-10m-4 { position: absolute; top: 97.55%; left: 65.45%; transform: translate(-50%, -50%); }
+.orbit-pos-10m-5 { position: absolute; top: 97.55%; left: 34.55%; transform: translate(-50%, -50%); }
+.orbit-pos-10m-6 { position: absolute; top: 79.39%; left: 9.55%; transform: translate(-50%, -50%); }
+.orbit-pos-10m-7 { position: absolute; top: 50.00%; left: 0.00%; transform: translate(-50%, -50%); }
+.orbit-pos-10m-8 { position: absolute; top: 20.61%; left: 9.55%; transform: translate(-50%, -50%); }
+.orbit-pos-10m-9 { position: absolute; top: 2.45%; left: 34.55%; transform: translate(-50%, -50%); }
+
+/* 10-point positions for inner orbit */
+.orbit-pos-10i-0 { position: absolute; top: 0.00%; left: 50.00%; transform: translate(-50%, -50%); }
+.orbit-pos-10i-1 { position: absolute; top: 9.55%; left: 79.39%; transform: translate(-50%, -50%); }
+.orbit-pos-10i-2 { position: absolute; top: 34.55%; left: 97.55%; transform: translate(-50%, -50%); }
+.orbit-pos-10i-3 { position: absolute; top: 65.45%; left: 97.55%; transform: translate(-50%, -50%); }
+.orbit-pos-10i-4 { position: absolute; top: 90.45%; left: 79.39%; transform: translate(-50%, -50%); }
+.orbit-pos-10i-5 { position: absolute; top: 100.00%; left: 50.00%; transform: translate(-50%, -50%); }
+.orbit-pos-10i-6 { position: absolute; top: 90.45%; left: 20.61%; transform: translate(-50%, -50%); }
+.orbit-pos-10i-7 { position: absolute; top: 65.45%; left: 2.45%; transform: translate(-50%, -50%); }
+.orbit-pos-10i-8 { position: absolute; top: 34.55%; left: 2.45%; transform: translate(-50%, -50%); }
+.orbit-pos-10i-9 { position: absolute; top: 9.55%; left: 20.61%; transform: translate(-50%, -50%); }
+
+/* Orbit position anchors (legacy compatibility) */
 .orbit-pos-top { position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); }
 .orbit-pos-right { position: absolute; top: 50%; right: 0; transform: translate(50%, -50%); }
 .orbit-pos-bottom { position: absolute; bottom: 0; left: 50%; transform: translate(-50%, 50%); }
@@ -177,9 +215,10 @@ progress.completeness::-moz-progress-bar {
 
 .orbit-point { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--color-brand); }
 .point-left { left: 7.6%; top: 39%; }.point-bottom-left { left: 15%; top: 85%; width: 7px; height: 7px; opacity: .6; }.point-top-right { right: 10.4%; top: 10%; width: 7px; height: 7px; }.point-bottom-right { right: 13.3%; top: 80%; width: 7px; height: 7px; }
-.hero-app-bubble { position: relative; z-index: 6; width: 59px; height: 59px; border-radius: 50%; display: grid; place-items: center; background: var(--color-background); box-shadow: var(--landing-shadow-card); border: 4px solid color-mix(in oklab, var(--color-background) 75%, transparent); pointer-events: auto; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-.hero-app-bubble:hover { transform: scale(1.15); box-shadow: var(--landing-shadow-float); z-index: 20; }
-.hero-app-icon { width: 31px; height: 31px; }
+.hero-app-bubble { position: relative; z-index: 6; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--color-background); box-shadow: var(--landing-shadow-card); border: 3px solid color-mix(in oklab, var(--color-background) 80%, var(--color-border)); pointer-events: auto; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; padding: 6px; }
+.hero-app-bubble:hover { transform: scale(1.18); box-shadow: var(--landing-shadow-float); z-index: 25; }
+.hero-app-icon { width: 28px; height: 28px; }
+.hero-app-img { width: 30px; height: 30px; max-width: 32px; max-height: 28px; object-fit: contain; pointer-events: none; user-select: none; }
 .logo-gmail { color: #ea4335; }.logo-s3 { color: #569a31; }.logo-cloudflare { color: #f38020; }.logo-backblaze { color: #e21e29; }.logo-digitalocean { color: #0080ff; }.logo-minio { color: #c72e49; }.logo-wasabi { color: #01cd3e; }.logo-zapier { color: #ff4f00; }.logo-make { color: #6d00cc; }.logo-n8n { color: #ea4b71; }
 .orbit-slack { left: 22%; top: 6%; }.orbit-asana { left: 14%; top: 26%; }.orbit-meta { left: 21%; top: 46%; }.orbit-mail { left: 8%; top: 59%; }.orbit-drive { left: 20%; top: 77%; }
 .orbit-zapier { right: 20%; top: 6%; }.orbit-aws { right: 12%; top: 24%; }.orbit-flow { right: 19%; top: 46%; }.orbit-click { right: 7%; top: 59%; }.orbit-airtable { right: 19%; top: 77%; }
