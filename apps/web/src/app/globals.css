@@ -128,13 +128,57 @@ progress.completeness::-moz-progress-bar {
 .hero-copy > p { margin: 15px auto 0; font-size: 15px; line-height: 1.55; color: var(--color-text-primary); }
 .hero-actions { display: flex; justify-content: center; gap: 16px; margin-top: 23px; }
 .hero-orbits { position: absolute; inset: 0; pointer-events: none; }
-.hero-orbit { position: absolute; left: 50%; top: 41%; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--hero-orbit-border); }
+.hero-orbit { position: absolute; left: 50%; top: 41%; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--hero-orbit-border); pointer-events: none; }
 .hero-orbit-outer { width: 84%; aspect-ratio: 1; }
-.hero-orbit-middle { width: 70%; aspect-ratio: 1; border-style: dashed; opacity: .55; }
-.hero-orbit-inner { width: 55%; aspect-ratio: 1; border-style: dashed; opacity: .45; }
+.hero-orbit-middle { width: 70%; aspect-ratio: 1; border-style: dashed; opacity: .75; }
+.hero-orbit-inner { width: 55%; aspect-ratio: 1; border-style: dashed; opacity: .65; }
+
+/* Orbit revolution animations */
+@keyframes orbit-cw {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@keyframes orbit-ccw {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(-360deg); }
+}
+@keyframes icon-counter-cw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+@keyframes icon-counter-ccw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.orbit-rev-outer { animation: orbit-cw 55s linear infinite; }
+.orbit-rev-middle { animation: orbit-ccw 42s linear infinite; }
+.orbit-rev-inner { animation: orbit-cw 32s linear infinite; }
+
+.counter-outer { animation: icon-counter-cw 55s linear infinite; }
+.counter-middle { animation: icon-counter-ccw 42s linear infinite; }
+.counter-inner { animation: icon-counter-cw 32s linear infinite; }
+
+.hero-orbit:hover,
+.hero-orbit:hover .hero-app-bubble,
+.hero-app-bubble:hover {
+  animation-play-state: paused;
+}
+
+/* Orbit position anchors */
+.orbit-pos-top { position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); }
+.orbit-pos-right { position: absolute; top: 50%; right: 0; transform: translate(50%, -50%); }
+.orbit-pos-bottom { position: absolute; bottom: 0; left: 50%; transform: translate(-50%, 50%); }
+.orbit-pos-left { position: absolute; top: 50%; left: 0; transform: translate(-50%, -50%); }
+.orbit-pos-top-left { position: absolute; top: 14.65%; left: 14.65%; transform: translate(-50%, -50%); }
+.orbit-pos-top-right { position: absolute; top: 14.65%; right: 14.65%; transform: translate(50%, -50%); }
+.orbit-pos-bottom-right { position: absolute; bottom: 14.65%; right: 14.65%; transform: translate(50%, 50%); }
+.orbit-pos-bottom-left { position: absolute; bottom: 14.65%; left: 14.65%; transform: translate(-50%, 50%); }
+
 .orbit-point { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--color-brand); }
 .point-left { left: 7.6%; top: 39%; }.point-bottom-left { left: 15%; top: 85%; width: 7px; height: 7px; opacity: .6; }.point-top-right { right: 10.4%; top: 10%; width: 7px; height: 7px; }.point-bottom-right { right: 13.3%; top: 80%; width: 7px; height: 7px; }
-.hero-app-bubble { position: absolute; z-index: 6; width: 59px; height: 59px; border-radius: 50%; display: grid; place-items: center; background: var(--color-background); box-shadow: var(--landing-shadow-card); border: 4px solid color-mix(in oklab, var(--color-background) 75%, transparent); }
+.hero-app-bubble { position: relative; z-index: 6; width: 59px; height: 59px; border-radius: 50%; display: grid; place-items: center; background: var(--color-background); box-shadow: var(--landing-shadow-card); border: 4px solid color-mix(in oklab, var(--color-background) 75%, transparent); pointer-events: auto; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.hero-app-bubble:hover { transform: scale(1.15); box-shadow: var(--landing-shadow-float); z-index: 20; }
 .hero-app-icon { width: 31px; height: 31px; }
 .logo-gmail { color: #ea4335; }.logo-s3 { color: #569a31; }.logo-cloudflare { color: #f38020; }.logo-backblaze { color: #e21e29; }.logo-digitalocean { color: #0080ff; }.logo-minio { color: #c72e49; }.logo-wasabi { color: #01cd3e; }.logo-zapier { color: #ff4f00; }.logo-make { color: #6d00cc; }.logo-n8n { color: #ea4b71; }
 .orbit-slack { left: 22%; top: 6%; }.orbit-asana { left: 14%; top: 26%; }.orbit-meta { left: 21%; top: 46%; }.orbit-mail { left: 8%; top: 59%; }.orbit-drive { left: 20%; top: 77%; }

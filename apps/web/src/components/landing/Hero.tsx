@@ -2,25 +2,10 @@
 
 import { CheckCircle2, MoreVertical, Star, ShieldCheck } from "lucide-react";
 import { SiAmazons3, SiBackblaze, SiCloudflare, SiDigitalocean, SiGmail, SiMake, SiMinio, SiN8N, SiWasabi, SiZapier } from "react-icons/si";
-import type { IconType } from "react-icons";
 import { LinkButton } from "./button";
 import { Header } from "./Header";
 
 const portrait = "/landing/testimonial.jpg";
-
-/** Services Avenra works with (see Integrations.tsx), in the design's orbit positions. */
-const floating: { name: string; icon: IconType; position: string; brand: string }[] = [
-  { name: "Zapier", icon: SiZapier, position: "orbit-slack", brand: "logo-zapier" },
-  { name: "Amazon S3", icon: SiAmazons3, position: "orbit-asana", brand: "logo-s3" },
-  { name: "Make", icon: SiMake, position: "orbit-meta", brand: "logo-make" },
-  { name: "Gmail", icon: SiGmail, position: "orbit-mail", brand: "logo-gmail" },
-  { name: "Backblaze B2", icon: SiBackblaze, position: "orbit-drive", brand: "logo-backblaze" },
-  { name: "n8n", icon: SiN8N, position: "orbit-zapier", brand: "logo-n8n" },
-  { name: "Cloudflare R2", icon: SiCloudflare, position: "orbit-aws", brand: "logo-cloudflare" },
-  { name: "DigitalOcean Spaces", icon: SiDigitalocean, position: "orbit-flow", brand: "logo-digitalocean" },
-  { name: "MinIO", icon: SiMinio, position: "orbit-click", brand: "logo-minio" },
-  { name: "Wasabi", icon: SiWasabi, position: "orbit-airtable", brand: "logo-wasabi" },
-];
 
 export function Hero() {
   return (
@@ -28,17 +13,72 @@ export function Hero() {
       <Header />
       <div className="hero-stage">
         <div className="hero-orbits" aria-hidden="true">
-          <div className="hero-orbit hero-orbit-outer" />
-          <div className="hero-orbit hero-orbit-middle" />
-          <div className="hero-orbit hero-orbit-inner" />
-          <span className="orbit-point point-left" /><span className="orbit-point point-bottom-left" />
-          <span className="orbit-point point-top-right" /><span className="orbit-point point-bottom-right" />
-        </div>
-        {floating.map(({ name, icon: Icon, position, brand }) => (
-          <div key={position} className={`hero-app-bubble ${position}`} title={name}>
-            <Icon className={`hero-app-icon ${brand}`} aria-label={name} />
+          {/* Outer Orbit (Clockwise revolution) */}
+          <div className="hero-orbit hero-orbit-outer orbit-rev-outer">
+            <span className="orbit-point point-left" />
+            <span className="orbit-point point-bottom-right" />
+            <div className="orbit-pos-top-left">
+              <div className="hero-app-bubble counter-outer" title="Zapier">
+                <SiZapier className="hero-app-icon logo-zapier" aria-label="Zapier" />
+              </div>
+            </div>
+            <div className="orbit-pos-top-right">
+              <div className="hero-app-bubble counter-outer" title="Cloudflare R2">
+                <SiCloudflare className="hero-app-icon logo-cloudflare" aria-label="Cloudflare R2" />
+              </div>
+            </div>
+            <div className="orbit-pos-bottom-right">
+              <div className="hero-app-bubble counter-outer" title="Wasabi">
+                <SiWasabi className="hero-app-icon logo-wasabi" aria-label="Wasabi" />
+              </div>
+            </div>
+            <div className="orbit-pos-bottom-left">
+              <div className="hero-app-bubble counter-outer" title="Backblaze B2">
+                <SiBackblaze className="hero-app-icon logo-backblaze" aria-label="Backblaze B2" />
+              </div>
+            </div>
           </div>
-        ))}
+
+          {/* Middle Orbit (Counter-Clockwise revolution) */}
+          <div className="hero-orbit hero-orbit-middle orbit-rev-middle">
+            <span className="orbit-point point-top-right" />
+            <div className="orbit-pos-top">
+              <div className="hero-app-bubble counter-middle" title="Amazon S3">
+                <SiAmazons3 className="hero-app-icon logo-s3" aria-label="Amazon S3" />
+              </div>
+            </div>
+            <div className="orbit-pos-right">
+              <div className="hero-app-bubble counter-middle" title="n8n">
+                <SiN8N className="hero-app-icon logo-n8n" aria-label="n8n" />
+              </div>
+            </div>
+            <div className="orbit-pos-bottom">
+              <div className="hero-app-bubble counter-middle" title="MinIO">
+                <SiMinio className="hero-app-icon logo-minio" aria-label="MinIO" />
+              </div>
+            </div>
+            <div className="orbit-pos-left">
+              <div className="hero-app-bubble counter-middle" title="Make">
+                <SiMake className="hero-app-icon logo-make" aria-label="Make" />
+              </div>
+            </div>
+          </div>
+
+          {/* Inner Orbit (Clockwise revolution) */}
+          <div className="hero-orbit hero-orbit-inner orbit-rev-inner">
+            <span className="orbit-point point-bottom-left" />
+            <div className="orbit-pos-top-right">
+              <div className="hero-app-bubble counter-inner" title="Gmail">
+                <SiGmail className="hero-app-icon logo-gmail" aria-label="Gmail" />
+              </div>
+            </div>
+            <div className="orbit-pos-bottom-left">
+              <div className="hero-app-bubble counter-inner" title="DigitalOcean Spaces">
+                <SiDigitalocean className="hero-app-icon logo-digitalocean" aria-label="DigitalOcean Spaces" />
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="hero-copy">
           <div className="hero-trust-badge">
             <span><ShieldCheck className="size-4 text-brand" /> Design partners</span>
