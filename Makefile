@@ -133,10 +133,9 @@ ai-run: .env ## AI service: run locally on 127.0.0.1:8090
 TAG ?= local
 
 .PHONY: images-build
-images-build: .env ## Build the api, web and ai images (needs docker buildx)
+images-build: .env ## Build the api and ai images (needs docker buildx)
 	docker buildx build --load -f backend/api/Dockerfile -t avenra-api:$(TAG) .
 	docker buildx build --load -f backend/ai/Dockerfile -t avenra-ai:$(TAG) .
-	docker buildx build --load -f frontend/platform/Dockerfile -t avenra-web:$(TAG) .
 
 .PHONY: images-test
 images-test: .env ## Smoke-test the images (needs `make infra-up`)
