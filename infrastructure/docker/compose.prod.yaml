@@ -111,7 +111,7 @@ services:
   avenra-ai:
     build:
       context: ../..
-      dockerfile: apps/ai/Dockerfile
+      dockerfile: backend/ai/Dockerfile
     restart: unless-stopped
     environment:
       AVENRA_AI_ENVIRONMENT: PRODUCTION
@@ -137,7 +137,7 @@ services:
   avenra-api:
     build:
       context: ../..
-      dockerfile: apps/api/Dockerfile
+      dockerfile: backend/api/Dockerfile
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: production

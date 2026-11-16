@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Avenra API image (Guidelines §93). Build from the repository root:
-#   docker build -f apps/api/Dockerfile -t avenra-api .
+#   docker build -f backend/api/Dockerfile -t avenra-api .
 # Tests are not run here; CI runs them before images are built.
 
 # --- Build ------------------------------------------------------------------
@@ -9,10 +9,10 @@ WORKDIR /workspace
 
 # The contract is the source of the generated API interfaces (ADR-008).
 COPY packages/contracts/openapi packages/contracts/openapi
-COPY apps/api/mvnw apps/api/pom.xml apps/api/
-COPY apps/api/.mvn apps/api/.mvn
-COPY apps/api/src apps/api/src
-WORKDIR /workspace/apps/api
+COPY backend/api/mvnw backend/api/pom.xml backend/api/
+COPY backend/api/.mvn backend/api/.mvn
+COPY backend/api/src backend/api/src
+WORKDIR /workspace/backend/api
 RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -ntp package -DskipTests \
     && java -Djarmode=tools -jar target/avenra-api-*.jar extract --layers --launcher --destination /extracted
 

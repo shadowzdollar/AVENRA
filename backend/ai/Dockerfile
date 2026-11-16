@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Avenra AI service image (Guidelines §93). Build from the repository root:
-#   docker build -f apps/ai/Dockerfile -t avenra-ai .
+#   docker build -f backend/ai/Dockerfile -t avenra-ai .
 
 FROM ghcr.io/astral-sh/uv:0.13.3 AS uv
 
@@ -13,10 +13,10 @@ ENV UV_COMPILE_BYTECODE=1 \
 WORKDIR /app
 
 # Exactly the locked versions, without development tools.
-COPY apps/ai/pyproject.toml apps/ai/uv.lock apps/ai/.python-version ./
+COPY backend/ai/pyproject.toml backend/ai/uv.lock backend/ai/.python-version ./
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-install-project
 
-COPY apps/ai/src src
+COPY backend/ai/src src
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-editable
 
 # --- Runtime ----------------------------------------------------------------
