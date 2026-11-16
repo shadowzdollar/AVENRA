@@ -38,4 +38,5 @@ Thumbs.db
 *.mp3
 *.mov
 *.wav
+*.tsbuildinfo
 .workspace/
