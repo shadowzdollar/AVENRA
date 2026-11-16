@@ -39,4 +39,7 @@ Thumbs.db
 *.mov
 *.wav
 *.tsbuildinfo
+.next/
+next-env.d.ts
+.clerk/
 .workspace/
