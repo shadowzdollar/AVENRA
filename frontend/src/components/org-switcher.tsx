@@ -2,6 +2,7 @@
 
 import { useAuth, useOrganizationList } from '@clerk/nextjs';
 import { Icons } from '@/components/icons';
+import { AvenraIcon } from '@/components/brand/avenra-logo';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
@@ -95,8 +96,8 @@ export function OrgSwitcher() {
             onClick={() => router.push('/dashboard/workspaces')}
             className='data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground'
           >
-            <div className='bg-primary text-primary-foreground flex aspect-square size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg font-bold text-xs'>
-              AV
+            <div className='flex aspect-square size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg'>
+              <AvenraIcon size={26} />
             </div>
             <div
               className={`grid flex-1 text-left text-sm leading-tight transition-all duration-200 ease-in-out ${
@@ -105,8 +106,8 @@ export function OrgSwitcher() {
                   : 'visible max-w-full opacity-100'
               }`}
             >
-              <span className='truncate font-medium'>Avenra Platform</span>
-              <span className='text-muted-foreground truncate text-xs'>Select Workspace</span>
+              <span className='truncate font-semibold tracking-wide'>AVENRA</span>
+              <span className='text-muted-foreground truncate text-xs'>Firm Platform</span>
             </div>
             <Icons.chevronsUpDown
               className={`text-muted-foreground ml-auto transition-all duration-200 ease-in-out ${
@@ -140,17 +141,17 @@ export function OrgSwitcher() {
               />
             }
           >
-            <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg'>
+            <div className='flex aspect-square size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg'>
               {displayOrganization.hasImage && displayOrganization.imageUrl ? (
                 <Image
                   src={displayOrganization.imageUrl}
                   alt={displayOrganization.name}
                   width={32}
                   height={32}
-                  className='size-full object-cover'
+                  className='size-full object-cover rounded-md'
                 />
               ) : (
-                <Icons.galleryVerticalEnd className='size-4' />
+                <AvenraIcon size={26} />
               )}
             </div>
             <div

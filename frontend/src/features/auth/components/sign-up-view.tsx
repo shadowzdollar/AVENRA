@@ -4,6 +4,7 @@ import { SignUp as ClerkSignUpForm } from '@clerk/nextjs';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { InteractiveGridPattern } from './interactive-grid';
+import { AvenraLogo } from '@/components/brand/avenra-logo';
 
 export const metadata: Metadata = {
   title: 'Authentication',
@@ -24,11 +25,8 @@ export default function SignUpViewPage() {
       </Link>
       <div className='relative hidden h-full flex-col p-10 lg:flex dark:border-r'>
         <div className='absolute inset-0 bg-sidebar' />
-        <div className='text-sidebar-foreground relative z-20 flex items-center text-xl font-bold tracking-tight'>
-          <span className='bg-primary text-primary-foreground size-8 rounded-lg flex items-center justify-center font-bold mr-2.5 text-sm'>
-            AV
-          </span>
-          AVENRA
+        <div className='relative z-20'>
+          <AvenraLogo size='lg' showSubtitle={true} subtitleText='AUTONOMOUS WORK ENGINE' />
         </div>
         <InteractiveGridPattern
           className={cn(

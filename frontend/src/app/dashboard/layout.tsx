@@ -10,8 +10,8 @@ import type { CSSProperties } from 'react';
 import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
-  title: 'Next Shadcn Dashboard Starter',
-  description: 'Basic dashboard with Next.js and Shadcn',
+  title: 'Avenra Command Center',
+  description: 'Autonomous accounting execution, document verification, and compliance monitoring',
   robots: {
     index: false,
     follow: false
