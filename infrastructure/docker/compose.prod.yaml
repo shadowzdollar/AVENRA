@@ -195,7 +195,7 @@ services:
   avenra-web:
     build:
       context: ../..
-      dockerfile: apps/web/Dockerfile
+      dockerfile: frontend/platform/Dockerfile
     restart: unless-stopped
     environment:
       NODE_ENV: production

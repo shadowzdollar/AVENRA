@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.parse
 
-DEST_DIR = "/home/ghost/Projects/AVENRA/apps/web/public/logos"
+DEST_DIR = "/home/ghost/Projects/AVENRA/frontend/platform/public/logos"
 os.makedirs(DEST_DIR, exist_ok=True)
 
 PARTNERS = {

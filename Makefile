@@ -66,7 +66,7 @@ js-install: ## Install JavaScript workspace dependencies (lockfile is respected)
 contract-check: ## Contract: lint, prove lint rules, generate TS client, type-check
 	pnpm --filter @avenra/contracts run check
 
-# --- Web (apps/web) ---------------------------------------------------------
+# --- Web (frontend/platform) ---------------------------------------------------------
 
 .PHONY: web-check
 web-check: ## Web: lint (zero warnings), strict type check, unit tests
@@ -136,7 +136,7 @@ TAG ?= local
 images-build: .env ## Build the api, web and ai images (needs docker buildx)
 	docker buildx build --load -f apps/api/Dockerfile -t avenra-api:$(TAG) .
 	docker buildx build --load -f apps/ai/Dockerfile -t avenra-ai:$(TAG) .
-	docker buildx build --load -f apps/web/Dockerfile -t avenra-web:$(TAG) .
+	docker buildx build --load -f frontend/platform/Dockerfile -t avenra-web:$(TAG) .
 
 .PHONY: images-test
 images-test: .env ## Smoke-test the images (needs `make infra-up`)

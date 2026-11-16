@@ -8,7 +8,7 @@ import os
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
-BASE_DIR = "apps/web/public/images"
+BASE_DIR = "frontend/platform/public/images"
 
 IMAGES = {
     # Platform
