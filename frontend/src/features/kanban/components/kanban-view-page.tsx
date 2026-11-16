@@ -5,8 +5,8 @@ import NewTaskDialog from './new-task-dialog';
 export default function KanbanViewPage() {
   return (
     <PageContainer
-      pageTitle='Kanban'
-      pageDescription='Manage tasks with drag and drop'
+      pageTitle='Execution Board'
+      pageDescription='Real-time workflow pipeline: monitor client intake, automated rule verification, exception resolution, and final deliverable sign-offs.'
       pageHeaderAction={<NewTaskDialog />}
     >
       <KanbanBoard />

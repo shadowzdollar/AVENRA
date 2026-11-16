@@ -171,6 +171,9 @@ importers:
       '@ai-sdk/react':
         specifier: ^4.0.142
         version: 4.0.170(react@19.3.0)(zod@4.6.7)
+      '@avenra/contracts':
+        specifier: workspace:*
+        version: link:../packages/contracts
       '@base-ui/react':
         specifier: ^1.9.0
         version: 1.9.0(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)

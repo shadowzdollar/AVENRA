@@ -27,11 +27,11 @@ export default function ProductForm({
   const createMutation = useMutation({
     ...productMutations.create(),
     onSuccess: () => {
-      toast.success('Product created');
+      toast.success('Work engagement created successfully');
       router.push('/dashboard/product');
     },
     onError: () => {
-      toast.error("Couldn't create product. Try again.");
+      toast.error("Couldn't create engagement. Please try again.");
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: productQueries.all() })
   });
@@ -39,11 +39,11 @@ export default function ProductForm({
   const updateMutation = useMutation({
     ...productMutations.update(),
     onSuccess: () => {
-      toast.success('Product updated');
+      toast.success('Engagement updated successfully');
       router.push('/dashboard/product');
     },
     onError: () => {
-      toast.error("Couldn't update product. Try again.");
+      toast.error("Couldn't update engagement. Please try again.");
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: productQueries.all() })
   });
@@ -91,23 +91,15 @@ export default function ProductForm({
           }}
         >
           <FieldGroup>
-            <form.AppField
-              name='image'
-              children={(field) => (
-                <field.FileUploadField
-                  label='Product Image'
-                  description='Upload a product image'
-                  maxSize={5 * 1024 * 1024}
-                  maxFiles={4}
-                />
-              )}
-            />
-
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
               <form.AppField
                 name='name'
                 children={(field) => (
-                  <field.TextField label='Product Name' required placeholder='Enter product name' />
+                  <field.TextField
+                    label='Engagement Title / Code'
+                    required
+                    placeholder='e.g. ENG-2026-015: FY2025 S-Corp 1120-S'
+                  />
                 )}
               />
 
@@ -115,10 +107,10 @@ export default function ProductForm({
                 name='category'
                 children={(field) => (
                   <field.SelectField
-                    label='Category'
+                    label='Practice Area'
                     required
                     options={categoryOptions}
-                    placeholder='Select category'
+                    placeholder='Select practice area'
                   />
                 )}
               />
@@ -127,12 +119,12 @@ export default function ProductForm({
                 name='price'
                 children={(field) => (
                   <field.TextField
-                    label='Price'
+                    label='Engagement Fee ($)'
                     required
                     type='number'
                     min={0}
-                    step={0.01}
-                    placeholder='Enter price'
+                    step={100}
+                    placeholder='e.g. 4500'
                   />
                 )}
               />
@@ -142,9 +134,9 @@ export default function ProductForm({
               name='description'
               children={(field) => (
                 <field.TextareaField
-                  label='Description'
+                  label='Engagement Scope & Deliverables'
                   required
-                  placeholder='Enter product description'
+                  placeholder='Describe required documents, filing deadlines, and rule checks...'
                   maxLength={500}
                   rows={4}
                 />
@@ -157,7 +149,7 @@ export default function ProductForm({
               Cancel
             </Button>
             <LoadingButton loading={isPending} type='submit'>
-              {isEdit ? 'Update Product' : 'Add Product'}
+              {isEdit ? 'Update Engagement' : 'Create Engagement'}
             </LoadingButton>
           </div>
         </form>

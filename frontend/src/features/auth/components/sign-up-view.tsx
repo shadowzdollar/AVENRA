@@ -24,20 +24,11 @@ export default function SignUpViewPage() {
       </Link>
       <div className='relative hidden h-full flex-col p-10 lg:flex dark:border-r'>
         <div className='absolute inset-0 bg-sidebar' />
-        <div className='text-sidebar-foreground relative z-20 flex items-center text-lg font-medium'>
-          <svg
-            xmlns='http://www.w3.org/2000/svg'
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='mr-2 h-6 w-6'
-          >
-            <path d='M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3' />
-          </svg>
-          Logo
+        <div className='text-sidebar-foreground relative z-20 flex items-center text-xl font-bold tracking-tight'>
+          <span className='bg-primary text-primary-foreground size-8 rounded-lg flex items-center justify-center font-bold mr-2.5 text-sm'>
+            AV
+          </span>
+          AVENRA
         </div>
         <InteractiveGridPattern
           className={cn(
@@ -47,11 +38,10 @@ export default function SignUpViewPage() {
         />
         <div className='text-sidebar-foreground relative z-20 mt-auto'>
           <blockquote className='space-y-2'>
-            <p className='text-lg'>
-              &ldquo;This starter template has saved me countless hours of work and helped me
-              deliver projects to my clients faster than ever before.&rdquo;
+            <p className='text-base leading-relaxed text-foreground/90 font-medium'>
+              &ldquo;Autonomous accounting execution and continuous compliance with deterministic precision. Avenra orchestrates document intake, OCR verification, and cryptographic audit hashing with zero guesswork.&rdquo;
             </p>
-            <footer className='text-sidebar-foreground/70 text-sm'>Random Dude</footer>
+            <footer className='text-muted-foreground text-xs font-semibold'>Avenra Autonomous Work Platform</footer>
           </blockquote>
         </div>
       </div>

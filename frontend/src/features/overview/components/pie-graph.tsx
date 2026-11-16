@@ -13,36 +13,31 @@ import { Badge } from '@/components/ui/badge';
 import { Icons } from '@/components/icons';
 
 const chartData = [
-  { browser: 'chrome', visitors: 275, fill: 'var(--color-chrome)' },
-  { browser: 'safari', visitors: 200, fill: 'var(--color-safari)' },
-  { browser: 'firefox', visitors: 187, fill: 'var(--color-firefox)' },
-  { browser: 'edge', visitors: 173, fill: 'var(--color-edge)' },
-  { browser: 'other', visitors: 90, fill: 'var(--color-other)' }
+  { status: 'auto_verified', count: 320, fill: 'var(--chart-1)' },
+  { status: 'partner_approved', count: 85, fill: 'var(--chart-2)' },
+  { status: 'awaiting_client', count: 48, fill: 'var(--chart-3)' },
+  { status: 'open_exceptions', count: 18, fill: 'var(--chart-4)' }
 ];
 
 const chartConfig = {
-  visitors: {
-    label: 'Visitors'
+  count: {
+    label: 'Requirements'
   },
-  chrome: {
-    label: 'Chrome',
+  auto_verified: {
+    label: 'Auto-Verified',
     color: 'var(--chart-1)'
   },
-  safari: {
-    label: 'Safari',
+  partner_approved: {
+    label: 'Partner Approved',
     color: 'var(--chart-2)'
   },
-  firefox: {
-    label: 'Firefox',
+  awaiting_client: {
+    label: 'Awaiting Client',
     color: 'var(--chart-3)'
   },
-  edge: {
-    label: 'Edge',
+  open_exceptions: {
+    label: 'Exceptions Flagged',
     color: 'var(--chart-4)'
-  },
-  other: {
-    label: 'Other',
-    color: 'var(--chart-5)'
   }
 } satisfies ChartConfig;
 
@@ -50,14 +45,14 @@ export function PieGraph() {
   return (
     <Card className='flex h-full flex-col'>
       <CardHeader className='items-center pb-0'>
-        <CardTitle>
-          Pie Chart
+        <CardTitle className='flex items-center gap-2'>
+          <span>Requirement Status</span>
           <Badge variant='outline'>
-            <Icons.trendingUp />
-            +5.2%
+            <Icons.check className='mr-1 h-3.5 w-3.5 text-emerald-500' />
+            86% Resolved
           </Badge>
         </CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardDescription>All requirements across active engagements</CardDescription>
       </CardHeader>
       <CardContent className='flex flex-1 items-center justify-center pb-0'>
         <ChartContainer
@@ -65,17 +60,17 @@ export function PieGraph() {
           className='[&_.recharts-text]:fill-background mx-auto aspect-square max-h-[300px] min-h-[250px]'
         >
           <PieChart>
-            <ChartTooltip content={<ChartTooltipContent nameKey='visitors' hideLabel />} />
+            <ChartTooltip content={<ChartTooltipContent nameKey='status' hideLabel />} />
             <Pie
               data={chartData}
-              innerRadius={30}
-              dataKey='visitors'
+              innerRadius={35}
+              dataKey='count'
               radius={10}
               cornerRadius={8}
               paddingAngle={4}
             >
               <LabelList
-                dataKey='visitors'
+                dataKey='count'
                 stroke='none'
                 fontSize={12}
                 fontWeight={500}

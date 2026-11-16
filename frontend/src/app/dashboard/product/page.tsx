@@ -10,7 +10,7 @@ import { SearchParams } from 'nuqs/server';
 import { productInfoContent } from '@/config/infoconfig';
 
 export const metadata = {
-  title: 'Dashboard: Products'
+  title: 'Dashboard: Work Engagements'
 };
 
 type pageProps = {
@@ -25,12 +25,12 @@ export default async function Page(props: pageProps) {
 
   return (
     <PageContainer
-      pageTitle='Products'
-      pageDescription='Manage products (React Query + nuqs table pattern.)'
+      pageTitle='Work Engagements'
+      pageDescription='Manage firm accounting engagements, monitor document verification, and coordinate client deliverables.'
       infoContent={productInfoContent}
       pageHeaderAction={
         <Link href='/dashboard/product/new' className={cn(buttonVariants(), 'text-xs md:text-sm')}>
-          <Icons.add className='mr-2 h-4 w-4' /> Add New
+          <Icons.add className='mr-2 h-4 w-4' /> New Engagement
         </Link>
       }
     >

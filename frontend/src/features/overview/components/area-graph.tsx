@@ -14,27 +14,27 @@ import { Icons } from '@/components/icons';
 import React from 'react';
 
 const chartData = [
-  { month: 'January', desktop: 342, mobile: 245 },
-  { month: 'February', desktop: 876, mobile: 654 },
-  { month: 'March', desktop: 512, mobile: 387 },
-  { month: 'April', desktop: 629, mobile: 521 },
-  { month: 'May', desktop: 458, mobile: 412 },
-  { month: 'June', desktop: 781, mobile: 598 },
-  { month: 'July', desktop: 394, mobile: 312 },
-  { month: 'August', desktop: 925, mobile: 743 },
-  { month: 'September', desktop: 647, mobile: 489 },
-  { month: 'October', desktop: 532, mobile: 476 },
-  { month: 'November', desktop: 803, mobile: 687 },
-  { month: 'December', desktop: 271, mobile: 198 }
+  { month: 'January', ingested: 342, verified: 335 },
+  { month: 'February', ingested: 876, verified: 860 },
+  { month: 'March', ingested: 512, verified: 504 },
+  { month: 'April', ingested: 629, verified: 618 },
+  { month: 'May', ingested: 458, verified: 450 },
+  { month: 'June', ingested: 781, verified: 770 },
+  { month: 'July', ingested: 394, verified: 388 },
+  { month: 'August', ingested: 925, verified: 910 },
+  { month: 'September', ingested: 647, verified: 638 },
+  { month: 'October', ingested: 532, verified: 524 },
+  { month: 'November', ingested: 803, verified: 790 },
+  { month: 'December', ingested: 420, verified: 412 }
 ];
 
 const chartConfig = {
-  desktop: {
-    label: 'Desktop',
+  ingested: {
+    label: 'Intake Documents',
     color: 'var(--chart-1)'
   },
-  mobile: {
-    label: 'Mobile',
+  verified: {
+    label: 'Auto-Verified',
     color: 'var(--chart-2)'
   }
 } satisfies ChartConfig;
@@ -43,14 +43,14 @@ export function AreaGraph() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          Dotted Area Chart
+        <CardTitle className='flex items-center justify-between'>
+          <span>Intake & Verification Velocity</span>
           <Badge variant='outline'>
-            <Icons.trendingUp />
-            -5.2%
+            <Icons.trendingUp className='mr-1 h-3.5 w-3.5' />
+            +18.4% YoY
           </Badge>
         </CardTitle>
-        <CardDescription>Showing total visitors for the last 6 months</CardDescription>
+        <CardDescription>Documents received via secure intake links vs verified with rules</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -68,22 +68,22 @@ export function AreaGraph() {
               <DottedBackgroundPattern config={chartConfig} />
             </defs>
             <Area
-              dataKey='mobile'
+              dataKey='verified'
               type='natural'
-              fill='url(#dotted-background-pattern-mobile)'
+              fill='url(#dotted-background-pattern-verified)'
               fillOpacity={0.4}
-              stroke='var(--color-mobile)'
+              stroke='var(--color-verified)'
               stackId='a'
-              strokeWidth={0.8}
+              strokeWidth={1.2}
             />
             <Area
-              dataKey='desktop'
+              dataKey='ingested'
               type='natural'
-              fill='url(#dotted-background-pattern-desktop)'
+              fill='url(#dotted-background-pattern-ingested)'
               fillOpacity={0.4}
-              stroke='var(--color-desktop)'
+              stroke='var(--color-ingested)'
               stackId='a'
-              strokeWidth={0.8}
+              strokeWidth={1.2}
             />
           </AreaChart>
         </ChartContainer>
@@ -108,7 +108,7 @@ const DottedBackgroundPattern = ({ config }: { config: ChartConfig }) => {
           height='7'
           patternUnits='userSpaceOnUse'
         >
-          <circle cx='5' cy='5' r='1.5' fill={value} opacity={0.5}></circle>
+          <circle cx='1.5' cy='1.5' r='1' fill={value} />
         </pattern>
       ))}
     </>

@@ -37,82 +37,84 @@ export default function OverViewPage() {
             <div className='*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4'>
               <Card className='@container/card'>
                 <CardHeader>
-                  <CardDescription>Total Revenue</CardDescription>
+                  <CardDescription>Active Engagements</CardDescription>
                   <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                    $1,250.00
+                    48
                   </CardTitle>
                   <CardAction>
                     <Badge variant='outline'>
-                      <Icons.trendingUp />
+                      <Icons.trendingUp className='mr-1 h-3.5 w-3.5 text-emerald-500' />
                       +12.5%
                     </Badge>
                   </CardAction>
                 </CardHeader>
                 <CardFooter className='flex-col items-start gap-1.5 text-sm'>
                   <div className='line-clamp-1 flex gap-2 font-medium'>
-                    Trending up this month <Icons.trendingUp className='size-4' />
+                    Across 18 enterprise clients
                   </div>
-                  <div className='text-muted-foreground'>Visitors for the last 6 months</div>
+                  <div className='text-muted-foreground'>Tax, Audit &amp; Compliance</div>
                 </CardFooter>
               </Card>
+
               <Card className='@container/card'>
                 <CardHeader>
-                  <CardDescription>New Customers</CardDescription>
+                  <CardDescription>Auto-Verification Rate</CardDescription>
                   <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                    1,234
+                    98.4%
                   </CardTitle>
                   <CardAction>
                     <Badge variant='outline'>
-                      <Icons.trendingDown />
-                      -20%
+                      <Icons.check className='mr-1 h-3.5 w-3.5 text-emerald-500' />
+                      Passing
                     </Badge>
                   </CardAction>
                 </CardHeader>
                 <CardFooter className='flex-col items-start gap-1.5 text-sm'>
                   <div className='line-clamp-1 flex gap-2 font-medium'>
-                    Down 20% this period <Icons.trendingDown className='size-4' />
+                    Deterministic rules &amp; OCR
                   </div>
-                  <div className='text-muted-foreground'>Acquisition needs attention</div>
+                  <div className='text-muted-foreground'>+3.2% above quality SLA</div>
                 </CardFooter>
               </Card>
+
               <Card className='@container/card'>
                 <CardHeader>
-                  <CardDescription>Active Accounts</CardDescription>
+                  <CardDescription>Open Client Requests</CardDescription>
                   <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                    45,678
+                    14
                   </CardTitle>
                   <CardAction>
                     <Badge variant='outline'>
-                      <Icons.trendingUp />
-                      +12.5%
+                      <Icons.clock className='mr-1 h-3.5 w-3.5 text-amber-500' />
+                      6 due this wk
                     </Badge>
                   </CardAction>
                 </CardHeader>
                 <CardFooter className='flex-col items-start gap-1.5 text-sm'>
                   <div className='line-clamp-1 flex gap-2 font-medium'>
-                    Strong user retention <Icons.trendingUp className='size-4' />
+                    Awaiting client uploads
                   </div>
-                  <div className='text-muted-foreground'>Engagement exceed targets</div>
+                  <div className='text-muted-foreground'>Automated reminders active</div>
                 </CardFooter>
               </Card>
+
               <Card className='@container/card'>
                 <CardHeader>
-                  <CardDescription>Growth Rate</CardDescription>
-                  <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                    4.5%
+                  <CardDescription>Exception Queue</CardDescription>
+                  <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl text-amber-600 dark:text-amber-400'>
+                    3
                   </CardTitle>
                   <CardAction>
-                    <Badge variant='outline'>
-                      <Icons.trendingUp />
-                      +4.5%
+                    <Badge variant='outline' className='border-amber-500/30 text-amber-600'>
+                      1 Urgent
                     </Badge>
                   </CardAction>
                 </CardHeader>
                 <CardFooter className='flex-col items-start gap-1.5 text-sm'>
                   <div className='line-clamp-1 flex gap-2 font-medium'>
-                    Steady performance increase <Icons.trendingUp className='size-4' />
+                    Discrepancies flagged
                   </div>
-                  <div className='text-muted-foreground'>Meets growth projections</div>
+                  <div className='text-muted-foreground'>Awaiting CPA sign-off</div>
                 </CardFooter>
               </Card>
             </div>

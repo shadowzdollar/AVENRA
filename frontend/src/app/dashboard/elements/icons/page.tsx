@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import IconsViewPage from '@/features/elements/components/icons-view-page';
 
 export const metadata = {
-  title: 'Dashboard : Icons'
+  title: 'Dashboard: Exception Queue'
 };
 
 export default async function page() {

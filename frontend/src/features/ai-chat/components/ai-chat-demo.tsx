@@ -80,8 +80,8 @@ export function AiChatDemo() {
             <Icons.sparkles className='size-4' />
           </div>
           <div className='min-w-0'>
-            <p className='text-sm font-medium'>Release Assistant</p>
-            <p className='text-muted-foreground text-xs'>Scripted demo · streamed via useChat</p>
+            <p className='text-sm font-medium'>Avenra Execution Agent</p>
+            <p className='text-muted-foreground text-xs'>Document Intelligence &amp; Rule Verification</p>
           </div>
           <Badge variant='outline' className='ml-auto capitalize'>
             {status}

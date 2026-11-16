@@ -1,10 +1,7 @@
 export const CATEGORY_OPTIONS = [
-  { value: 'Electronics', label: 'Electronics' },
-  { value: 'Furniture', label: 'Furniture' },
-  { value: 'Clothing', label: 'Clothing' },
-  { value: 'Toys', label: 'Toys' },
-  { value: 'Groceries', label: 'Groceries' },
-  { value: 'Books', label: 'Books' },
-  { value: 'Jewelry', label: 'Jewelry' },
-  { value: 'Beauty Products', label: 'Beauty Products' }
+  { value: 'Tax Compliance & Returns', label: 'Tax Compliance & Returns' },
+  { value: 'Audit & Attestation', label: 'Audit & Attestation' },
+  { value: 'Sales & VAT Filings', label: 'Sales & VAT Filings' },
+  { value: 'Payroll & KYC', label: 'Payroll & KYC' },
+  { value: 'Advisory & Due Diligence', label: 'Advisory & Due Diligence' }
 ];

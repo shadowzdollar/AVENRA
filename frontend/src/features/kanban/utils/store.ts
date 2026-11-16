@@ -20,80 +20,68 @@ type KanbanState = {
 };
 
 const initialColumns: Record<string, Task[]> = {
-  backlog: [
+  intake: [
     {
       id: '1',
-      title: 'Migrate to Stripe billing API',
+      title: 'Northwind Legal — Annual Corporate Tax Return',
       priority: 'high',
       assignee: 'Sarah Chen',
-      dueDate: '2026-04-08'
+      dueDate: '2026-11-20',
+      description: 'Magic link dispatched to CFO; awaiting 1099-MISC & W-2 packages'
     },
     {
       id: '2',
-      title: 'Add CSV export to reports',
+      title: 'Halden & Co. — SOC 2 Type II Continuous Evidence Pack',
       priority: 'medium',
       assignee: 'Marcus Rivera',
-      dueDate: '2026-04-12'
-    },
+      dueDate: '2026-11-24',
+      description: 'Collecting AWS IAM & CloudTrail access logs'
+    }
+  ],
+  verifying: [
     {
       id: '3',
-      title: 'Update onboarding flow copy',
-      priority: 'low',
-      assignee: 'Priya Sharma',
-      dueDate: '2026-04-15'
-    },
-    {
-      id: '9',
-      title: 'Audit RBAC permissions',
-      priority: 'medium',
-      assignee: 'Jordan Kim',
-      dueDate: '2026-04-10'
-    }
-  ],
-  inProgress: [
-    {
-      id: '4',
-      title: 'Refactor notification service',
+      title: 'Meridian Capital — Form 1040 & Schedule C Extraction',
       priority: 'high',
       assignee: 'Alex Turner',
-      dueDate: '2026-04-03'
+      dueDate: '2026-11-18',
+      description: 'AI OCR parsing EIN, gross receipts, and depreciation deductions'
     },
     {
-      id: '5',
-      title: 'Build team invitation flow',
+      id: '4',
+      title: 'Brightline Studio — Master Service Agreement & SOW',
       priority: 'medium',
       assignee: 'Emily Nakamura',
-      dueDate: '2026-04-06'
-    },
-    {
-      id: '10',
-      title: 'Fix timezone handling in scheduler',
-      priority: 'high',
-      assignee: 'Sarah Chen',
-      dueDate: '2026-04-04'
+      dueDate: '2026-11-19',
+      description: 'Verifying cryptographic digital signatures against DocuSign envelope'
     }
   ],
-  done: [
+  exceptions: [
     {
-      id: '6',
-      title: 'SSO integration with Okta',
+      id: '5',
+      title: 'Oakmont Partners — W-2 Line 12 Discrepancy',
       priority: 'high',
       assignee: 'Jordan Kim',
-      dueDate: '2026-03-22'
+      dueDate: '2026-11-17',
+      description: 'Box 12 reported amount does not match payroll journal; requires manual approval'
+    }
+  ],
+  completed: [
+    {
+      id: '6',
+      title: 'Kestrel Advisory — Client KYC & Beneficial Ownership Pack',
+      priority: 'high',
+      assignee: 'Sarah Chen',
+      dueDate: '2026-11-15',
+      description: 'All 8 identity proofs verified; SHA-256 evidence manifest locked'
     },
     {
       id: '7',
-      title: 'Dashboard analytics charts',
-      priority: 'medium',
-      assignee: 'Marcus Rivera',
-      dueDate: '2026-03-20'
-    },
-    {
-      id: '8',
-      title: 'Webhook retry mechanism',
+      title: 'Atlas BioCorp — Contractor W-9 Batch Intake',
       priority: 'low',
-      assignee: 'Alex Turner',
-      dueDate: '2026-03-18'
+      assignee: 'Priya Sharma',
+      dueDate: '2026-11-14',
+      description: '14/14 W-9 TIN validations passed successfully'
     }
   ]
 };

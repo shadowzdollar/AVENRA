@@ -23,14 +23,14 @@ type NotificationState = {
 const mockNotifications: Notification[] = [
   {
     id: '1',
-    title: 'New team member joined',
-    body: 'Sarah Connor has joined the Engineering workspace.',
+    title: 'High-Severity Exception Flagged',
+    body: 'Box 12 deferral mismatch in Form 1120-S for Apex Holdings Inc requires CPA sign-off.',
     status: 'unread',
-    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
     actions: [
       {
-        id: 'view',
-        label: 'View workspace',
+        id: 'open-exception',
+        label: 'Triage Exception',
         type: 'redirect',
         style: 'primary'
       }
@@ -38,14 +38,14 @@ const mockNotifications: Notification[] = [
   },
   {
     id: '2',
-    title: 'New product added',
-    body: 'A new product "Dashboard Pro" has been added to the catalog.',
+    title: 'Client Documents Ingested',
+    body: 'Vanguard Logistics Ltd submitted Q3 Customs MRN documents via secure request link.',
     status: 'unread',
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
     actions: [
       {
         id: 'view-product',
-        label: 'View products',
+        label: 'View Engagement',
         type: 'redirect',
         style: 'primary'
       }
@@ -53,14 +53,14 @@ const mockNotifications: Notification[] = [
   },
   {
     id: '3',
-    title: 'Billing cycle updated',
-    body: 'Your Pro plan has been renewed. Next invoice on April 24, 2026.',
+    title: 'Evidence Pack Hashed & Signed',
+    body: 'SOC-2 Type II audit bundle cryptographically signed and stored in Evidence Vault.',
     status: 'unread',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     actions: [
       {
-        id: 'billing',
-        label: 'View billing',
+        id: 'view-evidence',
+        label: 'Inspect Vault',
         type: 'redirect',
         style: 'primary'
       }
@@ -68,14 +68,14 @@ const mockNotifications: Notification[] = [
   },
   {
     id: '4',
-    title: 'Task assigned to you',
-    body: 'You have been assigned "Update dashboard analytics" on the Kanban board.',
+    title: 'Deterministic Rules Passed',
+    body: '10/10 TIN & withholding validations complete for Summit Creative Collective.',
     status: 'read',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
     actions: [
       {
         id: 'open',
-        label: 'Open kanban',
+        label: 'View on Board',
         type: 'redirect',
         style: 'primary'
       }
@@ -83,14 +83,14 @@ const mockNotifications: Notification[] = [
   },
   {
     id: '5',
-    title: 'New message from Alex',
-    body: 'Alex sent you a message: "Hey, can we sync on the overview dashboard?"',
+    title: 'Automated Reminder Dispatched',
+    body: '48h follow-up email delivered to Northwind Health Systems for management rep letter.',
     status: 'read',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     actions: [
       {
-        id: 'open-chat',
-        label: 'Open chat',
+        id: 'view-product',
+        label: 'View Engagement',
         type: 'redirect',
         style: 'primary'
       }
