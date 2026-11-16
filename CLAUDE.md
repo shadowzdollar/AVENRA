@@ -4,10 +4,10 @@ Read before working in this repository.
 
 ## Authority
 
-1. `AVENRA_BUILDING_GUIDELINES.md` is the engineering authority.
+1. `docs/AVENRA_BUILDING_GUIDELINES.md` is the engineering authority.
 2. `docs/adr/` records decisions that refine or amend it; an accepted ADR wins
    over the Guidelines text it amends.
-3. `AVENRA_MASTER_PROJECT.md` defines the product; features must serve its
+3. `docs/AVENRA_MASTER_PROJECT.md` defines the product; features must serve its
    Core Strategic Rule (§43).
 
 ## Phase discipline

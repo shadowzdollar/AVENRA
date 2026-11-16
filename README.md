@@ -5,24 +5,27 @@
 Avenra is a business work execution platform. It turns fragmented business
 information, requests and processes into verified completed work.
 
-- Product definition: [`AVENRA_MASTER_PROJECT.md`](AVENRA_MASTER_PROJECT.md)
-- Engineering authority: [`AVENRA_BUILDING_GUIDELINES.md`](AVENRA_BUILDING_GUIDELINES.md)
-- Architecture overview: [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- Product definition: [`docs/AVENRA_MASTER_PROJECT.md`](docs/AVENRA_MASTER_PROJECT.md)
+- Engineering authority: [`docs/AVENRA_BUILDING_GUIDELINES.md`](docs/AVENRA_BUILDING_GUIDELINES.md)
+- Architecture overview: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - Decisions: [`docs/adr/`](docs/adr/)
 - Build phases and their status: [`docs/phases/`](docs/phases/)
 
 ## Repository layout
 
 ```text
-apps/
-  api/            Java 25 + Spring Boot backend (system of record)
-  web/            Next.js web client
-  ai/             Python AI service (no business data ownership)
+backend/
+  api/            Java 25 + Spring Boot modular monolith (system of record)
+  ai/             Python AI microservice (document intelligence, OCR & evals)
+frontend/
+  platform/       Enterprise platform web application (Next.js)
+  direct-product/ Standalone direct product (Desktop GUI & CLI interface)
 packages/
   contracts/      OpenAPI contracts (source of truth for the API)
 infrastructure/
-  docker/         Local development infrastructure
-docs/             Architecture, ADRs, phases, security, API guidelines
+  docker/         Local and production container infrastructure
+docs/             Architecture, product specs, ADRs, security & operations
+scripts/          Health checks, drills, maintenance & data seeds
 ```
 
 Applications are added during Phase 1; see the
