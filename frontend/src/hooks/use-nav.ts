@@ -3,7 +3,7 @@
 /**
  * Fully client-side hook for filtering navigation items based on RBAC
  *
- * This hook uses Clerk's client-side hooks to check permissions, roles, and organization
+ * This hook uses the Avenra session (memberships and permissions from GET /api/v1/auth/session) to check permissions, roles, and organization
  * without any server calls. This is perfect for navigation visibility (UX only).
  *
  * Performance:
@@ -17,7 +17,7 @@
  */
 
 import { useMemo } from 'react';
-import { useOrganization, useUser } from '@clerk/nextjs';
+import { useSession } from '@/lib/auth/session-context';
 import type { NavItem, NavGroup } from '@/types';
 
 /**
@@ -27,8 +27,8 @@ import type { NavItem, NavGroup } from '@/types';
  * @returns Filtered items
  */
 export function useFilteredNavItems(items: NavItem[]) {
-  const { organization, membership } = useOrganization();
-  const { user } = useUser();
+  const { user, membership } = useSession();
+  const organization = membership?.organization;
 
   // Memoize context and permissions
   const accessContext = useMemo(() => {
@@ -42,7 +42,7 @@ export function useFilteredNavItems(items: NavItem[]) {
       role: role ?? undefined,
       hasOrg: !!organization
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- using stable primitives to avoid infinite re-renders from unstable Clerk object refs
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- depend on stable primitives, not object identity
   }, [organization?.id, user?.id, membership?.permissions, membership?.role]);
 
   // Filter items synchronously (all client-side)
@@ -79,7 +79,7 @@ export function useFilteredNavItems(items: NavItem[]) {
           }
         }
 
-        // Note: Plans and features require server-side checks with Clerk's has() function
+        // Note: plans and features are enforced by the backend (billing entitlements)
         // For navigation visibility, you can either:
         // 1. Store plan/feature info in organization metadata (client-accessible)
         // 2. Use server actions (current approach)

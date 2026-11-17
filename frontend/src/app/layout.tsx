@@ -1,4 +1,3 @@
-import { ClerkProvider } from '@clerk/nextjs';
 import Providers from '@/components/layout/providers';
 import { Toaster } from '@/components/ui/sonner';
 import { fontVariables } from '@/components/themes/font.config';
@@ -76,23 +75,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           fontVariables
         )}
       >
-        <ClerkProvider>
-          <NextTopLoader color='var(--primary)' showSpinner={false} />
-          <NuqsAdapter>
+        <NextTopLoader color='var(--primary)' showSpinner={false} />
+        <NuqsAdapter>
           <ThemeProvider
-          attribute='class'
-          defaultTheme='system'
-          enableSystem
-          disableTransitionOnChange
-          enableColorScheme
+            attribute='class'
+            defaultTheme='system'
+            enableSystem
+            disableTransitionOnChange
+            enableColorScheme
           >
-          <Providers activeThemeValue={themeToApply}>
-          <Toaster />
-          {children}
-          </Providers>
+            <Providers activeThemeValue={themeToApply}>
+              <Toaster />
+              {children}
+            </Providers>
           </ThemeProvider>
-          </NuqsAdapter>
-        </ClerkProvider>
+        </NuqsAdapter>
       </body>
     </html>
   );

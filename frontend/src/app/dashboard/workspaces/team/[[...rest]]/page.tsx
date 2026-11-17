@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import TeamView from './team-view';
 
 export default async function Page() {
-  await auth.protect();
+  await requireSession();
   return <TeamView />;
 }

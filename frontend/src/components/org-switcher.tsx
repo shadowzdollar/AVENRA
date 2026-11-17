@@ -1,9 +1,8 @@
 'use client';
 
-import { useAuth, useOrganizationList } from '@clerk/nextjs';
+import { useSession } from '@/lib/auth/session-context';
 import { Icons } from '@/components/icons';
 import { AvenraIcon } from '@/components/brand/avenra-logo';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import {
@@ -21,73 +20,22 @@ import {
   SidebarMenuItem,
   useSidebar
 } from '@/components/ui/sidebar';
-import { useEffect } from 'react';
 
 export function OrgSwitcher() {
   const { isMobile, state } = useSidebar();
   // Side menus open to the right: 8px from the expanded sidebar, 16px off the icon rail
   const railMenu = state === 'collapsed' && !isMobile;
   const router = useRouter();
-  const { isLoaded, setActive, userMemberships } = useOrganizationList({
-    userMemberships: {
-      infinite: true,
-      keepPreviousData: false
-    }
-  });
+  const { memberships, membership, setActiveOrganization } = useSession();
+  const orgId = membership?.organization.id ?? null;
 
-  const { orgId } = useAuth();
-
-  useEffect(() => {
-    if (userMemberships?.revalidate) {
-      void userMemberships.revalidate();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only revalidate when org changes, not on every userMemberships ref change
-  }, [orgId]);
-
-  // Get the currently active organization
-  const activeOrganization = userMemberships?.data?.find(
-    (membership) => membership.organization.id === orgId
-  )?.organization;
-
-  // Handle organization switch
-  const handleOrganizationSwitch = async (organizationId: string) => {
-    if (orgId === organizationId || !setActive) {
-      return; // Already active or setActive not available
-    }
-    try {
-      await setActive({ organization: organizationId });
-    } catch (error) {
-      console.error('Failed to switch organization:', error);
-    }
+  const handleOrganizationSwitch = (organizationId: string) => {
+    if (orgId === organizationId) return;
+    setActiveOrganization(organizationId);
   };
 
-  // Show loading state
-  if (!isLoaded) {
-    return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton size='lg' disabled>
-            <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg'>
-              <Icons.galleryVerticalEnd className='size-4' />
-            </div>
-            <div
-              className={`grid flex-1 text-left text-sm leading-tight transition-all duration-200 ease-in-out ${
-                state === 'collapsed'
-                  ? 'invisible max-w-0 overflow-hidden opacity-0'
-                  : 'visible max-w-full opacity-100'
-              }`}
-            >
-              <span className='truncate font-medium'>Loading...</span>
-              <span className='text-muted-foreground truncate text-xs'>Organizations</span>
-            </div>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    );
-  }
-
   // Show create organization option if no organizations
-  if (!userMemberships?.data || userMemberships.data.length === 0) {
+  if (memberships.length === 0) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
@@ -123,11 +71,10 @@ export function OrgSwitcher() {
   }
 
   // Use active organization or first organization as fallback
-  const displayOrganization = activeOrganization || userMemberships.data[0]?.organization;
-
-  if (!displayOrganization) {
+  if (!membership) {
     return null;
   }
+  const displayOrganization = membership.organization;
 
   return (
     <SidebarMenu>
@@ -142,17 +89,7 @@ export function OrgSwitcher() {
             }
           >
             <div className='flex aspect-square size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg'>
-              {displayOrganization.hasImage && displayOrganization.imageUrl ? (
-                <Image
-                  src={displayOrganization.imageUrl}
-                  alt={displayOrganization.name}
-                  width={32}
-                  height={32}
-                  className='size-full object-cover rounded-md'
-                />
-              ) : (
-                <AvenraIcon size={26} />
-              )}
+              <AvenraIcon size={26} />
             </div>
             <div
               className={`grid flex-1 text-left text-sm leading-tight transition-all duration-200 ease-in-out ${
@@ -165,8 +102,7 @@ export function OrgSwitcher() {
                 {displayOrganization.name}
               </span>
               <span className='text-muted-foreground truncate text-xs'>
-                {userMemberships.data.find((m) => m.organization.id === displayOrganization.id)
-                  ?.role || 'Organization'}
+                {formatRole(membership.role)}
               </span>
             </div>
             <Icons.chevronsUpDown
@@ -185,33 +121,21 @@ export function OrgSwitcher() {
           >
             <DropdownMenuGroup>
               <DropdownMenuLabel>Organizations</DropdownMenuLabel>
-              {userMemberships.data.map((membership) => {
-                const isActive = membership.organization.id === orgId;
+              {memberships.map((item) => {
+                const isActive = item.organization.id === orgId;
                 return (
                   <DropdownMenuItem
-                    key={membership.id}
-                    onClick={() => handleOrganizationSwitch(membership.organization.id)}
+                    key={item.membershipId}
+                    onClick={() => handleOrganizationSwitch(item.organization.id)}
                     className='items-start gap-2 p-1.5'
                   >
                     <div className='flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border'>
-                      {membership.organization.hasImage && membership.organization.imageUrl ? (
-                        <Image
-                          src={membership.organization.imageUrl}
-                          alt={membership.organization.name}
-                          width={28}
-                          height={28}
-                          className='size-full object-cover'
-                        />
-                      ) : (
-                        <Icons.galleryVerticalEnd className='size-3.5 shrink-0' />
-                      )}
+                      <Icons.galleryVerticalEnd className='size-3.5 shrink-0' />
                     </div>
                     {/* Names wrap instead of truncating so similar org names stay distinguishable */}
                     <div className='grid min-w-0 flex-1 leading-tight'>
-                      <span className='text-pretty wrap-break-word'>
-                        {membership.organization.name}
-                      </span>
-                      <span className='text-muted-foreground text-xs'>{membership.role}</span>
+                      <span className='text-pretty wrap-break-word'>{item.organization.name}</span>
+                      <span className='text-muted-foreground text-xs'>{formatRole(item.role)}</span>
                     </div>
                     {isActive && <Icons.check className='mt-1.5 ml-auto size-4' />}
                   </DropdownMenuItem>
@@ -237,4 +161,8 @@ export function OrgSwitcher() {
       </SidebarMenuItem>
     </SidebarMenu>
   );
+}
+
+function formatRole(role: string): string {
+  return role.charAt(0) + role.slice(1).toLowerCase();
 }

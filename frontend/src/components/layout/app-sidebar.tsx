@@ -27,7 +27,8 @@ import {
 } from '@/components/ui/sidebar';
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { navGroups } from '@/config/nav-config';
-import { useClerk, useOrganization, useUser } from '@clerk/nextjs';
+import { useSession } from '@/lib/auth/session-context';
+import { toAvatarUser } from '@/lib/auth/types';
 import { useFilteredNavGroups } from '@/hooks/use-nav';
 import { cn } from '@/lib/utils';
 import type { NavItem } from '@/types';
@@ -234,9 +235,8 @@ function NavMainItem({ item, pathname }: { item: NavItem; pathname: string }) {
 }
 
 function NavUser() {
-  const { user } = useUser();
-  const { organization } = useOrganization();
-  const { signOut } = useClerk();
+  const { user, membership, signOut } = useSession();
+  const avatarUser = toAvatarUser(user);
   const router = useRouter();
   const { isMobile, state } = useSidebar();
   const railMenu = state === 'collapsed' && !isMobile;
@@ -253,7 +253,7 @@ function NavUser() {
               />
             }
           >
-            {user && <UserAvatarProfile className='size-8 rounded-lg' showInfo user={user} />}
+            <UserAvatarProfile className='size-8 rounded-lg' showInfo user={avatarUser} />
             <Icons.chevronsUpDown className='text-muted-foreground ml-auto size-4' />
           </DropdownMenuTrigger>
           {/* Desktop: opens to the right, bottom edge aligned with the content panel
@@ -268,7 +268,7 @@ function NavUser() {
           >
             <DropdownMenuGroup>
               <DropdownMenuLabel className='text-foreground px-1.5 py-1.5 font-normal'>
-                {user && <UserAvatarProfile className='size-8 rounded-lg' showInfo user={user} />}
+                <UserAvatarProfile className='size-8 rounded-lg' showInfo user={avatarUser} />
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
@@ -277,7 +277,7 @@ function NavUser() {
                 <Icons.account />
                 Profile
               </DropdownMenuItem>
-              {organization && (
+              {membership && (
                 <DropdownMenuItem onClick={() => router.push('/dashboard/billing')}>
                   <Icons.creditCard />
                   Billing
@@ -290,7 +290,7 @@ function NavUser() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => signOut({ redirectUrl: '/auth/sign-in' })}>
+              <DropdownMenuItem onClick={() => void signOut()}>
                 <Icons.logout aria-hidden />
                 Sign out
               </DropdownMenuItem>
