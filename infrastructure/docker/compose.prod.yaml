@@ -220,7 +220,7 @@ services:
       - edge-tier
 
   edge-proxy:
-    image: caddy:2.9.1-alpine
+    image: caddy:2.11.8-alpine
     restart: unless-stopped
     ports:
       - "80:80"
