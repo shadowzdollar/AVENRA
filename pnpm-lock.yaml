@@ -199,8 +199,8 @@ importers:
         specifier: ^11.7.0
         version: 11.11.0(next@16.4.2(@opentelemetry/api@1.10.0)(@types/node@24.19.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
       '@shadcn/helpers':
-        specifier: ^0.2.0
-        version: 0.2.0(ai@7.0.166(zod@4.6.7))
+        specifier: ^0.3.0
+        version: 0.3.0(ai@7.0.166(zod@4.6.7))
       '@shadcn/react':
         specifier: ^0.3.1
         version: 0.3.1(@types/react@19.3.0)(react@19.3.0)
@@ -1634,8 +1634,8 @@ packages:
     resolution: {integrity: sha512-/EA3ilVCh7bPes6a2Qbs/M6C17kBQAeQy0yL10W/26hDKapAuO5PnjimbwslEpgxDyZFZUzGBQByp0StyDlVFQ==}
     engines: {node: '>=20.19.0 <22.0.0 || >=22.12.0 <23.0.0 || >=23.2.0'}
 
-  '@shadcn/helpers@0.2.0':
-    resolution: {integrity: sha512-wpcZNuRgdW16jLwjvh4mbREKpVFrGY+nBM3Okgic8b04sijN5CHW1Nl/AEMajsP3INaCTNnqMCouOalZ7OHvEQ==}
+  '@shadcn/helpers@0.3.0':
+    resolution: {integrity: sha512-paltuTr6OGY8ss4SVbWkrZOfRGTi+JvBRgzjh1DCqjwpDOPRY7IWiCuOSNQpaVNaf3yAoWrmdvGjmJV62twqog==}
     peerDependencies:
       '@tanstack/ai': '>=0.40.0 <0.41.0'
       '@tanstack/ai-client': '>=0.20.0 <0.21.0'
@@ -4049,7 +4049,7 @@ snapshots:
       '@sentry/core': 11.11.0
       '@sentry/server-utils': 11.11.0
 
-  '@shadcn/helpers@0.2.0(ai@7.0.166(zod@4.6.7))':
+  '@shadcn/helpers@0.3.0(ai@7.0.166(zod@4.6.7))':
     optionalDependencies:
       ai: 7.0.166(zod@4.6.7)
 
