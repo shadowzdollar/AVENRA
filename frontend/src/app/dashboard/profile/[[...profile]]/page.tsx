@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import ProfileViewPage from '@/features/profile/components/profile-view-page';
 
 export const metadata = {
@@ -6,7 +6,7 @@ export const metadata = {
 };
 
 export default async function Page() {
-  await auth.protect();
+  await requireSession();
 
   return <ProfileViewPage />;
 }

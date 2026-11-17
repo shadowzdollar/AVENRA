@@ -1,6 +1,9 @@
-import { create } from 'zustand';
-// import { persist } from 'zustand/middleware';
-import type { NotificationStatus, NotificationAction } from '@/components/ui/notification-card';
+'use client';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { NotificationAction, NotificationStatus } from '@/components/ui/notification-card';
+import { notificationMutations, notificationQueries } from '../api/queries';
+import type { Notification as ApiNotification, NotificationCategory } from '../api/types';
 
 export type Notification = {
   id: string;
@@ -11,127 +14,53 @@ export type Notification = {
   actions?: NotificationAction[];
 };
 
-type NotificationState = {
-  notifications: Notification[];
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  removeNotification: (id: string) => void;
-  addNotification: (notification: Omit<Notification, 'status'>) => void;
-  unreadCount: () => number;
+/** Where each category's button leads when the notification has no deeper link. */
+const CATEGORY_ACTION: Record<NotificationCategory, { route: string; label: string }> = {
+  exception: { route: '/dashboard/elements/icons', label: 'Triage Exception' },
+  escalation: { route: '/dashboard/elements/icons', label: 'Open Exception Queue' },
+  answer: { route: '/dashboard/forms/basic', label: 'View Request' },
+  request: { route: '/dashboard/forms/basic', label: 'View Request' },
+  approval: { route: '/dashboard/ai-chat', label: 'Review Plan' },
+  integration: { route: '/dashboard/workspaces', label: 'Open Workspace' }
 };
 
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'High-Severity Exception Flagged',
-    body: 'Box 12 deferral mismatch in Form 1120-S for Apex Holdings Inc requires CPA sign-off.',
-    status: 'unread',
-    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-    actions: [
-      {
-        id: 'open-exception',
-        label: 'Triage Exception',
-        type: 'redirect',
-        style: 'primary'
-      }
-    ]
-  },
-  {
-    id: '2',
-    title: 'Client Documents Ingested',
-    body: 'Vanguard Logistics Ltd submitted Q3 Customs MRN documents via secure request link.',
-    status: 'unread',
-    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    actions: [
-      {
-        id: 'view-product',
-        label: 'View Engagement',
-        type: 'redirect',
-        style: 'primary'
-      }
-    ]
-  },
-  {
-    id: '3',
-    title: 'Evidence Pack Hashed & Signed',
-    body: 'SOC-2 Type II audit bundle cryptographically signed and stored in Evidence Vault.',
-    status: 'unread',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    actions: [
-      {
-        id: 'view-evidence',
-        label: 'Inspect Vault',
-        type: 'redirect',
-        style: 'primary'
-      }
-    ]
-  },
-  {
-    id: '4',
-    title: 'Deterministic Rules Passed',
-    body: '10/10 TIN & withholding validations complete for Summit Creative Collective.',
-    status: 'read',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
-    actions: [
-      {
-        id: 'open',
-        label: 'View on Board',
-        type: 'redirect',
-        style: 'primary'
-      }
-    ]
-  },
-  {
-    id: '5',
-    title: 'Automated Reminder Dispatched',
-    body: '48h follow-up email delivered to Northwind Health Systems for management rep letter.',
-    status: 'read',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    actions: [
-      {
-        id: 'view-product',
-        label: 'View Engagement',
-        type: 'redirect',
-        style: 'primary'
-      }
-    ]
+/** Maps an API deep link (`/organizations/{org}/work/{id}`) to the dashboard page that shows it. */
+function dashboardRoute(n: ApiNotification): { route: string; label: string } {
+  const work = n.link?.match(/\/work\/([0-9a-f-]{36})/i);
+  if (work && n.category !== 'exception' && n.category !== 'escalation') {
+    return { route: `/dashboard/product/${work[1]}`, label: 'Open Work' };
   }
-];
+  return CATEGORY_ACTION[n.category];
+}
 
-export const useNotificationStore = create<NotificationState>()(
-  // To enable persistence across refreshes, uncomment the persist wrapper below:
-  // persist(
-  (set, get) => ({
-    notifications: mockNotifications,
+function toCard(n: ApiNotification): Notification {
+  const action = dashboardRoute(n);
+  return {
+    id: n.id,
+    title: n.title,
+    body: n.body,
+    status: n.readAt ? 'read' : 'unread',
+    createdAt: n.createdAt,
+    // The action id is the route, so components can navigate without a lookup table.
+    actions: [{ id: action.route, label: action.label, type: 'redirect', style: 'primary' }]
+  };
+}
 
-    markAsRead: (id) =>
-      set((state) => ({
-        notifications: state.notifications.map((n) =>
-          n.id === id ? { ...n, status: 'read' as const } : n
-        )
-      })),
+/** Live notifications for the signed-in user (all organizations), polled while visible. */
+export function useNotificationStore() {
+  const queryClient = useQueryClient();
+  const { data } = useQuery(notificationQueries.list());
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: notificationQueries.all() });
+  const read = useMutation({ ...notificationMutations.read(), onSettled: invalidate });
+  const readAll = useMutation({ ...notificationMutations.readAll(), onSettled: invalidate });
 
-    markAllAsRead: () =>
-      set((state) => ({
-        notifications: state.notifications.map((n) => ({
-          ...n,
-          status: 'read' as const
-        }))
-      })),
-
-    removeNotification: (id) =>
-      set((state) => ({
-        notifications: state.notifications.filter((n) => n.id !== id)
-      })),
-
-    addNotification: (notification) =>
-      set((state) => ({
-        notifications: [{ ...notification, status: 'unread' as const }, ...state.notifications]
-      })),
-
-    unreadCount: () => get().notifications.filter((n) => n.status === 'unread').length
-  })
-  //   ,
-  //   { name: 'notifications' }
-  // )
-);
+  const notifications = (data?.notifications ?? []).map(toCard);
+  return {
+    notifications,
+    markAsRead: (id: string) => {
+      if (notifications.find((n) => n.id === id)?.status === 'unread') read.mutate(id);
+    },
+    markAllAsRead: () => readAll.mutate(),
+    unreadCount: () => data?.unread ?? 0
+  };
+}

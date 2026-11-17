@@ -13,11 +13,27 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useTaskStore } from '../utils/store';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { workMutations, workQueries } from '@/features/work/api/queries';
+import { ApiError } from '@/lib/api-client';
+import { useSession } from '@/lib/auth/session-context';
 
 export default function NewTaskDialog() {
-  const addTask = useTaskStore((state) => state.addTask);
+  const { organizationId, hasPermission } = useSession();
+  const orgId = organizationId ?? '';
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const create = useMutation({
+    ...workMutations.create(orgId),
+    onSuccess: () => {
+      toast.success('Work created');
+      setOpen(false);
+    },
+    onError: (error) =>
+      toast.error(error instanceof ApiError ? error.message : "Couldn't create work"),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: workQueries.all(orgId) })
+  });
   const [titleError, setTitleError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -30,14 +46,17 @@ export default function NewTaskDialog() {
 
     if (typeof title !== 'string' || typeof description !== 'string') return;
     if (!title.trim()) {
-      setTitleError('Please enter a task title.');
+      setTitleError('Please enter a title.');
       return;
     }
     setTitleError(null);
-    addTask(title, description);
-    form.reset();
-    setOpen(false);
+    create.mutate(
+      { title: title.trim(), description: description.trim() || undefined },
+      { onSuccess: () => form.reset() }
+    );
   };
+
+  if (!hasPermission('work.create')) return null;
 
   return (
     <Dialog
@@ -47,20 +66,20 @@ export default function NewTaskDialog() {
         if (!next) setTitleError(null);
       }}
     >
-      <DialogTrigger render={<Button variant='secondary' size='sm' />}>
-        + Add New Task
-      </DialogTrigger>
+      <DialogTrigger render={<Button variant='secondary' size='sm' />}>+ New Work</DialogTrigger>
       <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
-          <DialogTitle>Add New Task</DialogTitle>
-          <DialogDescription>What do you want to get done today?</DialogDescription>
+          <DialogTitle>New Work</DialogTitle>
+          <DialogDescription>
+            Create a draft work item. It appears in Intake &amp; Ready.
+          </DialogDescription>
         </DialogHeader>
         <form id='task-form' className='grid gap-4 py-4' onSubmit={handleSubmit}>
           <div className='grid grid-cols-4 items-center gap-4'>
             <Input
               id='title'
               name='title'
-              placeholder='Task title...'
+              placeholder='Work title...'
               aria-label='Task title'
               required
               aria-invalid={!!titleError}
@@ -84,8 +103,8 @@ export default function NewTaskDialog() {
           </div>
         </form>
         <DialogFooter>
-          <Button type='submit' size='sm' form='task-form'>
-            Add Task
+          <Button type='submit' size='sm' form='task-form' disabled={create.isPending}>
+            Create Work
           </Button>
         </DialogFooter>
       </DialogContent>

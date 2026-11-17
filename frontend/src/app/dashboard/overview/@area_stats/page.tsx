@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import { AreaGraph } from '@/features/overview/components/area-graph';
 
 export default async function AreaStats() {
-  await auth.protect();
+  await requireSession();
   return <AreaGraph />;
 }

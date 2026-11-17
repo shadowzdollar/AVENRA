@@ -6,7 +6,7 @@ export default function KanbanViewPage() {
   return (
     <PageContainer
       pageTitle='Execution Board'
-      pageDescription='Real-time workflow pipeline: monitor client intake, automated rule verification, exception resolution, and final deliverable sign-offs.'
+      pageDescription='Live work pipeline. Drag a card to move work to the next status; the server checks every move.'
       pageHeaderAction={<NewTaskDialog />}
     >
       <KanbanBoard />

@@ -1,20 +1,20 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import PageContainer from '@/components/layout/page-container';
-import DemoForm from '@/components/forms/demo-form';
+import { ActiveRequests } from '@/features/requests/components/active-requests';
 
 export const metadata = {
-  title: 'Dashboard: Basic Form'
+  title: 'Dashboard: Active Requests'
 };
 
 export default async function Page() {
-  await auth.protect();
+  await requireSession();
 
   return (
     <PageContainer
-      pageTitle='Basic Form'
-      pageDescription='A comprehensive form demo with all field types.'
+      pageTitle='Active Requests'
+      pageDescription='Every request sent to clients: who opened it, what was answered, and reminders sent. Updates live.'
     >
-      <DemoForm />
+      <ActiveRequests />
     </PageContainer>
   );
 }

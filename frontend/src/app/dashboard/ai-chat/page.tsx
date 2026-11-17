@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import PageContainer from '@/components/layout/page-container';
 import { AiChatDemo } from '@/features/ai-chat/components/ai-chat-demo';
 
@@ -7,12 +7,12 @@ export const metadata = {
 };
 
 export default async function Page() {
-  await auth.protect();
+  await requireSession();
 
   return (
     <PageContainer
       pageTitle='Agent Intelligence'
-      pageDescription='Autonomous execution agent: inspect OCR parsing, deterministic rule checks, and interactive client communication routines.'
+      pageDescription='Ask the agent to plan the remaining steps for a piece of work. Every plan waits for human approval.'
     >
       <AiChatDemo />
     </PageContainer>

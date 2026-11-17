@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import PageContainer from '@/components/layout/page-container';
 import ClientRequestDispatcher from '@/features/forms/components/client-request-dispatcher';
 
@@ -7,12 +7,12 @@ export const metadata = {
 };
 
 export default async function Page() {
-  await auth.protect();
+  await requireSession();
 
   return (
     <PageContainer
       pageTitle='Client Requests'
-      pageDescription='Generate tokenized document intake links for clients with automated follow-ups and requirement checklists.'
+      pageDescription='Ask clients for documents and answers through a secure emailed link, with automatic follow-ups.'
     >
       <ClientRequestDispatcher />
     </PageContainer>

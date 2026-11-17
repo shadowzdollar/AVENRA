@@ -8,16 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter } from 'next/navigation';
 import { useNotificationStore } from '../utils/store';
 
-const actionRoutes: Record<string, string> = {
-  view: '/dashboard/workspaces',
-  'view-product': '/dashboard/product',
-  'view-evidence': '/dashboard/exclusive',
-  'open-exception': '/dashboard/elements/icons',
-  billing: '/dashboard/billing',
-  open: '/dashboard/kanban',
-  'open-chat': '/dashboard/chat'
-};
-
 export default function NotificationsPage() {
   const { notifications, markAsRead, markAllAsRead, unreadCount } = useNotificationStore();
   const router = useRouter();
@@ -49,7 +39,7 @@ export default function NotificationsPage() {
             actions={notification.actions}
             onMarkAsRead={markAsRead}
             onAction={(notifId, actionId) => {
-              const route = actionRoutes[actionId];
+              const route = actionId.startsWith('/dashboard') ? actionId : undefined;
               if (route) {
                 markAsRead(notifId);
                 router.push(route);

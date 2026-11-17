@@ -1,4 +1,21 @@
-export type { Product } from '@/constants/mock-api';
+import type { Priority, WorkStatus } from '@/features/work/api/types';
+
+/** Table/form view model of an Avenra work item (WorkSummary + client name). */
+export type Product = {
+  id: string;
+  name: string;
+  client?: string;
+  clientId?: string;
+  category: string;
+  status: WorkStatus;
+  priority: Priority;
+  completeness: string;
+  openExceptions: number;
+  dueAt?: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+};
 
 export type ProductFilters = {
   page?: number;
@@ -9,25 +26,14 @@ export type ProductFilters = {
 };
 
 export type ProductsResponse = {
-  success: boolean;
-  time: string;
-  message: string;
   total_products: number;
-  offset: number;
-  limit: number;
-  products: import('@/constants/mock-api').Product[];
-};
-
-export type ProductByIdResponse = {
-  success: boolean;
-  time: string;
-  message: string;
-  product: import('@/constants/mock-api').Product;
+  products: Product[];
+  categories: string[];
 };
 
 export type ProductMutationPayload = {
   name: string;
   category: string;
-  price: number;
+  priority: Priority;
   description: string;
 };

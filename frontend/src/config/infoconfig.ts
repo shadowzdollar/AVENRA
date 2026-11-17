@@ -1,52 +1,31 @@
 import type { InfobarContent } from '@/components/ui/infobar';
 
 export const workspacesInfoContent: InfobarContent = {
-  title: 'Workspaces Management',
+  title: 'Workspaces',
   sections: [
     {
       title: 'Overview',
       description:
-        'The Workspaces page allows you to manage your workspaces and switch between them. This feature is powered by Clerk Organizations, which enables multi-tenant workspace management. You can view all available workspaces, create new ones, and switch your active workspace.',
-      links: [
-        {
-          title: 'Clerk Organizations Documentation',
-          url: 'https://clerk.com/docs/organizations/overview'
-        }
-      ]
+        'A workspace is one Avenra organization: its clients, work, evidence, members and billing. You can belong to several workspaces and switch between them at any time.',
+      links: []
     },
     {
       title: 'Creating Workspaces',
       description:
-        'To create a new workspace, click the "Create Organization" button. You will be prompted to enter a workspace name and configure initial settings. Once created, you can switch to the new workspace and start managing it.',
-      links: [
-        {
-          title: 'Multi-tenant Authentication Guide',
-          url: 'https://clerk.com/blog/how-to-build-multitenant-authentication-with-clerk'
-        }
-      ]
+        'Enter a name under "Create a workspace". You become its owner and can invite your team from Team Management.',
+      links: []
     },
     {
       title: 'Switching Workspaces',
       description:
-        'You can switch between workspaces by clicking on a workspace in the list. The selected workspace becomes your active organization context, and all organization-specific features will use this workspace.',
+        'Pick a workspace in the list or in the sidebar switcher. Every page then shows that workspace only.',
       links: []
     },
     {
-      title: 'Workspace Features',
+      title: 'Isolation',
       description:
-        'Each workspace operates independently with its own team members, roles, permissions, and billing. This allows you to manage multiple projects or teams within a single account while keeping their data and settings separate.',
+        'Workspaces are isolated on the server. Every request is checked against your membership, so data from one workspace is never visible in another.',
       links: []
-    },
-    {
-      title: 'Server-Side Permission Checks',
-      description:
-        "This application follows Clerk's recommended patterns for multi-tenant authentication. Server-side permission checks ensure that users can only access resources for their active organization.",
-      links: [
-        {
-          title: 'Clerk Organizations Documentation',
-          url: 'https://clerk.com/docs/organizations/overview'
-        }
-      ]
     }
   ]
 };
@@ -57,47 +36,19 @@ export const teamInfoContent: InfobarContent = {
     {
       title: 'Overview',
       description:
-        "The Team Management page allows you to manage your workspace team, including members, roles, security settings, and more. This page provides comprehensive organization management through Clerk's OrganizationProfile component.",
-      links: [
-        {
-          title: 'Clerk Organizations Documentation',
-          url: 'https://clerk.com/docs/organizations/overview'
-        }
-      ]
-    },
-    {
-      title: 'Managing Team Members',
-      description:
-        'You can add, remove, and manage team members from this page. Invite new members by email, assign roles, and control their access levels. Each member can have different permissions based on their role.',
+        'See who belongs to this workspace and their role, and invite teammates by email.',
       links: []
     },
     {
       title: 'Roles and Permissions',
       description:
-        'Configure default roles and permissions in the Clerk Dashboard under Organizations settings. Roles define what actions team members can perform within the workspace. Common roles include admin, member, and custom roles you define.',
-      links: [
-        {
-          title: 'Clerk Organizations Documentation',
-          url: 'https://clerk.com/docs/organizations/overview'
-        }
-      ]
-    },
-    {
-      title: 'Security Settings',
-      description:
-        "Manage security settings for your workspace, including authentication requirements, session management, and access controls. These settings help protect your organization's data and resources.",
+        'Owner, Admin, Manager, Member and Viewer each grant a fixed set of permissions (for example work.create, work.approve, information.collect). The server enforces them on every request; the interface only hides what your role cannot use.',
       links: []
     },
     {
-      title: 'Organization Settings',
+      title: 'Invitations',
       description:
-        'Configure general organization settings such as name, logo, and other workspace preferences. These settings apply to the entire workspace and affect all team members.',
-      links: []
-    },
-    {
-      title: 'Navigation RBAC System',
-      description:
-        'The application includes a fully client-side navigation filtering system using the `useNav` hook. It supports `requireOrg`, `permission`, and `role` checks for instant access control. Navigation items are configured in `src/config/nav-config.ts` with `access` properties.',
+        'An invitation is emailed with a single-use link. The invitee signs in or creates an account with that email address and joins with the role you chose.',
       links: []
     }
   ]
@@ -109,88 +60,55 @@ export const billingInfoContent: InfobarContent = {
     {
       title: 'Overview',
       description:
-        "The Billing page allows you to manage your organization's subscription and usage limits. Plans and subscriptions are managed through Clerk Billing for B2B, which provides organization-level subscription management with integrated Stripe payment processing.",
-      links: [
-        {
-          title: 'Clerk Billing Documentation',
-          url: 'https://clerk.com/docs/billing/overview'
-        }
-      ]
-    },
-    {
-      title: 'Available Plans',
-      description:
-        'View and subscribe to available plans through the pricing table. Plans are created and managed in the Clerk Dashboard. Toggle "Publicly available" on plans to show them in the pricing table. Common plans include free, pro, and team tiers.',
-      links: [
-        {
-          title: 'Clerk Dashboard - Plans',
-          url: 'https://dashboard.clerk.com/~/billing/plans'
-        }
-      ]
-    },
-    {
-      title: 'Plan Features',
-      description:
-        'Each plan can include specific features that unlock functionality in the application. Features are added to plans in the Clerk Dashboard and can be checked in code using the `has()` function with `feature` checks.',
+        "Your workspace's plan sets its limits: members, open work, stored files, integrations and assistant usage. Usage is shown against each limit.",
       links: []
     },
     {
-      title: 'Access Control',
+      title: 'Changing Plans',
       description:
-        'Plans and features are used for access control throughout the application. Server-side checks use the `has()` function to verify plan or feature access. Client-side protection uses the `<Show>` component to conditionally render content based on subscription status.',
+        'Choosing a self-serve plan opens a secure checkout with the payment provider. Enterprise is arranged with sales.',
       links: []
     },
     {
-      title: 'Billing Cost Structure',
+      title: 'Payment Problems',
       description:
-        "Clerk Billing costs 0.7% per transaction, plus transaction fees paid directly to Stripe. Clerk Billing is not the same as Stripe Billing - plans and pricing are managed through the Clerk Dashboard and won't sync with existing Stripe products. Clerk uses Stripe only for payment processing.",
+        'If a payment is overdue the workspace stays readable, but adding members, work, integrations, files or assistant calls is paused until billing is in good standing.',
       links: []
     },
     {
-      title: 'Setup Requirements',
+      title: 'Who Can Manage Billing',
       description:
-        "To enable billing, navigate to Billing Settings in the Clerk Dashboard and enable billing for your application. Choose between Clerk's development gateway (for testing) or your own Stripe account (for production). Note: A Stripe account created for development cannot be used for production.",
-      links: [
-        {
-          title: 'Billing Settings',
-          url: 'https://dashboard.clerk.com/~/billing/settings'
-        }
-      ]
-    },
-    {
-      title: 'Beta Status',
-      description:
-        'Billing is currently in Beta and its APIs are experimental and may undergo breaking changes. To mitigate potential disruptions, we recommend pinning your SDK and `clerk-js` package versions.',
+        'Viewing billing needs billing.read; changing or cancelling a plan needs billing.manage.',
       links: []
     }
   ]
 };
 
 export const productInfoContent: InfobarContent = {
-  title: 'Work Engagements Management',
+  title: 'Work Engagements',
   sections: [
     {
       title: 'Overview',
       description:
-        'The Work Engagements page allows you to oversee active client accounting projects. You can track engagement status, monitor requirement completeness, and manage business exceptions with real-time server-side filtering, sorting, and search.',
+        'All work in this workspace with its status, priority, requirement completeness and open exceptions. The list refreshes automatically.',
       links: []
     },
     {
-      title: 'Creating Engagements',
+      title: 'Creating Work',
       description:
-        'To create an engagement, click the "New Engagement" button. Configure engagement code, client name, practice area (Tax, Audit, VAT, Payroll, Advisory), and scope deliverables.',
+        'Click "New Work" for a single item, or use the Intake Wizard to create work, list what to collect and send the client request in one go.',
       links: []
     },
     {
       title: 'Completeness & Exceptions',
       description:
-        'Each engagement tracks deterministic requirement progress (e.g. 8/10 verified). If a document fails OCR or violates cross-check rules, an exception is flagged and escalated to the Exception Queue for CPA sign-off.',
+        'Completeness counts accepted requirements against required ones. When something needs a person (inconsistent information, an overdue deadline, a failed delivery) an exception appears in the Exception Queue.',
       links: []
     },
     {
-      title: 'Direct Client Intake Links',
+      title: 'Status Changes',
       description:
-        'Use the row actions menu to copy secure magic links for client document submission per ADR-020 without requiring client password creation.',
+        'Status moves through a server-side state machine. Open a work item to see the moves allowed from its current status; work is cancelled, never deleted.',
       links: []
     }
   ]

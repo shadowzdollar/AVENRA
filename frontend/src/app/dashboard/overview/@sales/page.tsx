@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import { RecentSales } from '@/features/overview/components/recent-sales';
 
 export default async function Sales() {
-  await auth.protect();
+  await requireSession();
   return <RecentSales />;
 }

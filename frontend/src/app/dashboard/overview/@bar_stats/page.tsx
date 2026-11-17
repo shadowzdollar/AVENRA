@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import { BarGraph } from '@/features/overview/components/bar-graph';
 
 export default async function BarStats() {
-  await auth.protect();
+  await requireSession();
   return <BarGraph />;
 }

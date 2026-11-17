@@ -17,6 +17,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { ApiError } from '@/lib/api-client';
+import { useSession } from '@/lib/auth/session-context';
 
 interface CellActionProps {
   data: Product;
@@ -26,23 +28,24 @@ export function CellAction({ data }: CellActionProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { organizationId, hasPermission } = useSession();
+  const orgId = organizationId ?? '';
+  const finished = data.status === 'COMPLETED' || data.status === 'CANCELLED';
 
-  const deleteMutation = useMutation({
-    ...productMutations.delete(),
+  const cancelMutation = useMutation({
+    ...productMutations.cancel(orgId),
     onSuccess: () => {
-      toast.success('Engagement deleted successfully');
+      toast.success('Work cancelled');
       setOpen(false);
     },
-    onError: () => {
-      toast.error('Failed to delete engagement');
+    onError: (error) => {
+      toast.error(error instanceof ApiError ? error.message : "Couldn't cancel this work");
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: productQueries.all() })
+    onSettled: () => queryClient.invalidateQueries({ queryKey: productQueries.all(orgId) })
   });
 
-  const handleCopyLink = () => {
-    const link = `${window.location.origin}/client-portal/req_${data.id}_${Math.random().toString(36).substring(2, 9)}`;
-    navigator.clipboard?.writeText(link);
-    toast.success('Client intake magic link copied to clipboard');
+  const handleRequestInformation = () => {
+    router.push(`/dashboard/forms/sheet-form?workId=${data.id}`);
   };
 
   return (
@@ -50,8 +53,8 @@ export function CellAction({ data }: CellActionProps) {
       <AlertModal
         isOpen={open}
         onClose={() => setOpen(false)}
-        onConfirm={() => deleteMutation.mutate(data.id)}
-        loading={deleteMutation.isPending}
+        onConfirm={() => cancelMutation.mutate(data)}
+        loading={cancelMutation.isPending}
       />
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger render={<Button variant='ghost' className='h-8 w-8 p-0' />}>
@@ -60,28 +63,34 @@ export function CellAction({ data }: CellActionProps) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end'>
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Engagement Actions</DropdownMenuLabel>
+            <DropdownMenuLabel>Work Actions</DropdownMenuLabel>
           </DropdownMenuGroup>
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => router.push(`/dashboard/product/${data.id}`)}>
-              <Icons.edit className='mr-2 h-4 w-4' /> Edit Details
+              <Icons.edit className='mr-2 h-4 w-4' /> Open Details
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push('/dashboard/kanban')}>
               <Icons.kanban className='mr-2 h-4 w-4' /> View on Board
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleCopyLink}>
-              <Icons.share className='mr-2 h-4 w-4' /> Copy Client Link
-            </DropdownMenuItem>
+            {hasPermission('information.collect') && !finished && (
+              <DropdownMenuItem onClick={handleRequestInformation}>
+                <Icons.share className='mr-2 h-4 w-4' /> Request From Client
+              </DropdownMenuItem>
+            )}
           </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuItem
-              className='text-destructive focus:text-destructive'
-              onClick={() => setOpen(true)}
-            >
-              <Icons.trash className='mr-2 h-4 w-4' /> Delete Engagement
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
+          {hasPermission('work.update') && !finished && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  className='text-destructive focus:text-destructive'
+                  onClick={() => setOpen(true)}
+                >
+                  <Icons.trash className='mr-2 h-4 w-4' /> Cancel Work
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </>

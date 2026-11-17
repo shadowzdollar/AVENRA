@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import BillingView from './billing-view';
 
 export default async function Page() {
-  await auth.protect();
+  await requireSession();
   return <BillingView />;
 }

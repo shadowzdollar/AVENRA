@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import PageContainer from '@/components/layout/page-container';
 import UserListingPage from '@/features/users/components/user-listing';
 import { searchParamsCache } from '@/lib/searchparams';
@@ -15,7 +15,7 @@ type PageProps = {
 };
 
 export default async function UsersPage(props: PageProps) {
-  await auth.protect();
+  await requireSession();
 
   const searchParams = await props.searchParams;
   searchParamsCache.parse(searchParams);

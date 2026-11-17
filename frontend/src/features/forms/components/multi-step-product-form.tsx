@@ -12,63 +12,82 @@ import { useAppForm } from '@/lib/form';
 import { useFormStepper } from '@/hooks/use-stepper';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useRouter } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { categoryOptions } from '@/features/products/constants/product-options';
+import { createRequestLink } from '@/features/requests/api/service';
+import { workQueries } from '@/features/work/api/queries';
+import { createRequirement, createWork } from '@/features/work/api/service';
+import { ApiError } from '@/lib/api-client';
+import { useOrganizationId } from '@/lib/auth/session-context';
 
 // --- Schema ---
 
 const productFormSchema = z.object({
-  name: z.string().min(2, 'Product name must be at least 2 characters'),
-  category: z.string().min(1, 'Please select a category'),
-  price: z.number({ error: 'Price is required' }).min(0.01, 'Price must be greater than 0'),
-  description: z.string().min(10, 'Description must be at least 10 characters')
+  name: z.string().trim().min(2, 'Title must be at least 2 characters').max(200),
+  category: z.string().min(1, 'Please select a work type'),
+  clientId: z.string(),
+  description: z
+    .string()
+    .refine((v) => parseRequirements(v).length > 0, 'List at least one item, one per line')
+    .refine(
+      (v) => parseRequirements(v).every((l) => l.length <= 200),
+      'Each item can be 200 characters at most'
+    ),
+  recipientEmail: z.union([z.literal(''), z.email('Enter a valid email address')])
 });
 
 const stepSchemas = [
-  // Step 1: Basic Info
-  productFormSchema.pick({ name: true, category: true, price: true }),
-  // Step 2: Details
-  productFormSchema.pick({ description: true }),
+  // Step 1: Work
+  productFormSchema.pick({ name: true, category: true, clientId: true }),
+  // Step 2: What to collect, and from whom
+  productFormSchema.pick({ description: true, recipientEmail: true }),
   // Step 3: Review (no validation)
   z.object({})
 ];
 
-const categoryOptions = [
-  { value: 'beauty', label: 'Beauty Products' },
-  { value: 'electronics', label: 'Electronics' },
-  { value: 'home', label: 'Home & Garden' },
-  { value: 'sports', label: 'Sports & Outdoors' }
-];
+function parseRequirements(text: string): string[] {
+  return text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
 
 // --- Review summary (reads form values) ---
 
-function ReviewSummary({
-  values
-}: {
-  values: {
-    name: string;
-    category: string;
-    price?: number;
-    description: string;
-  };
-}) {
+function ReviewSummary({ values, clientName }: { values: ProductFormValues; clientName?: string }) {
+  const items = parseRequirements(values.description);
   return (
     <div className='space-y-3'>
       <Separator />
       <div className='grid gap-3'>
         <div>
-          <p className='text-muted-foreground text-xs font-medium uppercase'>Name</p>
+          <p className='text-muted-foreground text-xs font-medium uppercase'>Work</p>
           <p className='text-sm'>{values.name || '—'}</p>
         </div>
         <div>
-          <p className='text-muted-foreground text-xs font-medium uppercase'>Category</p>
-          <p className='text-sm capitalize'>{values.category || '—'}</p>
+          <p className='text-muted-foreground text-xs font-medium uppercase'>Type</p>
+          <p className='text-sm'>{values.category || '—'}</p>
         </div>
         <div>
-          <p className='text-muted-foreground text-xs font-medium uppercase'>Price</p>
-          <p className='text-sm'>{values.price != null ? `$${values.price}` : '—'}</p>
+          <p className='text-muted-foreground text-xs font-medium uppercase'>Client</p>
+          <p className='text-sm'>{clientName ?? 'No client'}</p>
         </div>
         <div>
-          <p className='text-muted-foreground text-xs font-medium uppercase'>Description</p>
-          <p className='text-sm'>{values.description || '—'}</p>
+          <p className='text-muted-foreground text-xs font-medium uppercase'>
+            To collect ({items.length})
+          </p>
+          <ul className='list-disc pl-5 text-sm'>
+            {items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className='text-muted-foreground text-xs font-medium uppercase'>Request sent to</p>
+          <p className='text-sm'>
+            {values.recipientEmail || 'Nobody yet (send later from Client Requests)'}
+          </p>
         </div>
       </div>
     </div>
@@ -77,12 +96,7 @@ function ReviewSummary({
 
 // --- Main Form ---
 
-type ProductFormValues = {
-  name: string;
-  category: string;
-  price: number | undefined;
-  description: string;
-};
+type ProductFormValues = z.infer<typeof productFormSchema>;
 
 export default function MultiStepProductForm() {
   const {
@@ -94,20 +108,68 @@ export default function MultiStepProductForm() {
     handleNextStepOrSubmit
   } = useFormStepper(stepSchemas, { fullSchema: productFormSchema });
 
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const organizationId = useOrganizationId();
+  const orgId = organizationId ?? '';
+  const { data: clients = [] } = useQuery({
+    ...workQueries.clients(orgId),
+    enabled: organizationId !== null
+  });
+  const clientOptions = [
+    { value: 'none', label: 'No client' },
+    ...clients.map((c) => ({ value: c.id, label: c.name }))
+  ];
+
+  const intake = useMutation({
+    mutationFn: async (values: ProductFormValues) => {
+      const work = await createWork(orgId, {
+        title: values.name.trim(),
+        type: values.category,
+        clientId: values.clientId && values.clientId !== 'none' ? values.clientId : undefined
+      });
+      const requirements = [];
+      for (const title of parseRequirements(values.description)) {
+        requirements.push(
+          await createRequirement(orgId, work.id, { title, kind: 'DOCUMENT', required: true })
+        );
+      }
+      if (values.recipientEmail) {
+        await createRequestLink(orgId, work.id, {
+          recipientEmail: values.recipientEmail,
+          requirementIds: requirements.map((r) => r.id)
+        });
+      }
+      return work;
+    },
+    onSuccess: (work, values) => {
+      toast.success(
+        values.recipientEmail
+          ? `Work created and request sent to ${values.recipientEmail}`
+          : 'Work created'
+      );
+      router.push(`/dashboard/product/${work.id}`);
+    },
+    onError: (error) =>
+      toast.error(error instanceof ApiError ? error.message : 'Intake failed. Please try again.'),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['org', orgId] })
+  });
+
   const form = useAppForm({
     defaultValues: {
       name: '',
       category: '',
-      price: undefined,
-      description: ''
+      clientId: 'none',
+      description: '',
+      recipientEmail: ''
     } as ProductFormValues,
     validationLogic: revalidateLogic(),
     validators: {
       onDynamic: currentValidator as typeof productFormSchema,
       onDynamicAsyncDebounceMs: 500
     },
-    onSubmit: () => {
-      toast.success('Product created successfully!');
+    onSubmit: ({ value }) => {
+      intake.mutate(value);
     }
   });
 
@@ -152,16 +214,16 @@ export default function MultiStepProductForm() {
           >
             {currentStep === 1 && (
               <FieldGroup className='space-y-4'>
-                <h3 className='text-lg font-semibold'>Basic Info</h3>
-                <FieldDescription>Enter the product name, category, and price.</FieldDescription>
+                <h3 className='text-lg font-semibold'>Work</h3>
+                <FieldDescription>What is this work, and which client is it for?</FieldDescription>
 
                 <form.AppField
                   name='name'
                   children={(field) => (
                     <field.TextField
-                      label='Product Name'
+                      label='Work Title'
                       required
-                      placeholder='Enter product name'
+                      placeholder='e.g. FY2025 tax return for Apex Holdings'
                     />
                   )}
                 />
@@ -170,44 +232,50 @@ export default function MultiStepProductForm() {
                   name='category'
                   children={(field) => (
                     <field.SelectField
-                      label='Category'
+                      label='Work Type'
                       required
                       options={categoryOptions}
-                      placeholder='Select category'
+                      placeholder='Select work type'
                     />
                   )}
                 />
 
                 <form.AppField
-                  name='price'
-                  children={(field) => (
-                    <field.TextField
-                      label='Price'
-                      required
-                      type='number'
-                      min={0}
-                      step={0.01}
-                      placeholder='Enter price'
-                    />
-                  )}
+                  name='clientId'
+                  children={(field) => <field.SelectField label='Client' options={clientOptions} />}
                 />
               </FieldGroup>
             )}
 
             {currentStep === 2 && (
               <FieldGroup className='space-y-4'>
-                <h3 className='text-lg font-semibold'>Details</h3>
-                <FieldDescription>Add a detailed product description.</FieldDescription>
+                <h3 className='text-lg font-semibold'>What to Collect</h3>
+                <FieldDescription>
+                  One item per line. Each becomes a requirement on the work.
+                </FieldDescription>
 
                 <form.AppField
                   name='description'
                   children={(field) => (
                     <field.TextareaField
-                      label='Description'
+                      label='Items to Collect'
                       required
-                      placeholder='Enter product description'
-                      maxLength={500}
-                      rows={5}
+                      placeholder={
+                        'Prior year tax returns\nYear-end trial balance\nBank statements'
+                      }
+                      maxLength={5000}
+                      rows={6}
+                    />
+                  )}
+                />
+
+                <form.AppField
+                  name='recipientEmail'
+                  children={(field) => (
+                    <field.TextField
+                      label='Client Email (optional)'
+                      type='email'
+                      placeholder='Leave empty to send the request later'
                     />
                   )}
                 />
@@ -218,7 +286,10 @@ export default function MultiStepProductForm() {
               <div className='space-y-4'>
                 <h3 className='text-lg font-semibold'>Review & Submit</h3>
                 <FieldDescription>Review the details below before submitting.</FieldDescription>
-                <ReviewSummary values={formValues} />
+                <ReviewSummary
+                  values={formValues}
+                  clientName={clients.find((c) => c.id === formValues.clientId)?.name}
+                />
               </div>
             )}
           </motion.div>
@@ -247,7 +318,9 @@ export default function MultiStepProductForm() {
               </Button>
             )}
             {step.isCompleted ? (
-              <Button type='submit'>Submit</Button>
+              <Button type='submit' disabled={intake.isPending}>
+                {formValues.recipientEmail ? 'Create & Send Request' : 'Create Work'}
+              </Button>
             ) : (
               <Button size='sm' variant='ghost' type='button' onClick={() => void handleNext()}>
                 Next <Icons.chevronRight />

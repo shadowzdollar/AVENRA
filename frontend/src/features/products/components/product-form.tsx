@@ -5,7 +5,9 @@ import { LoadingButton } from '@/components/ui/loading-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldGroup } from '@/components/ui/field';
 import { useAppForm } from '@/lib/form';
-import { categoryOptions } from '@/features/products/constants/product-options';
+import { categoryOptions, priorityOptions } from '@/features/products/constants/product-options';
+import { useOrganizationId } from '@/lib/auth/session-context';
+import { ApiError } from '@/lib/api-client';
 import { productSchema, type ProductFormValues } from '@/features/products/schemas/product';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -22,38 +24,35 @@ export default function ProductForm({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const orgId = useOrganizationId() ?? '';
   const isEdit = !!initialData;
+  const failure = (fallback: string) => (error: Error) =>
+    toast.error(error instanceof ApiError ? error.message : fallback);
 
   const createMutation = useMutation({
-    ...productMutations.create(),
-    onSuccess: () => {
-      toast.success('Work engagement created successfully');
-      router.push('/dashboard/product');
+    ...productMutations.create(orgId),
+    onSuccess: (work) => {
+      toast.success('Work created');
+      router.push(`/dashboard/product/${work.id}`);
     },
-    onError: () => {
-      toast.error("Couldn't create engagement. Please try again.");
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: productQueries.all() })
+    onError: failure("Couldn't create work. Please try again."),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: productQueries.all(orgId) })
   });
 
   const updateMutation = useMutation({
-    ...productMutations.update(),
+    ...productMutations.update(orgId),
     onSuccess: () => {
-      toast.success('Engagement updated successfully');
-      router.push('/dashboard/product');
+      toast.success('Work updated');
     },
-    onError: () => {
-      toast.error("Couldn't update engagement. Please try again.");
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: productQueries.all() })
+    onError: failure("Couldn't update work. Please try again."),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: productQueries.all(orgId) })
   });
 
   const form = useAppForm({
     defaultValues: {
-      image: undefined,
       name: initialData?.name ?? '',
       category: initialData?.category ?? '',
-      price: initialData?.price,
+      priority: initialData?.priority ?? 'NORMAL',
       description: initialData?.description ?? ''
     } as ProductFormValues,
     validators: {
@@ -61,9 +60,9 @@ export default function ProductForm({
     },
     onSubmit: ({ value }) => {
       const payload = {
-        name: value.name,
+        name: value.name.trim(),
         category: value.category,
-        price: value.price!,
+        priority: value.priority,
         description: value.description
       };
 
@@ -96,9 +95,9 @@ export default function ProductForm({
                 name='name'
                 children={(field) => (
                   <field.TextField
-                    label='Engagement Title / Code'
+                    label='Work Title'
                     required
-                    placeholder='e.g. ENG-2026-015: FY2025 S-Corp 1120-S'
+                    placeholder='e.g. FY2025 corporate tax return for Apex Holdings'
                   />
                 )}
               />
@@ -107,25 +106,25 @@ export default function ProductForm({
                 name='category'
                 children={(field) => (
                   <field.SelectField
-                    label='Practice Area'
+                    label='Work Type'
                     required
-                    options={categoryOptions}
-                    placeholder='Select practice area'
+                    options={
+                      initialData && !categoryOptions.some((o) => o.value === initialData.category)
+                        ? [
+                            { value: initialData.category, label: initialData.category },
+                            ...categoryOptions
+                          ]
+                        : categoryOptions
+                    }
+                    placeholder='Select work type'
                   />
                 )}
               />
 
               <form.AppField
-                name='price'
+                name='priority'
                 children={(field) => (
-                  <field.TextField
-                    label='Engagement Fee ($)'
-                    required
-                    type='number'
-                    min={0}
-                    step={100}
-                    placeholder='e.g. 4500'
-                  />
+                  <field.SelectField label='Priority' required options={priorityOptions} />
                 )}
               />
             </div>
@@ -134,10 +133,9 @@ export default function ProductForm({
               name='description'
               children={(field) => (
                 <field.TextareaField
-                  label='Engagement Scope & Deliverables'
-                  required
-                  placeholder='Describe required documents, filing deadlines, and rule checks...'
-                  maxLength={500}
+                  label='Description'
+                  placeholder='What needs to be collected, checked and delivered...'
+                  maxLength={5000}
                   rows={4}
                 />
               )}
@@ -149,7 +147,7 @@ export default function ProductForm({
               Cancel
             </Button>
             <LoadingButton loading={isPending} type='submit'>
-              {isEdit ? 'Update Engagement' : 'Create Engagement'}
+              {isEdit ? 'Save Changes' : 'Create Work'}
             </LoadingButton>
           </div>
         </form>

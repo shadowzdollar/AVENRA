@@ -12,45 +12,61 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Icons } from '@/components/icons';
 import React from 'react';
-
-const chartData = [
-  { month: 'January', ingested: 342, verified: 335 },
-  { month: 'February', ingested: 876, verified: 860 },
-  { month: 'March', ingested: 512, verified: 504 },
-  { month: 'April', ingested: 629, verified: 618 },
-  { month: 'May', ingested: 458, verified: 450 },
-  { month: 'June', ingested: 781, verified: 770 },
-  { month: 'July', ingested: 394, verified: 388 },
-  { month: 'August', ingested: 925, verified: 910 },
-  { month: 'September', ingested: 647, verified: 638 },
-  { month: 'October', ingested: 532, verified: 524 },
-  { month: 'November', ingested: 803, verified: 790 },
-  { month: 'December', ingested: 420, verified: 412 }
-];
+import { useQuery } from '@tanstack/react-query';
+import { analyticsQueries } from '@/features/overview/api/queries';
+import { metric, series } from '@/features/overview/api/types';
+import { workQueries } from '@/features/work/api/queries';
+import { useOrganizationId } from '@/lib/auth/session-context';
+import { useHydrated } from '@/hooks/use-hydrated';
 
 const chartConfig = {
   ingested: {
-    label: 'Intake Documents',
+    label: 'Work Created',
     color: 'var(--chart-1)'
   },
   verified: {
-    label: 'Auto-Verified',
+    label: 'Work Completed',
     color: 'var(--chart-2)'
   }
 } satisfies ChartConfig;
 
+const WEEK_MS = 7 * 24 * 3600 * 1000;
+
 export function AreaGraph() {
+  const hydrated = useHydrated();
+  const sessionOrganizationId = useOrganizationId();
+  // Until hydration, render as the server did (no data); see useHydrated.
+  const organizationId = hydrated ? sessionOrganizationId : null;
+  const enabled = organizationId !== null;
+  const { data: report } = useQuery({
+    ...analyticsQueries.report(organizationId ?? '', 90),
+    enabled
+  });
+  const { data: work = [] } = useQuery({ ...workQueries.list(organizationId ?? ''), enabled });
+
+  const completed = series(report, 'work.completed_weekly')?.points ?? [];
+  const chartData = completed.map((point) => {
+    const start = new Date(`${point.start}T00:00:00Z`).getTime();
+    const ingested = work.filter((w) => {
+      const t = new Date(w.createdAt).getTime();
+      return t >= start && t < start + WEEK_MS;
+    }).length;
+    return { month: point.start, ingested, verified: point.value };
+  });
+  const created = metric(report, 'work.created');
+  const finished = metric(report, 'work.completed');
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className='flex items-center justify-between'>
-          <span>Intake & Verification Velocity</span>
+          <span>Work Throughput</span>
           <Badge variant='outline'>
             <Icons.trendingUp className='mr-1 h-3.5 w-3.5' />
-            +18.4% YoY
+            {finished?.value ?? 0} / {created?.value ?? 0} done
           </Badge>
         </CardTitle>
-        <CardDescription>Documents received via secure intake links vs verified with rules</CardDescription>
+        <CardDescription>Work created vs completed per week, last 90 days</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -61,7 +77,12 @@ export function AreaGraph() {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
+              tickFormatter={(value: string) =>
+                new Date(`${value}T00:00:00Z`).toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric'
+                })
+              }
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <defs>
@@ -69,20 +90,18 @@ export function AreaGraph() {
             </defs>
             <Area
               dataKey='verified'
-              type='natural'
+              type='monotone'
               fill='url(#dotted-background-pattern-verified)'
               fillOpacity={0.4}
               stroke='var(--color-verified)'
-              stackId='a'
               strokeWidth={1.2}
             />
             <Area
               dataKey='ingested'
-              type='natural'
+              type='monotone'
               fill='url(#dotted-background-pattern-ingested)'
               fillOpacity={0.4}
               stroke='var(--color-ingested)'
-              stackId='a'
               strokeWidth={1.2}
             />
           </AreaChart>

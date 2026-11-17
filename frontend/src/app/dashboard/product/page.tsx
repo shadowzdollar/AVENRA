@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import PageContainer from '@/components/layout/page-container';
 import { buttonVariants } from '@/components/ui/button';
 import ProductListingPage from '@/features/products/components/product-listing';
@@ -18,7 +18,7 @@ type pageProps = {
 };
 
 export default async function Page(props: pageProps) {
-  await auth.protect();
+  await requireSession();
 
   const searchParams = await props.searchParams;
   searchParamsCache.parse(searchParams);
@@ -26,11 +26,11 @@ export default async function Page(props: pageProps) {
   return (
     <PageContainer
       pageTitle='Work Engagements'
-      pageDescription='Manage firm accounting engagements, monitor document verification, and coordinate client deliverables.'
+      pageDescription='All work in this workspace: status, completeness and open exceptions, updated live.'
       infoContent={productInfoContent}
       pageHeaderAction={
         <Link href='/dashboard/product/new' className={cn(buttonVariants(), 'text-xs md:text-sm')}>
-          <Icons.add className='mr-2 h-4 w-4' /> New Engagement
+          <Icons.add className='mr-2 h-4 w-4' /> New Work
         </Link>
       }
     >

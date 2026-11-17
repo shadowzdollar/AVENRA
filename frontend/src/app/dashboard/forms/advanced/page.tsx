@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import PageContainer from '@/components/layout/page-container';
 import AdvancedFormPatterns from '@/features/forms/components/advanced-form-patterns';
 
@@ -7,7 +7,7 @@ export const metadata = {
 };
 
 export default async function Page() {
-  await auth.protect();
+  await requireSession();
 
   return (
     <PageContainer

@@ -1,16 +1,19 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import PageContainer from '@/components/layout/page-container';
 import FormsShowcasePage from '@/features/forms/components/forms-showcase-page';
 
 export const metadata = {
-  title: 'Dashboard: Multi-Step Form'
+  title: 'Dashboard: Intake Wizard'
 };
 
 export default async function Page() {
-  await auth.protect();
+  await requireSession();
 
   return (
-    <PageContainer pageTitle='Multi-Step Form' pageDescription='Multi-step wizard form pattern.'>
+    <PageContainer
+      pageTitle='Intake Wizard'
+      pageDescription='Set up new client work, list what to collect, and send the request in one flow.'
+    >
       <FormsShowcasePage />
     </PageContainer>
   );

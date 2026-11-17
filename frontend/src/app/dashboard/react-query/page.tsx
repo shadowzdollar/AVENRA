@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { requireSession } from '@/lib/auth/server';
 import { HydrationBoundary, dehydrate, noop } from '@tanstack/react-query';
 import { getQueryClient } from '@/lib/query-client';
 import { pokemonQueries } from '@/features/react-query-demo/api/queries';
@@ -13,7 +13,7 @@ export const metadata = {
 };
 
 export default async function ReactQueryPage() {
-  await auth.protect();
+  await requireSession();
 
   const queryClient = getQueryClient();
 

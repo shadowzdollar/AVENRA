@@ -1,7 +1,9 @@
 import { mutationOptions, queryOptions } from '@tanstack/react-query';
+import { live } from '@/lib/live';
+import { workQueries } from '@/features/work/api/queries';
 import {
+  cancelProduct,
   createProduct,
-  deleteProduct,
   getProductById,
   getProducts,
   updateProduct
@@ -10,36 +12,35 @@ import type { Product, ProductFilters, ProductMutationPayload } from './types';
 
 export type { Product };
 
-// Reads: query key + fetcher in one place, shared by server prefetch and client hooks.
-// Invalidate everything for this entity with productQueries.all().
+// Keys live under the work keys so any work mutation refreshes these views too.
 export const productQueries = {
-  all: () => ['products'] as const,
-  list: (filters: ProductFilters) =>
+  all: (organizationId: string) => workQueries.all(organizationId),
+  list: (organizationId: string, filters: ProductFilters) =>
     queryOptions({
-      queryKey: [...productQueries.all(), 'list', filters] as const,
-      queryFn: () => getProducts(filters)
+      queryKey: [...productQueries.all(organizationId), 'engagements', filters] as const,
+      queryFn: () => getProducts(organizationId, filters),
+      ...live
     }),
-  detail: (id: number) =>
+  detail: (organizationId: string, id: string) =>
     queryOptions({
-      queryKey: [...productQueries.all(), 'detail', id] as const,
-      queryFn: () => getProductById(id)
+      queryKey: [...productQueries.all(organizationId), 'engagement', id] as const,
+      queryFn: () => getProductById(organizationId, id)
     })
 };
 
-// Writes: only the mutationFn. Components add onSuccess/onError/onSettled,
-// including cache invalidation, so everything that happens after a mutation is in one place.
 export const productMutations = {
-  create: () =>
+  create: (organizationId: string) =>
     mutationOptions({
-      mutationFn: (data: ProductMutationPayload) => createProduct(data)
+      mutationFn: (data: ProductMutationPayload) => createProduct(organizationId, data)
     }),
-  update: () =>
+  update: (organizationId: string) =>
     mutationOptions({
-      mutationFn: ({ id, values }: { id: number; values: ProductMutationPayload }) =>
-        updateProduct(id, values)
+      mutationFn: ({ id, values }: { id: string; values: ProductMutationPayload }) =>
+        updateProduct(organizationId, id, values)
     }),
-  delete: () =>
+  cancel: (organizationId: string) =>
     mutationOptions({
-      mutationFn: (id: number) => deleteProduct(id)
+      mutationFn: (product: Pick<Product, 'id' | 'status'>) =>
+        cancelProduct(organizationId, product)
     })
 };
