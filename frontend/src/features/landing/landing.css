@@ -1,0 +1,52 @@
+/* Landing-only motion. Respects reduced-motion preferences. */
+@keyframes landing-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes landing-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes landing-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.landing-marquee {
+  animation: landing-marquee 40s linear infinite;
+}
+
+.landing-marquee:hover {
+  animation-play-state: paused;
+}
+
+.landing-caret {
+  animation: landing-caret 1s steps(1) infinite;
+}
+
+.landing-flow {
+  stroke-dasharray: 4 8;
+  animation: landing-dash 1.2s linear infinite;
+}
+
+.landing-dots {
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1.2px);
+  background-size: 10px 10px;
+  background-position: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-marquee,
+  .landing-caret,
+  .landing-flow {
+    animation: none;
+  }
+}
