@@ -7,6 +7,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+if [[ -z "${JAVA_HOME:-}" && -d "/home/ghost/.local/share/jvm/jdk25-openjdk" ]]; then
+  export JAVA_HOME="/home/ghost/.local/share/jvm/jdk25-openjdk"
+  export PATH="$JAVA_HOME/bin:$PATH"
+fi
+
 make --no-print-directory infra-up
 
 PIDS=()

@@ -84,7 +84,7 @@ e2e: ## Browser end-to-end tests (needs the stack running: infra, API, web on :3
 .PHONY: web-dev
 web-dev: .env ## Web: run the development server on :3000
 	pnpm --filter @avenra/contracts run generate
-	$(WITH_ENV) pnpm --filter @avenra/web run dev
+	$(WITH_ENV) PORT=3000 pnpm --filter @avenra/web run dev
 
 # --- Backend (backend/api) ----------------------------------------------------
 

@@ -133,7 +133,8 @@ class Providers {
                         HttpStatus.SERVICE_UNAVAILABLE,
                         "Stripe API key is not configured.");
             }
-            return URI.create("https://checkout.stripe.com/pay/cs_live_" + current.organizationId() + "?plan=" + plan.name());
+            return URI.create(
+                    "https://checkout.stripe.com/pay/cs_live_" + current.organizationId() + "?plan=" + plan.name());
         }
 
         @Override

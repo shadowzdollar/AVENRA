@@ -5,6 +5,9 @@ import { withSentryConfig } from '@sentry/nextjs/config';
 const baseConfig: NextConfig = {
   output: process.env.BUILD_STANDALONE === 'true' ? 'standalone' : undefined,
   transpilePackages: ['geist'],
+  experimental: {
+    agentUpgrade: false
+  },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production'
   },
