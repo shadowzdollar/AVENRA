@@ -185,24 +185,114 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
         </div>
       </div>
 
-      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <CommandInput placeholder='Search Avenra…' />
-        <CommandList>
-          <CommandEmpty>No results.</CommandEmpty>
-          <CommandGroup heading='Jump to'>
-            {SEARCH_ENTRIES.map((entry) => (
+      <CommandDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        className='border-border/80 bg-popover/95 max-w-xl shadow-2xl backdrop-blur-xl'
+      >
+        <div className='relative'>
+          <CommandInput placeholder='Search platform, solutions, docs, or actions…' />
+          <kbd className='bg-muted text-muted-foreground pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded border px-1.5 py-0.5 font-mono text-[10px] font-medium sm:inline-block'>
+            ESC
+          </kbd>
+        </div>
+        <CommandList className='max-h-[380px] p-1.5'>
+          <CommandEmpty className='py-10 text-center'>
+            <p className='text-sm font-medium'>No matching pages or actions</p>
+            <p className='text-muted-foreground mt-1 text-xs'>
+              Try searching for “pricing”, “security”, “agent”, or “audit”.
+            </p>
+          </CommandEmpty>
+
+          <CommandGroup heading='Quick actions'>
+            <CommandItem
+              onSelect={() => {
+                setSearchOpen(false);
+                router.push('/auth/sign-up');
+              }}
+              className='flex items-center justify-between rounded-lg px-3 py-2.5'
+            >
+              <div className='flex items-center gap-3'>
+                <span className='bg-primary/10 text-primary flex size-8 items-center justify-center rounded-md'>
+                  <Icons.sparkles className='size-4' />
+                </span>
+                <div>
+                  <p className='text-sm font-medium'>Start 14-day free trial</p>
+                  <p className='text-muted-foreground text-xs'>Create a firm workspace with zero card required</p>
+                </div>
+              </div>
+              <Icons.arrowRight className='text-muted-foreground size-3.5' />
+            </CommandItem>
+            <CommandItem
+              onSelect={() => {
+                setSearchOpen(false);
+                router.push(signedIn ? '/dashboard/overview' : '/auth/sign-in');
+              }}
+              className='flex items-center justify-between rounded-lg px-3 py-2.5'
+            >
+              <div className='flex items-center gap-3'>
+                <span className='bg-muted flex size-8 items-center justify-center rounded-md'>
+                  <Icons.dashboard className='size-4' />
+                </span>
+                <div>
+                  <p className='text-sm font-medium'>
+                    {signedIn ? 'Open dashboard' : 'Log in to workspace'}
+                  </p>
+                  <p className='text-muted-foreground text-xs'>Jump directly into your engagements</p>
+                </div>
+              </div>
+              <Icons.arrowRight className='text-muted-foreground size-3.5' />
+            </CommandItem>
+            <CommandItem
+              onSelect={() => {
+                setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+                setSearchOpen(false);
+              }}
+              className='flex items-center justify-between rounded-lg px-3 py-2.5'
+            >
+              <div className='flex items-center gap-3'>
+                <span className='bg-muted flex size-8 items-center justify-center rounded-md'>
+                  <Icons.brightness className='size-4' />
+                </span>
+                <div>
+                  <p className='text-sm font-medium'>
+                    Switch to {resolvedTheme === 'dark' ? 'light' : 'dark'} theme
+                  </p>
+                  <p className='text-muted-foreground text-xs'>Toggle interface appearance</p>
+                </div>
+              </div>
+            </CommandItem>
+          </CommandGroup>
+
+          <CommandGroup heading='Explore Avenra'>
+            {SEARCH_ENTRIES.filter(
+              (e) => e.href !== '/auth/sign-up' && e.href !== '/auth/sign-in'
+            ).map((entry) => (
               <CommandItem
                 key={entry.label}
                 onSelect={() => {
                   setSearchOpen(false);
                   router.push(entry.href);
                 }}
+                className='flex items-center justify-between rounded-lg px-3 py-2'
               >
-                {entry.label}
+                <span className='text-sm'>{entry.label}</span>
+                <span className='text-muted-foreground font-mono text-[11px]'>{entry.href}</span>
               </CommandItem>
             ))}
           </CommandGroup>
         </CommandList>
+        <div className='bg-muted/30 text-muted-foreground flex items-center justify-between border-t px-4 py-2.5 text-[11px]'>
+          <div className='flex items-center gap-3'>
+            <span className='flex items-center gap-1'>
+              <kbd className='bg-background rounded border px-1 font-mono'>↑↓</kbd> Navigate
+            </span>
+            <span className='flex items-center gap-1'>
+              <kbd className='bg-background rounded border px-1 font-mono'>↵</kbd> Open
+            </span>
+          </div>
+          <span className='font-mono'>⌘K Search</span>
+        </div>
       </CommandDialog>
     </header>
   );
