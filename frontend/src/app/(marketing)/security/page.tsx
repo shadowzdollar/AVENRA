@@ -2,59 +2,68 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Icons } from '@/components/icons';
 import { buttonVariants } from '@/components/ui/button';
-import { TrustSection } from '@/features/landing/components/closing-sections';
 import { DottedRule, Frame, SectionHeading } from '@/features/landing/components/frame';
 import { PageHero } from '@/features/landing/components/page-hero';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Security & Trust | Avenra',
+  title: 'Security Architecture | Avenra',
   description:
-    'Learn how Avenra protects client engagements with PostgreSQL Row-Level Security, ClamAV malware scanning, application-level encryption, and immutable SHA-256 audit ledgers.'
+    'Deep dive into Avenra’s multi-tenant PostgreSQL Row-Level Security (RLS), ClamAV document scanning, application-level encryption, and SOC-2 compliance controls.'
 };
 
-const CONTROLS = [
+const UPLOAD_PIPELINE = [
   {
-    adr: 'ADR-005',
-    icon: 'lock' as const,
-    title: 'PostgreSQL Row-Level Security (RLS)',
+    step: '01',
+    title: 'Size & MIME Enforcement',
     description:
-      'Every tenant-owned table enforces strict organization_id policies at the database layer. Tenant context is resolved server-side from your authenticated session—never trusted from client input.'
+      'RequestBodySizeLimitFilter rejects oversized payloads before buffering; allowed MIME types are checked against the requirement schema.'
   },
   {
-    adr: 'ADR-017',
-    icon: 'fingerprint' as const,
-    title: 'Application-Level Encryption',
+    step: '02',
+    title: 'ClamAV Stream Scanning (ADR-021)',
     description:
-      'Sensitive tokens, webhook secrets, and integration credentials are encrypted at the application layer with rotatable key IDs before touching persistent storage.'
+      'Every uploaded byte streams through an isolated ClamAV daemon. Infected files are rejected immediately and never written to object storage.'
   },
   {
-    adr: 'ADR-021',
-    icon: 'warning' as const,
-    title: 'ClamAV Malware Inspection',
+    step: '03',
+    title: 'SHA-256 Fingerprinting (ADR-020)',
     description:
-      'Every client upload is streamed through an isolated ClamAV daemon before entering the Evidence Vault, stopping infected files before any staff member downloads them.'
+      'Clean files are cryptographically hashed and stored in tenant-prefixed S3 object storage with immutable metadata.'
   },
   {
-    adr: 'ADR-020',
-    icon: 'history' as const,
-    title: 'Immutable SHA-256 Evidence Vault',
+    step: '04',
+    title: 'Scoped Access & Audit',
     description:
-      'Accepted documents and verification decisions are cryptographically hashed and stored in S3-compatible object storage with complete actor and timestamp provenance.'
+      'Downloads require explicit organization permissions and emit an audit trail entry recording actor, timestamp, and document digest.'
+  }
+];
+
+const COMPLIANCE_MAP = [
+  {
+    pillar: 'Tenant Isolation (ADR-005)',
+    control: 'PostgreSQL RLS + non-owner app role',
+    evidence: 'Automated cross-tenant isolation integration tests run on every CI build.'
   },
   {
-    adr: 'ADR-016',
-    icon: 'bellRinging' as const,
-    title: 'Redis Rate Limiting & Abuse Protection',
-    description:
-      'Public client portal links and authentication endpoints are protected by sliding-window rate limits, CSRF protection, and revocable single-purpose tokens.'
+    pillar: 'Secrets & Credentials (ADR-017)',
+    control: 'Application-level envelope encryption with rotatable key IDs',
+    evidence: 'Zero plaintext tokens in database columns or structured JSON logs.'
   },
   {
-    adr: '§143',
-    icon: 'users' as const,
-    title: 'Explicit Permission Authorization',
-    description:
-      'Every endpoint and state transition checks explicit permissions (such as work.approve or billing.manage) rather than coarse admin booleans.'
+    pillar: 'Abuse Protection (ADR-016)',
+    control: 'Redis sliding-window rate limits + CSRF double-submit cookies',
+    evidence: 'Protects auth, password reset, and public client portal endpoints.'
+  },
+  {
+    pillar: 'Authorization Integrity (§143)',
+    control: 'Explicit permission checks (work.approve, billing.manage)',
+    evidence: 'Enforced in domain services and verified by ArchUnit boundary tests.'
+  },
+  {
+    pillar: 'Auditability & Non-Repudiation',
+    control: 'Append-only audit ledger with UTC timestamps & request trace IDs',
+    evidence: 'Every state transition, exception override, and export is permanently logged.'
   }
 ];
 
@@ -62,65 +71,138 @@ export default function SecurityPage() {
   return (
     <>
       <PageHero
-        pill='Security & Compliance Architecture'
-        title='Engineered for firms that cannot afford guesswork'
-        description='Security in Avenra is not a marketing badge—it is enforced by database row-level security, cryptographic hashing, malware scanning, and automated isolation tests on every build.'
+        pill='Security Whitepaper · Defense in Depth'
+        title='Enforced at the database, verified on every commit'
+        description='Professional services firms handle tax returns, audit workpapers, and corporate filings. Avenra enforces tenant boundaries inside PostgreSQL itself—backed by malware scanning, encryption, and automated isolation tests.'
         primaryAction={{ label: 'Start free trial', href: '/auth/sign-up' }}
-        secondaryAction={{ label: 'Read technical docs', href: '/docs' }}
+        secondaryAction={{ label: 'Inspect ADR index', href: '/docs' }}
       />
       <DottedRule />
-      <TrustSection />
+
+      {/* PostgreSQL RLS Deep Dive */}
+      <Frame className='grid lg:grid-cols-2'>
+        <div className='space-y-5 border-b p-6 md:p-10 lg:border-r lg:border-b-0'>
+          <SectionHeading
+            title='Database-enforced Row-Level Security (RLS)'
+            description='Even if an application query forgot a WHERE clause, PostgreSQL itself refuses to return rows belonging to another organization.'
+          />
+          <ul className='space-y-3 text-sm'>
+            <li className='flex items-start gap-2.5'>
+              <Icons.lock className='mt-0.5 size-4 shrink-0 text-cyan-500' />
+              <span className='text-muted-foreground'>
+                <strong className='text-foreground'>Server-side tenant resolution:</strong> Organization context is derived exclusively from the authenticated session—never from client-supplied headers or IDs.
+              </span>
+            </li>
+            <li className='flex items-start gap-2.5'>
+              <Icons.lock className='mt-0.5 size-4 shrink-0 text-cyan-500' />
+              <span className='text-muted-foreground'>
+                <strong className='text-foreground'>Least-privilege DB roles:</strong> Schema migrations run under an owner role; runtime traffic runs under a restricted app role that cannot bypass RLS.
+              </span>
+            </li>
+            <li className='flex items-start gap-2.5'>
+              <Icons.lock className='mt-0.5 size-4 shrink-0 text-cyan-500' />
+              <span className='text-muted-foreground'>
+                <strong className='text-foreground'>Proven by tests:</strong> Cross-tenant read and write attempts are asserted to fail in our automated test suite.
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div className='bg-muted/20 flex flex-col justify-center p-6 md:p-10'>
+          <p className='text-muted-foreground mb-3 font-mono text-xs uppercase'>
+            PostgreSQL Migration · Tenant Isolation Policy
+          </p>
+          <pre className='bg-card overflow-x-auto rounded-xl border p-5 font-mono text-xs leading-relaxed'>
+            {`ALTER TABLE work_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE work_items FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY work_items_tenant_isolation
+  ON work_items
+  USING (
+    organization_id =
+      current_setting('avenra.organization_id', true)::uuid
+  )
+  WITH CHECK (
+    organization_id =
+      current_setting('avenra.organization_id', true)::uuid
+  );`}
+          </pre>
+        </div>
+      </Frame>
       <DottedRule />
 
-      {/* Architecture Controls Grid */}
+      {/* Document Security Pipeline */}
       <Frame>
         <div className='px-6 py-14 md:px-10'>
           <SectionHeading
-            title='Defense in depth, verified by architecture decision records'
-            description='Every security boundary in Avenra is documented, codified in automated ArchUnit and integration tests, and audited continuously.'
+            title='Zero-trust document ingestion pipeline'
+            description='Client uploads pass through four security gates before any team member or AI worker can read them.'
           />
         </div>
-        <div className='grid border-t sm:grid-cols-2 lg:grid-cols-3'>
-          {CONTROLS.map((control, i) => {
-            const Icon = Icons[control.icon];
-            return (
-              <div
-                key={control.title}
-                className={cn(
-                  'space-y-3 border-b p-6 md:p-10',
-                  i % 3 !== 2 && 'lg:border-r',
-                  i >= 3 && 'lg:border-b-0'
-                )}
-              >
-                <div className='flex items-center justify-between'>
-                  <span className='flex size-10 items-center justify-center rounded-md border'>
-                    <Icon className='size-5' />
-                  </span>
-                  <span className='bg-muted text-muted-foreground rounded px-2 py-0.5 font-mono text-xs'>
-                    {control.adr}
-                  </span>
-                </div>
-                <h3 className='text-lg font-medium'>{control.title}</h3>
-                <p className='text-muted-foreground text-sm leading-relaxed'>
-                  {control.description}
-                </p>
-              </div>
-            );
-          })}
+        <div className='grid border-t sm:grid-cols-2 lg:grid-cols-4'>
+          {UPLOAD_PIPELINE.map((item, i) => (
+            <div
+              key={item.step}
+              className={cn(
+                'space-y-3 border-b p-6 md:p-8 lg:border-b-0',
+                i < 3 && 'lg:border-r',
+                i % 2 === 0 && 'sm:border-r'
+              )}
+            >
+              <span className='bg-muted rounded px-2 py-0.5 font-mono text-xs font-semibold'>
+                GATE {item.step}
+              </span>
+              <h3 className='text-lg font-medium'>{item.title}</h3>
+              <p className='text-muted-foreground text-sm leading-relaxed'>{item.description}</p>
+            </div>
+          ))}
+        </div>
+      </Frame>
+      <DottedRule />
+
+      {/* Compliance & Control Mapping */}
+      <Frame>
+        <div className='px-6 py-14 md:px-10'>
+          <SectionHeading
+            title='Security controls & verification evidence'
+            description='A concise reference for firm IT teams, compliance officers, and external security reviewers.'
+          />
+        </div>
+        <div className='overflow-x-auto border-t'>
+          <table className='w-full min-w-[680px] border-collapse text-left'>
+            <thead>
+              <tr className='bg-muted/30 border-b text-xs uppercase tracking-wider'>
+                <th className='px-6 py-4 font-semibold md:px-10'>Domain</th>
+                <th className='px-6 py-4 font-semibold'>Technical Control</th>
+                <th className='px-6 py-4 font-semibold'>Verification Evidence</th>
+              </tr>
+            </thead>
+            <tbody className='divide-y text-sm'>
+              {COMPLIANCE_MAP.map((row) => (
+                <tr key={row.pillar} className='hover:bg-muted/20 transition-colors'>
+                  <td className='px-6 py-4 font-medium md:px-10'>{row.pillar}</td>
+                  <td className='px-6 py-4'>{row.control}</td>
+                  <td className='text-muted-foreground px-6 py-4'>{row.evidence}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </Frame>
       <DottedRule />
 
       <Frame className='flex flex-col items-center justify-between gap-6 px-6 py-12 md:flex-row md:px-10'>
         <div className='space-y-2'>
-          <h2 className='text-2xl font-medium tracking-tight'>Have a security questionnaire?</h2>
+          <h2 className='text-2xl font-medium tracking-tight'>
+            Reviewing Avenra for your firm’s compliance program?
+          </h2>
           <p className='text-muted-foreground text-sm'>
-            Review common compliance answers in our FAQ or start an enterprise evaluation workspace.
+            Read our detailed FAQ or spin up an isolated trial workspace in minutes.
           </p>
         </div>
         <div className='flex flex-wrap gap-3'>
           <Link href='/faq' className={cn(buttonVariants({ variant: 'outline' }), 'h-10 px-5')}>
-            View FAQ
+            Read security FAQ
           </Link>
           <Link href='/auth/sign-up' className={cn(buttonVariants(), 'h-10 gap-2 px-5')}>
             Start free trial <Icons.arrowRight className='size-4' />

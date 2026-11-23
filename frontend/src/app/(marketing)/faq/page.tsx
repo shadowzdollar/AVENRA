@@ -1,35 +1,35 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Icons } from '@/components/icons';
-import { FaqSection } from '@/features/landing/components/faq-section';
 import { DottedRule, Frame } from '@/features/landing/components/frame';
+import { KnowledgeBaseFaq } from '@/features/landing/components/knowledge-base-faq';
 import { PageHero } from '@/features/landing/components/page-hero';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'FAQ | Avenra',
+  title: 'Knowledge Base & FAQ | Avenra',
   description:
-    'Answers to frequently asked questions about Avenra client portals, deterministic verification rules, AI agent governance, data isolation, and pricing.'
+    'Searchable answers covering Avenra workflows, passwordless client portals, deterministic verification, AI governance, PostgreSQL RLS, and billing.'
 };
 
-const QUICK_LINKS = [
+const RELATED_PAGES = [
   {
-    title: 'Platform Overview',
-    description: 'See how client requests, verification, and evidence vaults fit together.',
+    title: 'Platform Architecture',
+    description: 'Explore state machines, domain layers, and explicit permissions.',
     href: '/platform',
     icon: 'dashboard' as const
   },
   {
-    title: 'Security & Isolation',
-    description: 'Deep dive into PostgreSQL RLS, ClamAV scanning, and SHA-256 hashing.',
+    title: 'Security Whitepaper',
+    description: 'Inspect PostgreSQL RLS policies, ClamAV scanning, and SHA-256 vaulting.',
     href: '/security',
     icon: 'lock' as const
   },
   {
-    title: 'Pricing & Plans',
-    description: 'Compare Starter, Business, and Enterprise tiers with 14-day free trials.',
-    href: '/pricing',
-    icon: 'creditCard' as const
+    title: 'Integrations & Webhooks',
+    description: 'Review event schemas, HMAC verification, and S3 completion manifests.',
+    href: '/integrations',
+    icon: 'webhook' as const
   }
 ];
 
@@ -37,17 +37,17 @@ export default function FaqPage() {
   return (
     <>
       <PageHero
-        pill='Resources · FAQ'
-        title='Frequently asked questions'
-        description='Everything you need to know about running client engagements, verification rules, governed AI agents, and tenant isolation on Avenra.'
+        pill='Resources · Knowledge Base'
+        title='Detailed answers for partners, auditors, and engineers'
+        description='Filter by topic or search across platform workflows, verification rules, AI guardrails, tenant isolation, and subscription billing.'
         primaryAction={{ label: 'Start free trial', href: '/auth/sign-up' }}
         secondaryAction={{ label: 'Read documentation', href: '/docs' }}
       />
       <DottedRule />
-      <FaqSection />
+      <KnowledgeBaseFaq />
       <DottedRule />
       <Frame className='grid md:grid-cols-3'>
-        {QUICK_LINKS.map((item, i) => {
+        {RELATED_PAGES.map((item, i) => {
           const Icon = Icons[item.icon];
           return (
             <Link
@@ -66,7 +66,7 @@ export default function FaqPage() {
                 <p className='text-muted-foreground text-sm leading-relaxed'>{item.description}</p>
               </div>
               <span className='text-muted-foreground group-hover:text-foreground inline-flex items-center gap-1 text-xs font-medium'>
-                Explore <Icons.arrowRight className='size-3.5' />
+                Read deep dive <Icons.arrowRight className='size-3.5' />
               </span>
             </Link>
           );
