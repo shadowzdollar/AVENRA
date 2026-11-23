@@ -18,54 +18,61 @@ export interface NavLink {
 }
 
 export const NAV: NavLink[] = [
-  { label: 'Platform', href: '#platform' },
+  { label: 'Platform', href: '/platform' },
   {
     label: 'Solutions',
-    href: '#workspace',
+    href: '/solutions/accounting-tax',
     isNew: true,
     children: [
       {
         label: 'Accounting & tax',
-        href: '#workspace',
+        href: '/solutions/accounting-tax',
         description: 'Year-end packs, returns and reconciliations'
       },
       {
         label: 'Audit & assurance',
-        href: '#workspace',
+        href: '/solutions/audit-assurance',
         description: 'Evidence requests with a full trail'
       },
       {
         label: 'Legal & compliance',
-        href: '#workspace',
+        href: '/solutions/legal-compliance',
         description: 'KYC, onboarding and filings'
       },
-      { label: 'Advisory', href: '#workspace', description: 'Client data collection at scale' }
+      {
+        label: 'Advisory',
+        href: '/solutions/advisory',
+        description: 'Client data collection at scale'
+      }
     ]
   },
-  { label: 'Agent', href: '#agent', isNew: true },
-  { label: 'Integrations', href: '#integrations' },
-  { label: 'Pricing', href: '#pricing' },
-  { label: 'Security', href: '#trust' },
+  { label: 'Agent', href: '/agent', isNew: true },
+  { label: 'Integrations', href: '/integrations' },
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'Security', href: '/security' },
   {
     label: 'Resources',
-    href: '#faq',
+    href: '/faq',
     children: [
-      { label: 'FAQ', href: '#faq', description: 'Answers to common questions' },
-      { label: 'Source code', href: REPOSITORY_URL, description: 'Avenra on GitHub' },
+      { label: 'FAQ', href: '/faq', description: 'Answers to common questions' },
+      { label: 'Documentation', href: '/docs', description: 'Guides, OpenAPI & architecture' },
       { label: 'Sign in', href: '/auth/sign-in', description: 'Go to your workspace' }
     ]
-  },
-  { label: 'Pricing', href: '#cta' }
+  }
 ];
 
 export const SEARCH_ENTRIES = [
-  { label: 'Platform overview', href: '#platform' },
-  { label: 'Client requests', href: '#platform' },
-  { label: 'Workspace tour', href: '#workspace' },
-  { label: 'Agent Intelligence', href: '#agent' },
-  { label: 'Integrations', href: '#integrations' },
-  { label: 'Security & trust', href: '#trust' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'Platform overview', href: '/platform' },
+  { label: 'Accounting & tax solution', href: '/solutions/accounting-tax' },
+  { label: 'Audit & assurance solution', href: '/solutions/audit-assurance' },
+  { label: 'Legal & compliance solution', href: '/solutions/legal-compliance' },
+  { label: 'Advisory solution', href: '/solutions/advisory' },
+  { label: 'Agent Intelligence', href: '/agent' },
+  { label: 'Integrations & webhooks', href: '/integrations' },
+  { label: 'Pricing & plans', href: '/pricing' },
+  { label: 'Security & trust', href: '/security' },
+  { label: 'Documentation', href: '/docs' },
+  { label: 'FAQ', href: '/faq' },
   { label: 'Start free trial', href: '/auth/sign-up' },
   { label: 'Log in', href: '/auth/sign-in' }
 ];
@@ -380,24 +387,27 @@ export const FOOTER = {
     {
       title: 'Platform',
       links: [
-        { label: 'Command Center', href: '#workspace' },
-        { label: 'Client Requests', href: '#platform' },
-        { label: 'Agent', href: '#agent' },
-        { label: 'Integrations', href: '#integrations' }
+        { label: 'Platform Overview', href: '/platform' },
+        { label: 'Agent Intelligence', href: '/agent' },
+        { label: 'Integrations', href: '/integrations' },
+        { label: 'Pricing', href: '/pricing' }
       ]
     },
     {
-      title: 'Company',
+      title: 'Solutions',
       links: [
-        { label: 'Security', href: '#trust' },
-        { label: 'Source code', href: REPOSITORY_URL },
-        { label: 'Report an issue', href: `${REPOSITORY_URL}/issues` }
+        { label: 'Accounting & tax', href: '/solutions/accounting-tax' },
+        { label: 'Audit & assurance', href: '/solutions/audit-assurance' },
+        { label: 'Legal & compliance', href: '/solutions/legal-compliance' },
+        { label: 'Advisory', href: '/solutions/advisory' }
       ]
     },
     {
-      title: 'Help and Support',
+      title: 'Resources',
       links: [
-        { label: 'FAQ', href: '#faq' },
+        { label: 'Security', href: '/security' },
+        { label: 'Documentation', href: '/docs' },
+        { label: 'FAQ', href: '/faq' },
         { label: 'Log in', href: '/auth/sign-in' }
       ]
     }

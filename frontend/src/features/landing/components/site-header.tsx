@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { AvenraIcon } from '@/components/brand/avenra-logo';
@@ -36,8 +36,10 @@ function NewDot() {
 
 export function SiteHeader({ signedIn }: { signedIn: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -64,11 +66,19 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
         </Link>
 
         <nav aria-label='Main' className='hidden items-center gap-6 lg:flex'>
-          {NAV.map((item) =>
-            item.children ? (
+          {NAV.map((item) => {
+            const isActive = item.children
+              ? item.children.some((c) => pathname === c.href)
+              : pathname === item.href;
+
+            return item.children ? (
               <DropdownMenu key={item.label}>
                 <DropdownMenuTrigger
-                  className={cn(linkClass, 'flex items-center gap-1 outline-none')}
+                  className={cn(
+                    linkClass,
+                    'flex items-center gap-1 outline-none',
+                    isActive && 'text-foreground font-medium'
+                  )}
                 >
                   <span className='relative'>
                     {item.label}
@@ -81,7 +91,10 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
                     {item.children.map((child) => (
                       <DropdownMenuItem
                         key={child.label}
-                        className='flex flex-col items-start gap-0.5 py-2'
+                        className={cn(
+                          'flex flex-col items-start gap-0.5 py-2',
+                          pathname === child.href && 'bg-accent'
+                        )}
                         onClick={() => router.push(child.href)}
                       >
                         <span className='font-medium'>{child.label}</span>
@@ -92,12 +105,16 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link key={item.label} href={item.href} className={linkClass}>
+              <Link
+                key={item.label}
+                href={item.href}
+                className={cn(linkClass, isActive && 'text-foreground font-medium')}
+              >
                 {item.label}
                 {item.isNew && <NewDot />}
               </Link>
-            )
-          )}
+            );
+          })}
         </nav>
 
         <div className='ml-auto flex items-center gap-2.5'>
@@ -137,23 +154,27 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
               </Link>
             </>
           )}
-          <Sheet>
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger
               render={<Button variant='outline' size='icon' className='size-9 lg:hidden' />}
             >
               <Icons.ellipsis className='size-4' />
               <span className='sr-only'>Menu</span>
             </SheetTrigger>
-            <SheetContent side='right' className='w-80'>
+            <SheetContent side='right' className='w-80 overflow-y-auto'>
               <SheetHeader>
                 <SheetTitle>Avenra</SheetTitle>
               </SheetHeader>
-              <nav className='flex flex-col gap-1 px-4'>
+              <nav className='flex flex-col gap-1 px-4 pb-6'>
                 {NAV.flatMap((item) => (item.children ? item.children : [item])).map((item) => (
                   <Link
                     key={item.label}
                     href={item.href}
-                    className='hover:bg-accent rounded-md px-2 py-2 text-sm'
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      'hover:bg-accent rounded-md px-2 py-2 text-sm transition-colors',
+                      pathname === item.href && 'bg-accent font-medium'
+                    )}
                   >
                     {item.label}
                   </Link>
