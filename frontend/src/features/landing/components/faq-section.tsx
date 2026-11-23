@@ -15,14 +15,9 @@ export function FaqSection() {
       <div className='space-y-4 border-b px-6 py-14 md:px-10 lg:border-r lg:border-b-0'>
         <h2 className='text-xl font-medium text-balance'>{FAQ.aside.title}</h2>
         <p className='text-muted-foreground text-sm leading-relaxed'>{FAQ.aside.description}</p>
-        <a
-          href={FAQ.aside.action.href}
-          target='_blank'
-          rel='noreferrer'
-          className={cn(buttonVariants(), 'mt-4 h-10 px-5')}
-        >
+        <Link href={FAQ.aside.action.href} className={cn(buttonVariants(), 'mt-4 h-10 px-5')}>
           {FAQ.aside.action.label}
-        </a>
+        </Link>
       </div>
       <div>
         {FAQ.items.map((item, i) => {
@@ -61,12 +56,12 @@ export function FaqSection() {
   );
 }
 
-/** Floating help bubble (bottom right), jumps to the FAQ. */
+/** Floating help bubble (bottom right), routes directly to the Contact page. */
 export function FloatingHelp() {
   return (
     <Link
-      href='#faq'
-      aria-label='Questions? Open the FAQ'
+      href='/contact'
+      aria-label='Contact Avenra team'
       className='bg-foreground text-background fixed right-6 bottom-6 z-40 flex size-14 items-center justify-center rounded-full shadow-2xl transition-transform hover:scale-105'
     >
       <Icons.messageCircle className='size-7' />

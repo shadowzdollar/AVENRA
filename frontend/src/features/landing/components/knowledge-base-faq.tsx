@@ -61,12 +61,12 @@ const ITEMS: FaqItem[] = [
   {
     category: 'Security',
     q: 'Are client file uploads scanned for malware before staff download them?',
-    a: 'Yes. Per ADR-021, every uploaded file is streamed through an isolated ClamAV malware scanner before entering S3 object storage. Infected or malformed files are blocked at ingestion and never reach your team.'
+    a: 'Yes. Every uploaded file is automatically screened for malware and threats in real time before entering encrypted cloud storage. Infected or malformed files are blocked at ingestion and never reach your team.'
   },
   {
     category: 'Security',
     q: 'How does Avenra prove that an evidence file has not been altered?',
-    a: 'Per ADR-020, every accepted file is fingerprinted with a SHA-256 cryptographic digest at ingestion time. That hash is stored alongside the actor identity, UTC timestamp, and rule outcome in our append-only audit ledger.'
+    a: 'Every accepted file is fingerprinted with a SHA-256 cryptographic digest at ingestion time. That fingerprint is stored alongside the actor identity, timestamp, and verification outcome in our append-only audit ledger.'
   },
   {
     category: 'Billing',
@@ -185,8 +185,8 @@ export function KnowledgeBaseFaq() {
           </p>
         </div>
         <div className='flex flex-wrap gap-3'>
-          <Link href='/docs' className={cn(buttonVariants({ variant: 'outline' }), 'h-9 px-4')}>
-            Read documentation
+          <Link href='/contact' className={cn(buttonVariants({ variant: 'outline' }), 'h-9 px-4')}>
+            Contact our team
           </Link>
           <Link href='/auth/sign-up' className={cn(buttonVariants(), 'h-9 gap-1.5 px-4')}>
             Start free trial <Icons.arrowRight className='size-4' />

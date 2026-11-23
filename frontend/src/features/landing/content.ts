@@ -55,7 +55,8 @@ export const NAV: NavLink[] = [
     href: '/faq',
     children: [
       { label: 'FAQ', href: '/faq', description: 'Answers to common questions' },
-      { label: 'Documentation', href: '/docs', description: 'Guides, OpenAPI & architecture' },
+      { label: 'Documentation', href: '/docs', description: 'Guides & API reference' },
+      { label: 'Contact us', href: '/contact', description: 'Book a demo or talk to sales' },
       { label: 'Sign in', href: '/auth/sign-in', description: 'Go to your workspace' }
     ]
   }
@@ -73,6 +74,7 @@ export const SEARCH_ENTRIES = [
   { label: 'Security & trust', href: '/security' },
   { label: 'Documentation', href: '/docs' },
   { label: 'FAQ', href: '/faq' },
+  { label: 'Contact us', href: '/contact' },
   { label: 'Start free trial', href: '/auth/sign-up' },
   { label: 'Log in', href: '/auth/sign-in' }
 ];
@@ -169,7 +171,7 @@ export const WORKSPACE = {
   actions: [
     { label: 'Start free trial', href: '/auth/sign-up', variant: 'default' as const },
     { label: 'Log in', href: '/auth/sign-in', variant: 'outline' as const },
-    { label: 'Source code', href: REPOSITORY_URL, variant: 'outline' as const }
+    { label: 'Book a demo', href: '/contact', variant: 'outline' as const }
   ],
   tabs: [
     {
@@ -339,8 +341,8 @@ export const FAQ = {
   aside: {
     title: 'Still have questions? Our team is ready to assist.',
     description:
-      'Open an issue for technical questions, security reviews or anything about running Avenra.',
-    action: { label: 'Contact Us', href: `${REPOSITORY_URL}/issues` }
+      'Speak with our enterprise specialists for tailored demos, security reviews, or custom firm rollouts.',
+    action: { label: 'Contact Us', href: '/contact' }
   },
   items: [
     {
@@ -403,12 +405,12 @@ export const FOOTER = {
       ]
     },
     {
-      title: 'Resources',
+      title: 'Company & Support',
       links: [
         { label: 'Security', href: '/security' },
         { label: 'Documentation', href: '/docs' },
         { label: 'FAQ', href: '/faq' },
-        { label: 'Log in', href: '/auth/sign-in' }
+        { label: 'Contact Us', href: '/contact' }
       ]
     }
   ],

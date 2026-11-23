@@ -2,219 +2,222 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { toast } from 'sonner';
 import { Icons } from '@/components/icons';
 import { buttonVariants } from '@/components/ui/button';
 import { DottedRule, Frame, Pill } from '@/features/landing/components/frame';
-import { REPOSITORY_URL } from '@/features/landing/content';
 import { cn } from '@/lib/utils';
 
-interface EndpointDemo {
+interface GuideSection {
   id: string;
-  method: 'GET' | 'POST';
-  path: string;
+  category: string;
   title: string;
   summary: string;
-  curl: string;
-  response: string;
+  steps: { heading: string; detail: string }[];
 }
 
-const ENDPOINTS: EndpointDemo[] = [
+const GUIDES: GuideSection[] = [
   {
-    id: 'meta',
-    method: 'GET',
-    path: '/api/v1/meta',
-    title: 'API Metadata & Health',
-    summary: 'Verify API availability and active OpenAPI contract version.',
-    curl: `curl -s http://localhost:3000/api/v1/meta`,
-    response: `{\n  "service": "avenra-api",\n  "apiVersion": "v1"\n}`
+    id: 'getting-started',
+    category: 'Onboarding',
+    title: 'Getting Started with Avenra',
+    summary:
+      'Set up your firm workspace, invite team members with role-based approvals, and launch your first verified client engagement in under ten minutes.',
+    steps: [
+      {
+        heading: '1. Configure your organization workspace',
+        detail:
+          'Create your firm profile, add practice offices or entities, and define preparer, reviewer, and partner approval permissions.'
+      },
+      {
+        heading: '2. Build reusable engagement templates',
+        detail:
+          'Standardize your year-end tax packs, audit PBC lists, or KYC onboarding checklists with required fields and verification rules.'
+      },
+      {
+        heading: '3. Dispatch passwordless client requests',
+        detail:
+          'Send expiring portal links directly to clients so they can answer questions and upload documents without creating an account.'
+      }
+    ]
   },
   {
-    id: 'create-work',
-    method: 'POST',
-    path: '/api/v1/organizations/{orgId}/work',
-    title: 'Create Work Engagement',
-    summary: 'Create a new tenant-scoped engagement in DRAFT state.',
-    curl: `curl -X POST http://localhost:3000/api/v1/organizations/org_northwind/work \\\n  -H "Content-Type: application/json" \\\n  -d '{"clientId":"cli_01","title":"FY26 Tax Pack"}'`,
-    response: `{\n  "id": "wrk_01J9X8",\n  "status": "DRAFT",\n  "organizationId": "org_northwind",\n  "createdAt": "2026-11-23T16:30:00Z"\n}`
+    id: 'verification',
+    category: 'Quality Control',
+    title: 'Verification Rules & Exception Queue',
+    summary:
+      'Automate routine completeness checks on every uploaded document and route real discrepancies to designated reviewers with full audit history.',
+    steps: [
+      {
+        heading: '1. Attach rules to any requirement',
+        detail:
+          'Enforce allowed file types, date range coverage, required fields, and materiality variance thresholds per deliverable.'
+      },
+      {
+        heading: '2. Automatic intake screening',
+        detail:
+          'Every client upload is screened for malware, fingerprinted with SHA-256, and evaluated against your rules immediately on arrival.'
+      },
+      {
+        heading: '3. Structured exception resolution',
+        detail:
+          'Reviewers can reject incomplete files to trigger a targeted re-request, or approve an exception by recording a formal justification.'
+      }
+    ]
   },
   {
-    id: 'send-request',
-    method: 'POST',
-    path: '/api/v1/organizations/{orgId}/work/{workId}/requests',
-    title: 'Dispatch Client Portal Request',
-    summary: 'Generate a single-purpose, expiring client upload link.',
-    curl: `curl -X POST http://localhost:3000/api/v1/organizations/org_northwind/work/wrk_01J9X8/requests \\\n  -H "Content-Type: application/json" \\\n  -d '{"recipientEmail":"cfo@acme.example","expiresInDays":14}'`,
-    response: `{\n  "requestId": "req_01J9Y2",\n  "status": "SENT",\n  "expiresAt": "2026-12-07T16:30:00Z"\n}`
+    id: 'webhooks-api',
+    category: 'Integrations',
+    title: 'Enterprise API & Signed Webhooks',
+    summary:
+      'Connect Avenra to your practice management, billing, and archival systems using our versioned OpenAPI 3.1 interface and HMAC-signed webhooks.',
+    steps: [
+      {
+        heading: '1. Subscribe to lifecycle events',
+        detail:
+          'Register HTTPS endpoints for engagement completion, client document submission, exception alerts, and expiring request notices.'
+      },
+      {
+        heading: '2. Verify webhook authenticity',
+        detail:
+          'Validate the X-Avenra-Signature HMAC-SHA256 header using your workspace signing secret and deduplicate using Idempotency-Key.'
+      },
+      {
+        heading: '3. Automate archival exports',
+        detail:
+          'Configure cloud storage destinations to receive signed completion manifests and verified client evidence packages automatically.'
+      }
+    ]
   },
   {
-    id: 'list-exceptions',
-    method: 'GET',
-    path: '/api/v1/organizations/{orgId}/exceptions',
-    title: 'List Open Exceptions',
-    summary: 'Retrieve failed verification rules awaiting human triage.',
-    curl: `curl -s http://localhost:3000/api/v1/organizations/org_northwind/exceptions`,
-    response: `{\n  "items": [\n    {\n      "id": "exc_441",\n      "rule": "PERIOD_COVERAGE_12M",\n      "status": "OPEN",\n      "severity": "HIGH"\n    }\n  ]\n}`
+    id: 'security-governance',
+    category: 'Compliance',
+    title: 'Security & Audit Administration',
+    summary:
+      'Manage multi-tenant isolation, access reviews, AI usage caps, and exportable compliance audit logs for internal and external regulators.',
+    steps: [
+      {
+        heading: '1. Enforce segregation of duties',
+        detail:
+          'Assign explicit permissions separating work preparation, exception overrides, AI plan approval, and final partner sign-off.'
+      },
+      {
+        heading: '2. Set AI usage & budget guardrails',
+        detail:
+          'Configure daily organization token caps and require human approval on every AI-proposed engagement plan.'
+      },
+      {
+        heading: '3. Export immutable audit histories',
+        detail:
+          'Download timestamped evidence logs showing every actor, decision, and cryptographic document fingerprint.'
+      }
+    ]
   }
 ];
 
-const ADRS = [
-  { id: 'ADR-001', title: 'Modular Monolith Core', scope: 'Spring Modulith domain boundaries & system of record.' },
-  { id: 'ADR-005', title: 'Multi-Tenant RLS Isolation', scope: 'PostgreSQL row-level security & server-side tenant resolution.' },
-  { id: 'ADR-008', title: 'Contract-First OpenAPI 3.1', scope: 'Single YAML source generating Java server stubs & TS clients.' },
-  { id: 'ADR-017', title: 'Application-Level Encryption', scope: 'Rotatable key IDs protecting secrets & integration tokens.' },
-  { id: 'ADR-020', title: 'Cryptographic Evidence Vault', scope: 'SHA-256 hashing & immutable S3 storage for client proof.' },
-  { id: 'ADR-029', title: 'AI Service Boundary', scope: 'Isolated Python worker with strict schema & budget controls.' }
-];
-
 export function DocsExperience() {
-  const [activeId, setActiveId] = useState(ENDPOINTS[0].id);
-  const [simulated, setSimulated] = useState(false);
-
-  const endpoint = ENDPOINTS.find((e) => e.id === activeId) ?? ENDPOINTS[0];
+  const [activeId, setActiveId] = useState(GUIDES[0].id);
+  const active = GUIDES.find((g) => g.id === activeId) ?? GUIDES[0];
 
   return (
     <>
-      <Frame className='grid lg:grid-cols-[260px_1fr]'>
-        {/* Left Sticky Docs Sidebar */}
+      <Frame className='grid lg:grid-cols-[280px_1fr]'>
+        {/* Sticky Navigation Sidebar */}
         <aside className='border-b p-6 lg:border-r lg:border-b-0'>
-          <p className='text-muted-foreground mb-3 font-mono text-[11px] uppercase tracking-wider'>
-            Interactive Endpoints
+          <p className='text-muted-foreground mb-3 text-xs font-semibold uppercase tracking-wider'>
+            Documentation Guides
           </p>
           <div className='space-y-1.5'>
-            {ENDPOINTS.map((ep) => (
+            {GUIDES.map((guide) => (
               <button
-                key={ep.id}
+                key={guide.id}
                 type='button'
-                onClick={() => {
-                  setActiveId(ep.id);
-                  setSimulated(false);
-                }}
+                onClick={() => setActiveId(guide.id)}
                 className={cn(
-                  'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs transition-colors',
-                  activeId === ep.id
-                    ? 'bg-accent text-foreground font-medium'
+                  'flex w-full flex-col rounded-lg px-3.5 py-2.5 text-left transition-colors',
+                  activeId === guide.id
+                    ? 'bg-accent text-foreground'
                     : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
                 )}
               >
-                <span
-                  className={cn(
-                    'rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold',
-                    ep.method === 'GET'
-                      ? 'bg-emerald-500/10 text-emerald-500'
-                      : 'bg-cyan-500/10 text-cyan-500'
-                  )}
-                >
-                  {ep.method}
+                <span className='text-[11px] font-medium uppercase tracking-wider opacity-70'>
+                  {guide.category}
                 </span>
-                <span className='truncate'>{ep.title}</span>
+                <span className='text-sm font-medium'>{guide.title}</span>
               </button>
             ))}
           </div>
 
-          <div className='mt-8 border-t pt-6'>
-            <p className='text-muted-foreground mb-3 font-mono text-[11px] uppercase tracking-wider'>
-              Resources
+          <div className='mt-8 space-y-2 border-t pt-6 text-xs'>
+            <p className='text-muted-foreground font-semibold uppercase tracking-wider'>
+              Need assistance?
             </p>
-            <div className='flex flex-col gap-2 text-xs'>
-              <a
-                href={REPOSITORY_URL}
-                target='_blank'
-                rel='noreferrer'
-                className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5'
-              >
-                <Icons.github className='size-3.5' /> OpenAPI YAML on GitHub
-              </a>
-              <Link href='/integrations' className='text-muted-foreground hover:text-foreground'>
-                Webhook Playground →
-              </Link>
-              <Link href='/security' className='text-muted-foreground hover:text-foreground'>
-                Security Sandbox →
-              </Link>
-            </div>
+            <p className='text-muted-foreground leading-relaxed'>
+              Our implementation specialists help enterprise teams configure templates and integrations.
+            </p>
+            <Link
+              href='/contact'
+              className='text-foreground inline-flex items-center gap-1 pt-1 font-medium hover:underline'
+            >
+              Contact implementation team <Icons.arrowRight className='size-3.5' />
+            </Link>
           </div>
         </aside>
 
-        {/* Right Interactive API Console */}
-        <div className='p-6 md:p-10'>
-          <Pill>OpenAPI 3.1 · Interactive Reference</Pill>
-          <h1 className='mt-4 text-3xl font-medium tracking-tight md:text-4xl'>{endpoint.title}</h1>
-          <p className='text-muted-foreground mt-2 text-sm'>{endpoint.summary}</p>
+        {/* Main Guide Content */}
+        <div className='p-6 md:p-12'>
+          <Pill>{active.category}</Pill>
+          <h1 className='mt-4 text-3xl font-medium tracking-tight md:text-4xl'>{active.title}</h1>
+          <p className='text-muted-foreground mt-3 max-w-2xl text-base leading-relaxed'>
+            {active.summary}
+          </p>
 
-          <div className='bg-muted/30 mt-6 flex flex-wrap items-center justify-between gap-2 rounded-xl border px-4 py-3 font-mono text-xs'>
-            <div className='flex items-center gap-2 overflow-x-auto'>
-              <span className='bg-primary text-primary-foreground rounded px-2 py-0.5 font-semibold'>
-                {endpoint.method}
-              </span>
-              <span>{endpoint.path}</span>
-            </div>
-            <div className='flex gap-2'>
-              <button
-                type='button'
-                onClick={() => {
-                  void navigator.clipboard?.writeText(endpoint.curl);
-                  toast.success('cURL copied');
-                }}
-                className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'h-7 text-xs')}
-              >
-                Copy cURL
-              </button>
-              <button
-                type='button'
-                onClick={() => setSimulated(true)}
-                className={cn(buttonVariants({ size: 'sm' }), 'h-7 gap-1 text-xs')}
-              >
-                <Icons.sparkles className='size-3' /> Simulate Request
-              </button>
-            </div>
+          <div className='mt-10 space-y-5'>
+            {active.steps.map((step) => (
+              <div key={step.heading} className='bg-card rounded-xl border p-6'>
+                <h2 className='text-base font-semibold'>{step.heading}</h2>
+                <p className='text-muted-foreground mt-2 text-sm leading-relaxed'>{step.detail}</p>
+              </div>
+            ))}
           </div>
 
-          <div className='mt-4 grid gap-4 lg:grid-cols-2'>
-            <div>
-              <p className='text-muted-foreground mb-2 font-mono text-[11px] uppercase'>Request</p>
-              <pre className='bg-card overflow-x-auto rounded-xl border p-4 font-mono text-xs leading-relaxed'>
-                {endpoint.curl}
-              </pre>
-            </div>
-            <div>
-              <div className='mb-2 flex items-center justify-between font-mono text-[11px] uppercase'>
-                <span className='text-muted-foreground'>Response</span>
-                {simulated && (
-                  <span className='text-emerald-500'>200 OK · 24ms</span>
-                )}
-              </div>
-              <pre
-                className={cn(
-                  'bg-card overflow-x-auto rounded-xl border p-4 font-mono text-xs leading-relaxed transition-all',
-                  simulated && 'border-emerald-500/40'
-                )}
-              >
-                {endpoint.response}
-              </pre>
+          <div className='mt-10 flex flex-wrap items-center justify-between gap-4 border-t pt-8'>
+            <p className='text-muted-foreground text-sm'>
+              Ready to try this workflow in your own workspace?
+            </p>
+            <div className='flex flex-wrap gap-3'>
+              <Link href='/contact' className={cn(buttonVariants({ variant: 'outline' }), 'h-10 px-5')}>
+                Request guided onboarding
+              </Link>
+              <Link href='/auth/sign-up' className={cn(buttonVariants(), 'h-10 gap-2 px-5')}>
+                Start 14-day free trial <Icons.arrowRight className='size-4' />
+              </Link>
             </div>
           </div>
         </div>
       </Frame>
       <DottedRule />
-
-      {/* Compact ADR Index */}
-      <Frame className='grid sm:grid-cols-2 lg:grid-cols-3'>
-        {ADRS.map((adr, i) => (
-          <div
-            key={adr.id}
-            className={cn(
-              'space-y-2 border-b p-6 md:p-8',
-              i % 3 !== 2 && 'lg:border-r',
-              i >= 3 && 'lg:border-b-0'
-            )}
-          >
-            <code className='bg-muted rounded px-2 py-0.5 font-mono text-xs font-semibold'>
-              {adr.id}
-            </code>
-            <h3 className='text-base font-medium'>{adr.title}</h3>
-            <p className='text-muted-foreground text-xs leading-relaxed'>{adr.scope}</p>
-          </div>
-        ))}
+      <Frame className='grid md:grid-cols-3'>
+        <Link
+          href='/platform'
+          className='hover:bg-muted/30 space-y-2 border-b p-6 transition-colors md:border-r md:border-b-0 md:p-8'
+        >
+          <p className='text-base font-medium'>Platform Tour →</p>
+          <p className='text-muted-foreground text-xs'>See screenshots of every Avenra module in action.</p>
+        </Link>
+        <Link
+          href='/security'
+          className='hover:bg-muted/30 space-y-2 border-b p-6 transition-colors md:border-r md:border-b-0 md:p-8'
+        >
+          <p className='text-base font-medium'>Security & Trust Center →</p>
+          <p className='text-muted-foreground text-xs'>Review tenant isolation, encryption, and audit guarantees.</p>
+        </Link>
+        <Link
+          href='/contact'
+          className='hover:bg-muted/30 space-y-2 p-6 transition-colors md:p-8'
+        >
+          <p className='text-base font-medium'>Book an Enterprise Demo →</p>
+          <p className='text-muted-foreground text-xs'>Speak directly with our solutions architects.</p>
+        </Link>
       </Frame>
     </>
   );

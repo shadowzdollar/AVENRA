@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { AvenraIcon } from '@/components/brand/avenra-logo';
 import { Icons } from '@/components/icons';
-import { FOOTER, REPOSITORY_URL } from '../content';
+import { FOOTER } from '../content';
 import { Frame } from './frame';
 
 export function SiteFooter() {
@@ -16,24 +16,20 @@ export function SiteFooter() {
             </span>
             <p className='text-muted-foreground max-w-[380px] leading-relaxed'>{FOOTER.tagline}</p>
             <div className='flex gap-2'>
-              <a
-                href={REPOSITORY_URL}
-                target='_blank'
-                rel='noreferrer'
-                aria-label='GitHub'
-                className='hover:bg-accent flex size-10 items-center justify-center rounded-full border'
-              >
-                <Icons.github className='size-4' />
-              </a>
-              <a
-                href={`${REPOSITORY_URL}/issues`}
-                target='_blank'
-                rel='noreferrer'
-                aria-label='Report an issue'
+              <Link
+                href='/contact'
+                aria-label='Contact Avenra'
                 className='hover:bg-accent flex size-10 items-center justify-center rounded-full border'
               >
                 <Icons.messages className='size-4' />
-              </a>
+              </Link>
+              <Link
+                href='/security'
+                aria-label='Security & Trust'
+                className='hover:bg-accent flex size-10 items-center justify-center rounded-full border'
+              >
+                <Icons.lock className='size-4' />
+              </Link>
             </div>
           </div>
           {FOOTER.columns.map((column) => (

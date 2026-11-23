@@ -30,10 +30,10 @@ const PRICING_TIERS: PricingTier[] = [
     features: [
       'Up to 25 Active Engagements',
       'Real-time OCR document intake',
-      'Deterministic rule engine (ADR-024)',
+      'Automated verification rule engine',
       'Automated client upload checklists',
       '1 Workspace seat included',
-      'Standard email exception dispatch',
+      'Automated email notifications & reminders',
       '10 GB Encrypted Evidence Vault'
     ],
     ctaLabel: 'Start Starter Trial',
@@ -50,7 +50,7 @@ const PRICING_TIERS: PricingTier[] = [
     features: [
       'Unlimited Active Engagements',
       'Continuous verification & rule validation',
-      'SHA-256 Cryptographic Evidence Vault (ADR-020)',
+      'Tamper-evident SHA-256 Evidence Vault',
       'Multi-assignee Kanban & triage queue',
       '5 Team seats included (+$25/extra seat)',
       'Secure client portal with magic link uploads',
@@ -78,8 +78,8 @@ const PRICING_TIERS: PricingTier[] = [
       '99.9% Uptime SLA & dedicated architect',
       '1 TB+ Encrypted Evidence Vault'
     ],
-    ctaLabel: 'Contact Enterprise',
-    ctaHref: '/auth/sign-up?plan=enterprise'
+    ctaLabel: 'Contact Sales',
+    ctaHref: '/contact'
   }
 ];
 
