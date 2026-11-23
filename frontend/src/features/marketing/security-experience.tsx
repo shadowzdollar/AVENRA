@@ -1,176 +1,199 @@
+'use client';
+
+import { motion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
 import { Icons } from '@/components/icons';
 import { buttonVariants } from '@/components/ui/button';
-import { DottedRule, Frame, Pill, SectionHeading } from '@/features/landing/components/frame';
+import { DottedRule, Frame } from '@/features/landing/components/frame';
 import { cn } from '@/lib/utils';
 
-const PILLARS = [
+const LAYERS = [
   {
-    icon: 'lock' as const,
-    title: 'Dedicated Multi-Tenant Isolation',
-    description:
-      'Every firm’s workspace is strictly isolated at the database layer. Organization boundaries are enforced server-side on every request and continuously verified by automated security tests.'
+    id: 'isolation',
+    num: '01',
+    title: 'Database-Enforced Tenant Isolation',
+    summary:
+      'Every firm workspace is isolated at the PostgreSQL database level—guaranteeing client data can never cross organizational boundaries.',
+    bullets: [
+      'Server-side organization resolution from authenticated sessions',
+      'Automated cross-tenant isolation testing on every release',
+      'Dedicated storage isolation options for Enterprise firms'
+    ]
   },
   {
-    icon: 'warning' as const,
-    title: 'Automated Malware & Threat Screening',
-    description:
-      'Every client upload is scanned in real time before entering your vault—protecting partners and staff from infected attachments and malformed documents.'
+    id: 'screening',
+    num: '02',
+    title: 'Real-Time Malware & Threat Screening',
+    summary:
+      'Every client attachment is scanned in real time before entering your vault—stopping infected or malformed files before staff ever touch them.',
+    bullets: [
+      'Automatic file-type and payload size validation at intake',
+      'Streamed antivirus inspection prior to encrypted storage',
+      'Zero unscreened documents ever reach team downloads'
+    ]
   },
   {
-    icon: 'fingerprint' as const,
+    id: 'vault',
+    num: '03',
     title: 'Tamper-Evident Evidence Vault',
-    description:
-      'Accepted client files and reviewer decisions are cryptographically fingerprinted with SHA-256 and stored in an append-only audit ledger built for regulatory inspection.'
+    summary:
+      'Accepted files and partner decisions are fingerprinted with SHA-256 and recorded in an append-only audit ledger built for external inspection.',
+    bullets: [
+      'AES-256 encryption at rest and TLS 1.3 in transit',
+      'Cryptographic integrity verification on every document',
+      'One-click audit trail export for peer or regulatory review'
+    ]
   },
   {
-    icon: 'users' as const,
-    title: 'Granular Role & Approval Controls',
-    description:
-      'Enforce strict segregation of duties across preparers, managers, and signing partners. High-risk actions and final approvals require explicit permission.'
-  }
-];
-
-const ASSURANCE_ITEMS = [
-  {
-    category: 'Data Encryption',
-    detail: 'TLS 1.3 encryption in transit and AES-256 encryption at rest across databases and document storage.'
-  },
-  {
-    category: 'Client Portal Access',
-    detail: 'Single-purpose, expiring client links scoped to one engagement with instant revocation controls.'
-  },
-  {
-    category: 'AI Data Privacy',
-    detail: 'Zero retention for third-party model training; client documents remain strictly within your workspace boundary.'
-  },
-  {
-    category: 'Audit & Retention',
-    detail: 'Complete chronological log of every upload, rule outcome, exception override, and partner approval.'
-  },
-  {
-    category: 'Abuse & Rate Protection',
-    detail: 'Automated rate limiting, CSRF protection, and anomaly detection guarding all public and authenticated routes.'
-  },
-  {
-    category: 'Enterprise Procurement',
-    detail: 'Dedicated Data Processing Addenda (DPA), security review packages, and isolated storage options.'
+    id: 'governance',
+    num: '04',
+    title: 'Granular Approval & AI Privacy Controls',
+    summary:
+      'Strict segregation of duties across preparers, reviewers, and signing partners—with zero external AI model training on your client files.',
+    bullets: [
+      'Explicit approval permissions for exceptions and final sign-offs',
+      'Revocable, expiring passwordless client portal links',
+      'Enterprise Data Processing Addenda (DPA) available'
+    ]
   }
 ];
 
 export function SecurityExperience() {
+  const [openLayer, setOpenLayer] = useState(LAYERS[0].id);
+
   return (
     <>
-      {/* Executive Trust Hero */}
-      <Frame className='grid lg:grid-cols-[1fr_1fr]'>
-        <div className='flex flex-col justify-center space-y-6 border-b px-6 py-16 md:px-10 lg:border-r lg:border-b-0 lg:py-20'>
-          <div>
-            <Pill>Avenra Trust & Security Center</Pill>
+      {/* Monolithic Minimalist Trust Hero */}
+      <Frame className='relative overflow-hidden px-6 pt-24 pb-20 text-center md:px-12 md:pt-32 md:pb-28'>
+        <div
+          aria-hidden
+          className='pointer-events-none absolute top-0 left-1/2 h-[380px] w-[640px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.12),transparent_70%)] blur-2xl'
+        />
+
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className='relative z-10 mx-auto max-w-3xl'
+        >
+          <div className='bg-card/80 border-border/80 mx-auto mb-7 flex size-14 items-center justify-center rounded-2xl border shadow-xl'>
+            <Icons.lock className='size-6 text-emerald-500' />
           </div>
-          <h1 className='text-4xl font-medium tracking-tight text-balance md:text-5xl md:leading-[1.08]'>
-            Enterprise security built for confidential client engagements
+
+          <h1 className='from-foreground via-foreground to-foreground/60 bg-gradient-to-b bg-clip-text text-4xl font-medium tracking-[-0.04em] text-balance text-transparent sm:text-6xl md:leading-[1.04]'>
+            Trust, engineered into every layer.
           </h1>
-          <p className='text-muted-foreground text-base leading-relaxed'>
-            Accounting, audit, and legal firms entrust Avenra with their most sensitive financial records. Our architecture enforces isolation, encryption, malware screening, and immutable auditability at every layer.
+
+          <p className='text-muted-foreground/90 mx-auto mt-6 max-w-2xl text-base leading-relaxed md:text-lg'>
+            Confidential tax returns, audit workpapers, and corporate filings deserve more than checkboxes. Avenra enforces tenant isolation, encryption, and immutable auditability by design.
           </p>
-          <div className='flex flex-wrap gap-3 pt-2'>
-            <Link href='/contact' className={cn(buttonVariants(), 'h-11 gap-2 px-6')}>
+
+          <div className='mt-9 flex flex-wrap justify-center gap-3.5'>
+            <Link
+              href='/contact'
+              className={cn(buttonVariants(), 'h-11 gap-2 rounded-full px-6 text-sm font-medium shadow-lg')}
+            >
               Request security package <Icons.arrowRight className='size-4' />
             </Link>
-            <Link href='/auth/sign-up' className={cn(buttonVariants({ variant: 'outline' }), 'h-11 px-6')}>
+            <Link
+              href='/auth/sign-up'
+              className={cn(buttonVariants({ variant: 'outline' }), 'h-11 rounded-full px-6 text-sm')}
+            >
               Start free trial
             </Link>
           </div>
-        </div>
+        </motion.div>
+      </Frame>
+      <DottedRule />
 
-        <div className='bg-muted/20 flex items-center justify-center p-6 md:p-10'>
-          <div className='bg-card w-full overflow-hidden rounded-xl border p-1.5 shadow-2xl'>
-            <Image
-              src='/landing/evidence-vault.webp'
-              alt='Avenra Evidence Vault showing verified documents and audit trail'
-              width={1600}
-              height={1000}
-              className='h-auto w-full rounded-lg'
-            />
+      {/* 3 Monolithic Trust KPIs */}
+      <Frame className='grid md:grid-cols-3'>
+        {[
+          { value: 'AES-256', label: 'Encryption at rest & TLS 1.3 in transit' },
+          { value: '100%', label: 'Client uploads screened before vaulting' },
+          { value: 'SHA-256', label: 'Cryptographic fingerprint on every record' }
+        ].map((stat, i) => (
+          <div
+            key={stat.value}
+            className={cn(
+              'space-y-2 border-b px-8 py-12 text-center md:border-b-0',
+              i < 2 && 'md:border-r'
+            )}
+          >
+            <p className='text-3xl font-medium tracking-tight md:text-4xl'>{stat.value}</p>
+            <p className='text-muted-foreground text-sm'>{stat.label}</p>
+          </div>
+        ))}
+      </Frame>
+      <DottedRule />
+
+      {/* Interactive Layered Defense Accordion + Vault Preview */}
+      <Frame className='grid items-center gap-12 px-6 py-24 md:px-12 lg:grid-cols-[1fr_1.05fr]'>
+        <div className='space-y-3'>
+          <p className='text-xs font-medium uppercase tracking-[0.18em] text-emerald-500'>
+            Defense in Depth
+          </p>
+          <h2 className='pb-4 text-3xl font-medium tracking-[-0.03em]'>
+            Four safeguards protecting every engagement.
+          </h2>
+
+          <div className='space-y-2.5'>
+            {LAYERS.map((layer) => {
+              const isOpen = openLayer === layer.id;
+              return (
+                <div
+                  key={layer.id}
+                  className={cn(
+                    'rounded-2xl border transition-all',
+                    isOpen ? 'bg-card/80 border-border shadow-sm' : 'border-border/60 bg-background/40'
+                  )}
+                >
+                  <button
+                    type='button'
+                    onClick={() => setOpenLayer(layer.id)}
+                    className='flex w-full items-center justify-between px-5 py-4 text-left'
+                  >
+                    <div className='flex items-center gap-3'>
+                      <span className='text-muted-foreground font-mono text-xs'>{layer.num}</span>
+                      <span className='text-sm font-medium md:text-base'>{layer.title}</span>
+                    </div>
+                    <Icons.chevronDown
+                      className={cn(
+                        'text-muted-foreground size-4 transition-transform',
+                        isOpen && 'rotate-180'
+                      )}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className='space-y-3 border-t px-5 py-4'>
+                      <p className='text-muted-foreground text-sm leading-relaxed'>{layer.summary}</p>
+                      <ul className='space-y-2'>
+                        {layer.bullets.map((b) => (
+                          <li key={b} className='flex items-center gap-2 text-xs'>
+                            <Icons.circleCheck className='size-3.5 shrink-0 text-emerald-500' />
+                            <span>{b}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
-      </Frame>
-      <DottedRule />
 
-      {/* 4 Enterprise Security Pillars */}
-      <Frame>
-        <div className='px-6 py-14 md:px-10'>
-          <SectionHeading
-            title='Four non-negotiable layers of protection'
-            description='Security is engineered directly into Avenra’s data model—not bolted on as an afterthought.'
+        <div className='bg-card/80 border-border/70 overflow-hidden rounded-2xl border p-2 shadow-2xl'>
+          <Image
+            src='/landing/evidence-vault.webp'
+            alt='Avenra Evidence Vault'
+            width={1600}
+            height={1000}
+            className='h-auto w-full rounded-xl'
           />
         </div>
-        <div className='grid border-t sm:grid-cols-2 lg:grid-cols-4'>
-          {PILLARS.map((pillar, i) => {
-            const Icon = Icons[pillar.icon];
-            return (
-              <div
-                key={pillar.title}
-                className={cn(
-                  'space-y-3 border-b p-6 md:p-8 lg:border-b-0',
-                  i < 3 && 'lg:border-r',
-                  i % 2 === 0 && 'sm:border-r'
-                )}
-              >
-                <span className='flex size-10 items-center justify-center rounded-md border'>
-                  <Icon className='size-5' />
-                </span>
-                <h3 className='text-lg font-medium'>{pillar.title}</h3>
-                <p className='text-muted-foreground text-sm leading-relaxed'>{pillar.description}</p>
-              </div>
-            );
-          })}
-        </div>
-      </Frame>
-      <DottedRule />
-
-      {/* Security & Compliance Assurance Grid */}
-      <Frame>
-        <div className='px-6 py-14 md:px-10'>
-          <SectionHeading
-            title='Built for firm IT teams and external compliance reviews'
-            description='Clear technical safeguards designed to pass enterprise vendor security assessments quickly.'
-          />
-        </div>
-        <div className='grid border-t md:grid-cols-2 lg:grid-cols-3'>
-          {ASSURANCE_ITEMS.map((item, i) => (
-            <div
-              key={item.category}
-              className={cn(
-                'space-y-2 border-b p-6 md:p-8',
-                i % 3 !== 2 && 'lg:border-r',
-                i >= 3 && 'lg:border-b-0'
-              )}
-            >
-              <div className='flex items-center gap-2'>
-                <Icons.circleCheck className='size-4 text-emerald-500' />
-                <h3 className='text-base font-medium'>{item.category}</h3>
-              </div>
-              <p className='text-muted-foreground text-sm leading-relaxed'>{item.detail}</p>
-            </div>
-          ))}
-        </div>
-      </Frame>
-      <DottedRule />
-
-      <Frame className='flex flex-col items-center justify-between gap-6 px-6 py-14 md:flex-row md:px-12'>
-        <div className='space-y-1.5'>
-          <h2 className='text-2xl font-medium tracking-tight'>
-            Need our Security Brief or Data Processing Addendum?
-          </h2>
-          <p className='text-muted-foreground text-sm'>
-            Our security team works directly with your IT and compliance officers during evaluation.
-          </p>
-        </div>
-        <Link href='/contact' className={cn(buttonVariants(), 'h-10 gap-2 px-6')}>
-          Contact security team <Icons.arrowRight className='size-4' />
-        </Link>
       </Frame>
     </>
   );

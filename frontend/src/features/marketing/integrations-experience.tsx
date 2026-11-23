@@ -1,172 +1,127 @@
+'use client';
+
+import { motion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { AvenraIcon } from '@/components/brand/avenra-logo';
 import { Icons } from '@/components/icons';
 import { buttonVariants } from '@/components/ui/button';
-import { DottedRule, Frame, Pill, SectionHeading } from '@/features/landing/components/frame';
+import { DottedRule, Frame } from '@/features/landing/components/frame';
 import { cn } from '@/lib/utils';
 
-const ECOSYSTEM_CATEGORIES = [
-  {
-    icon: 'webhook' as const,
-    title: 'Real-Time Lifecycle Webhooks',
-    description:
-      'Automatically notify your billing, CRM, or practice management software the moment a client uploads a document or a partner completes an engagement.'
-  },
-  {
-    icon: 'fingerprint' as const,
-    title: 'Cloud Storage & Archival Exports',
-    description:
-      'Export signed completion manifests and verified client evidence directly into AWS S3 or your firm’s enterprise document management archive.'
-  },
-  {
-    icon: 'bellRinging' as const,
-    title: 'Email & Team Notifications',
-    description:
-      'Deliver branded client request emails, polite automated follow-up reminders, and instant internal escalation alerts when exceptions need review.'
-  },
-  {
-    icon: 'code' as const,
-    title: 'Enterprise REST API',
-    description:
-      'Automate engagement creation, sync client rosters, and pull real-time compliance reporting using Avenra’s strongly-typed OpenAPI 3.1 interface.'
-  }
-];
-
-const AUTOMATION_FLOWS = [
-  {
-    trigger: 'Engagement Completed',
-    action: 'Archive verified workpapers to cloud storage & trigger client billing automatically.'
-  },
-  {
-    trigger: 'Client Document Uploaded',
-    action: 'Run automated screening, update engagement readiness, and notify the assigned preparer.'
-  },
-  {
-    trigger: 'Verification Exception Flagged',
-    action: 'Alert the review manager immediately so discrepancies are resolved days before filing.'
-  },
-  {
-    trigger: 'Client Request Approaching Deadline',
-    action: 'Dispatch scheduled reminders and escalate stalled items in your Command Center.'
-  }
+const NODES = [
+  { label: 'Accounting & ERP', icon: 'calculator' as const },
+  { label: 'Cloud Archival (S3)', icon: 'fingerprint' as const },
+  { label: 'Signed Webhooks', icon: 'webhook' as const },
+  { label: 'Team Alerts', icon: 'bellRinging' as const },
+  { label: 'Enterprise API', icon: 'code' as const }
 ];
 
 export function IntegrationsExperience() {
   return (
     <>
-      {/* Executive Integrations Hero */}
-      <Frame className='grid lg:grid-cols-[0.95fr_1.05fr]'>
-        <div className='flex flex-col justify-center space-y-6 border-b px-6 py-16 md:px-10 lg:border-r lg:border-b-0 lg:py-20'>
-          <div>
-            <Pill>Connected Firm Infrastructure</Pill>
-          </div>
-          <h1 className='text-4xl font-medium tracking-tight text-balance md:text-5xl md:leading-[1.08]'>
-            Connect Avenra seamlessly to your firm’s existing systems
+      {/* Minimalist Hub-and-Spoke Ecosystem Hero */}
+      <Frame className='relative overflow-hidden px-6 pt-24 pb-20 text-center md:px-12 md:pt-32 md:pb-28'>
+        <div
+          aria-hidden
+          className='pointer-events-none absolute top-0 left-1/2 h-[380px] w-[700px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.12),transparent_70%)] blur-2xl'
+        />
+
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className='relative z-10 mx-auto max-w-3xl'
+        >
+          <span className='border-border/70 bg-background/60 text-muted-foreground inline-flex items-center gap-2 rounded-full border px-3.5 py-1 text-xs font-medium backdrop-blur-md'>
+            Connected Practice Ecosystem
+          </span>
+
+          <h1 className='from-foreground via-foreground to-foreground/60 mt-7 bg-gradient-to-b bg-clip-text text-4xl font-medium tracking-[-0.04em] text-balance text-transparent sm:text-6xl md:leading-[1.04]'>
+            Fits quietly into the tools your firm already runs.
           </h1>
-          <p className='text-muted-foreground text-base leading-relaxed'>
-            Keep your ERP, document archive, billing platform, and internal alerts perfectly in sync with signed webhooks, automated retries, and structured archival exports.
+
+          <p className='text-muted-foreground/90 mx-auto mt-6 max-w-2xl text-base leading-relaxed md:text-lg'>
+            Keep billing, document archives, and internal notifications effortlessly synchronized through signed lifecycle webhooks, automated archival exports, and our enterprise REST API.
           </p>
-          <div className='flex flex-wrap gap-3 pt-2'>
-            <Link href='/auth/sign-up' className={cn(buttonVariants(), 'h-11 gap-2 px-6')}>
-              Start 14-day free trial <Icons.arrowRight className='size-4' />
+
+          <div className='mt-9 flex flex-wrap justify-center gap-3.5'>
+            <Link
+              href='/auth/sign-up'
+              className={cn(buttonVariants(), 'h-11 gap-2 rounded-full px-6 text-sm font-medium shadow-lg')}
+            >
+              Start free trial <Icons.arrowRight className='size-4' />
             </Link>
-            <Link href='/contact' className={cn(buttonVariants({ variant: 'outline' }), 'h-11 px-6')}>
+            <Link
+              href='/contact'
+              className={cn(buttonVariants({ variant: 'outline' }), 'h-11 rounded-full px-6 text-sm')}
+            >
               Discuss custom integrations
             </Link>
           </div>
-        </div>
+        </motion.div>
 
-        <div className='bg-muted/20 flex items-center justify-center p-6 md:p-10'>
-          <div className='bg-card w-full overflow-hidden rounded-xl border p-1.5 shadow-2xl'>
-            <Image
-              src='/landing/notifications.webp'
-              alt='Avenra automated notifications and integration workflow'
-              width={1600}
-              height={1000}
-              className='h-auto w-full rounded-lg'
-            />
+        {/* Minimalist Connected Ecosystem Strip */}
+        <div className='relative z-10 mx-auto mt-16 max-w-4xl'>
+          <div className='bg-card/50 border-border/70 relative flex flex-col items-center justify-between gap-6 overflow-hidden rounded-2xl border p-8 md:flex-row'>
+            <div className='via-cyan-400/30 pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent to-transparent' />
+            <div className='bg-background border-border/80 flex size-16 shrink-0 items-center justify-center rounded-2xl border shadow-xl'>
+              <AvenraIcon size={36} />
+            </div>
+            <div className='via-border hidden h-px flex-1 bg-gradient-to-r from-cyan-500/40 to-transparent md:block' />
+            <div className='grid w-full grid-cols-2 gap-3 sm:grid-cols-3 md:w-auto lg:grid-cols-5'>
+              {NODES.map((n) => {
+                const Icon = Icons[n.icon];
+                return (
+                  <div
+                    key={n.label}
+                    className='bg-background/80 border-border/70 flex flex-col items-center gap-2 rounded-xl border px-3 py-4 text-center'
+                  >
+                    <Icon className='text-muted-foreground size-5' />
+                    <span className='text-xs font-medium'>{n.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </Frame>
       <DottedRule />
 
-      {/* 4 Integration Pillars */}
-      <Frame>
-        <div className='px-6 py-14 md:px-10'>
-          <SectionHeading
-            title='Built to fit into your practice—not disrupt it'
-            description='Every integration channel is cryptographically signed, monitored for delivery health, and auditable by your IT team.'
-          />
-        </div>
-        <div className='grid border-t sm:grid-cols-2 lg:grid-cols-4'>
-          {ECOSYSTEM_CATEGORIES.map((item, i) => {
-            const Icon = Icons[item.icon];
-            return (
-              <div
-                key={item.title}
-                className={cn(
-                  'space-y-3 border-b p-6 md:p-8 lg:border-b-0',
-                  i < 3 && 'lg:border-r',
-                  i % 2 === 0 && 'sm:border-r'
-                )}
-              >
-                <span className='flex size-10 items-center justify-center rounded-md border'>
-                  <Icon className='size-5' />
-                </span>
-                <h3 className='text-lg font-medium'>{item.title}</h3>
-                <p className='text-muted-foreground text-sm leading-relaxed'>{item.description}</p>
-              </div>
-            );
-          })}
-        </div>
-      </Frame>
-      <DottedRule />
-
-      {/* Automated Workflow Outcomes */}
-      <Frame>
-        <div className='px-6 py-14 md:px-10'>
-          <SectionHeading
-            title='Automate handoffs across every milestone'
-            description='Eliminate manual re-entry between intake, workpapers, and downstream billing.'
-          />
-        </div>
-        <div className='grid border-t md:grid-cols-2'>
-          {AUTOMATION_FLOWS.map((flow, i) => (
-            <div
-              key={flow.trigger}
-              className={cn(
-                'space-y-2 border-b p-6 md:p-8',
-                i % 2 === 0 && 'md:border-r',
-                i >= 2 && 'md:border-b-0'
-              )}
-            >
-              <div className='flex items-center gap-2'>
-                <Icons.sparkles className='size-4 text-cyan-500' />
-                <h3 className='text-base font-medium'>{flow.trigger}</h3>
-              </div>
-              <p className='text-muted-foreground text-sm leading-relaxed'>{flow.action}</p>
-            </div>
-          ))}
-        </div>
-      </Frame>
-      <DottedRule />
-
-      <Frame className='flex flex-col items-center justify-between gap-6 px-6 py-14 md:flex-row md:px-12'>
-        <div className='space-y-1.5'>
-          <h2 className='text-2xl font-medium tracking-tight'>
-            Need help connecting Avenra to your firm’s ERP or document repository?
-          </h2>
-          <p className='text-muted-foreground text-sm'>
-            Our implementation engineers partner directly with your IT team on Enterprise plans.
+      {/* Asymmetric Showcase with Masked Real Product Preview */}
+      <Frame className='grid items-center gap-12 px-6 py-24 md:px-12 lg:grid-cols-[0.85fr_1.15fr]'>
+        <div className='space-y-6'>
+          <p className='text-xs font-medium uppercase tracking-[0.18em] text-cyan-500'>
+            Automated Handoffs
           </p>
+          <h2 className='text-3xl font-medium tracking-[-0.03em]'>
+            Every milestone triggers the next step automatically.
+          </h2>
+          <p className='text-muted-foreground text-sm leading-relaxed md:text-base'>
+            Stop re-entering engagement statuses across systems. Signed webhooks and automated cloud exports deliver verified workpapers and billing triggers the moment a partner signs off.
+          </p>
+          <div className='space-y-3 border-t pt-6 text-sm'>
+            {[
+              'Cryptographically signed webhooks with automatic retries',
+              'Structured completion manifests exported directly to cloud storage',
+              'Full delivery logs and replay controls built into your workspace'
+            ].map((line) => (
+              <div key={line} className='flex items-start gap-2.5'>
+                <Icons.circleCheck className='mt-0.5 size-4 shrink-0 text-emerald-500' />
+                <span className='text-muted-foreground'>{line}</span>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className='flex flex-wrap gap-3'>
-          <Link href='/docs' className={cn(buttonVariants({ variant: 'outline' }), 'h-10 px-5')}>
-            Read API documentation
-          </Link>
-          <Link href='/contact' className={cn(buttonVariants(), 'h-10 gap-2 px-5')}>
-            Talk to our team <Icons.arrowRight className='size-4' />
-          </Link>
+
+        <div className='bg-card/80 border-border/70 overflow-hidden rounded-2xl border p-2 shadow-2xl'>
+          <Image
+            src='/landing/notifications.webp'
+            alt='Avenra automated notifications and integrations'
+            width={1600}
+            height={1000}
+            className='h-auto w-full rounded-xl'
+          />
         </div>
       </Frame>
     </>

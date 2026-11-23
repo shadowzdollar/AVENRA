@@ -1,21 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { motion } from 'motion/react';
 import Link from 'next/link';
+import { useState } from 'react';
 import { Icons } from '@/components/icons';
 import { buttonVariants } from '@/components/ui/button';
-import { DottedRule, Frame, Pill } from '@/features/landing/components/frame';
+import { DottedRule, Frame } from '@/features/landing/components/frame';
 import { cn } from '@/lib/utils';
 
-type Topic = 'Enterprise Demo' | 'Security & Compliance' | 'Pricing & Procurement' | 'General Support';
+type Topic = 'Enterprise Demo' | 'Security Review' | 'Pricing & Volume' | 'Support';
 
-const TOPICS: Topic[] = [
-  'Enterprise Demo',
-  'Security & Compliance',
-  'Pricing & Procurement',
-  'General Support'
-];
-
+const TOPICS: Topic[] = ['Enterprise Demo', 'Security Review', 'Pricing & Volume', 'Support'];
 const FIRM_SIZES = ['1–10 professionals', '11–50 professionals', '51–250 professionals', '250+ professionals'];
 
 export function ContactExperience() {
@@ -39,227 +34,221 @@ export function ContactExperience() {
       return;
     }
     setError(null);
-    const refId = `AVR-${Math.floor(100000 + Math.random() * 900000)}`;
-    setSubmittedRef(refId);
+    setSubmittedRef(`AVR-${Math.floor(100000 + Math.random() * 900000)}`);
   };
 
   return (
     <>
-      <Frame className='grid lg:grid-cols-[0.95fr_1.05fr]'>
-        {/* Left Column: Executive Context & SLAs */}
-        <div className='flex flex-col justify-between space-y-10 border-b px-6 py-16 md:px-12 lg:border-r lg:border-b-0 lg:py-20'>
-          <div className='space-y-6'>
-            <div>
-              <Pill>Contact Avenra</Pill>
-            </div>
-            <h1 className='text-4xl font-medium tracking-tight text-balance md:text-5xl md:leading-[1.08]'>
-              Speak with our enterprise advisory team
-            </h1>
-            <p className='text-muted-foreground max-w-lg text-base leading-relaxed'>
-              Whether you are evaluating Avenra for a 20-person tax practice or rolling out standardized audit intake across multiple offices, our specialists will walk you through a tailored deployment plan.
-            </p>
-          </div>
+      <Frame className='relative overflow-hidden px-6 py-20 md:px-12 md:py-28'>
+        <div
+          aria-hidden
+          className='pointer-events-none absolute -top-32 right-0 h-[380px] w-[600px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.10),transparent_70%)] blur-2xl'
+        />
 
-          <div className='space-y-5 border-t pt-8'>
-            <div className='flex items-start gap-3.5'>
-              <span className='bg-muted flex size-9 shrink-0 items-center justify-center rounded-lg border'>
-                <Icons.clock className='size-4' />
+        <div className='relative z-10 grid items-start gap-16 lg:grid-cols-[0.9fr_1.1fr]'>
+          {/* Left Minimalist Editorial Column */}
+          <div className='space-y-8 pt-2'>
+            <div className='space-y-5'>
+              <span className='border-border/70 bg-background/60 text-muted-foreground inline-flex items-center gap-2 rounded-full border px-3.5 py-1 text-xs font-medium'>
+                Contact Avenra
               </span>
-              <div>
-                <h2 className='text-sm font-semibold'>Under 4-hour enterprise response</h2>
-                <p className='text-muted-foreground mt-0.5 text-sm'>
-                  Dedicated solutions architects respond to every firm inquiry within one business half-day.
-                </p>
-              </div>
-            </div>
-
-            <div className='flex items-start gap-3.5'>
-              <span className='bg-muted flex size-9 shrink-0 items-center justify-center rounded-lg border'>
-                <Icons.lock className='size-4' />
-              </span>
-              <div>
-                <h2 className='text-sm font-semibold'>Security & procurement packages</h2>
-                <p className='text-muted-foreground mt-0.5 text-sm'>
-                  Request our security architecture brief, Data Processing Addendum (DPA), and multi-entity licensing options.
-                </p>
-              </div>
-            </div>
-
-            <div className='flex items-start gap-3.5'>
-              <span className='bg-muted flex size-9 shrink-0 items-center justify-center rounded-lg border'>
-                <Icons.users className='size-4' />
-              </span>
-              <div>
-                <h2 className='text-sm font-semibold'>Guided firm onboarding</h2>
-                <p className='text-muted-foreground mt-0.5 text-sm'>
-                  White-glove template migration from legacy spreadsheets, portals, and email checklists.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Enterprise Contact Form */}
-        <div className='bg-muted/15 flex items-center justify-center p-6 md:p-12'>
-          {submittedRef ? (
-            <div className='bg-card w-full max-w-lg rounded-2xl border p-8 text-center shadow-sm'>
-              <div className='mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500'>
-                <Icons.circleCheck className='size-6' />
-              </div>
-              <p className='text-muted-foreground font-mono text-xs'>REFERENCE · {submittedRef}</p>
-              <h2 className='mt-2 text-2xl font-semibold tracking-tight'>Inquiry received</h2>
-              <p className='text-muted-foreground mt-2 text-sm leading-relaxed'>
-                Thank you, <strong className='text-foreground'>{fullName}</strong>. Our{' '}
-                <strong className='text-foreground'>{topic}</strong> team has received your request for{' '}
-                <strong className='text-foreground'>{firmName}</strong> and will reach out to{' '}
-                <span className='text-foreground'>{workEmail}</span> shortly.
+              <h1 className='from-foreground via-foreground to-foreground/60 bg-gradient-to-b bg-clip-text text-4xl font-medium tracking-[-0.04em] text-balance text-transparent md:text-5xl md:leading-[1.06]'>
+                Talk to our enterprise team.
+              </h1>
+              <p className='text-muted-foreground max-w-md text-base leading-relaxed'>
+                Book a private walkthrough, request our security package, or design a tailored rollout across your firm’s offices.
               </p>
-              <div className='mt-8 flex flex-wrap justify-center gap-3'>
-                <Link href='/platform' className={cn(buttonVariants({ variant: 'outline' }), 'h-10 px-5')}>
-                  Explore the platform
-                </Link>
-                <Link href='/auth/sign-up' className={cn(buttonVariants(), 'h-10 gap-2 px-5')}>
-                  Start 14-day free trial <Icons.arrowRight className='size-4' />
-                </Link>
-              </div>
             </div>
-          ) : (
-            <form
-              onSubmit={handleSubmit}
-              className='bg-card w-full max-w-lg space-y-5 rounded-2xl border p-7 shadow-sm sm:p-9'
-            >
-              <div>
-                <p className='text-sm font-medium'>How can we help your firm?</p>
-                <div className='mt-2.5 flex flex-wrap gap-2'>
-                  {TOPICS.map((t) => (
-                    <button
-                      key={t}
-                      type='button'
-                      onClick={() => setTopic(t)}
-                      className={cn(
-                        'rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
-                        topic === t
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-background text-muted-foreground hover:text-foreground'
-                      )}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
-              <div className='grid gap-4 sm:grid-cols-2'>
-                <div className='space-y-1.5'>
-                  <label htmlFor='contact-name' className='text-xs font-medium'>
-                    Full name *
-                  </label>
-                  <input
-                    id='contact-name'
-                    type='text'
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder='Jordan Ellis'
-                    className='bg-background border-input focus:ring-ring h-10 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2'
-                  />
+            <div className='space-y-6 border-t pt-8'>
+              {[
+                {
+                  title: 'Under 4-hour response',
+                  desc: 'Dedicated solutions architects reply to every inquiry within one business half-day.'
+                },
+                {
+                  title: 'Security & procurement ready',
+                  desc: 'Data Processing Addenda (DPA), architecture briefs, and multi-entity licensing.'
+                },
+                {
+                  title: 'White-glove onboarding',
+                  desc: 'We help migrate your existing checklists and client intake templates cleanly.'
+                }
+              ].map((item) => (
+                <div key={item.title} className='flex items-start gap-3'>
+                  <Icons.circleCheck className='mt-0.5 size-4 shrink-0 text-emerald-500' />
+                  <div>
+                    <p className='text-sm font-medium'>{item.title}</p>
+                    <p className='text-muted-foreground mt-0.5 text-xs leading-relaxed'>{item.desc}</p>
+                  </div>
                 </div>
-                <div className='space-y-1.5'>
-                  <label htmlFor='contact-email' className='text-xs font-medium'>
-                    Work email *
-                  </label>
-                  <input
-                    id='contact-email'
-                    type='email'
-                    value={workEmail}
-                    onChange={(e) => setWorkEmail(e.target.value)}
-                    placeholder='jordan@northwindcpa.com'
-                    className='bg-background border-input focus:ring-ring h-10 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2'
-                  />
-                </div>
-              </div>
+              ))}
+            </div>
+          </div>
 
-              <div className='grid gap-4 sm:grid-cols-2'>
-                <div className='space-y-1.5'>
-                  <label htmlFor='contact-firm' className='text-xs font-medium'>
-                    Firm or organization *
-                  </label>
-                  <input
-                    id='contact-firm'
-                    type='text'
-                    value={firmName}
-                    onChange={(e) => setFirmName(e.target.value)}
-                    placeholder='Northwind Advisors LLP'
-                    className='bg-background border-input focus:ring-ring h-10 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2'
-                  />
-                </div>
-                <div className='space-y-1.5'>
-                  <label htmlFor='contact-size' className='text-xs font-medium'>
-                    Team size
-                  </label>
-                  <select
-                    id='contact-size'
-                    value={firmSize}
-                    onChange={(e) => setFirmSize(e.target.value)}
-                    className='bg-background border-input focus:ring-ring h-10 w-full rounded-lg border px-3 text-sm outline-none focus:ring-2'
-                  >
-                    {FIRM_SIZES.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className='space-y-1.5'>
-                <label htmlFor='contact-message' className='text-xs font-medium'>
-                  Tell us about your practice and timeline
-                </label>
-                <textarea
-                  id='contact-message'
-                  rows={4}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder='Share your primary workflows (tax, audit, legal onboarding, advisory) and any security or integration requirements…'
-                  className='bg-background border-input focus:ring-ring w-full rounded-lg border p-3 text-sm outline-none focus:ring-2'
-                />
-              </div>
-
-              {error && <p className='text-destructive text-xs'>{error}</p>}
-
-              <button
-                type='submit'
-                className={cn(buttonVariants(), 'h-11 w-full gap-2 rounded-xl text-sm font-medium')}
+          {/* Right Floating Specular Glass Form Card */}
+          <div className='relative'>
+            <div className='via-foreground/20 pointer-events-none absolute -top-px right-12 left-12 h-px bg-gradient-to-r from-transparent to-transparent' />
+            {submittedRef ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className='bg-card/80 border-border/70 rounded-2xl border p-10 text-center shadow-2xl backdrop-blur-md'
               >
-                Submit inquiry <Icons.arrowRight className='size-4' />
-              </button>
+                <div className='mx-auto mb-5 flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500'>
+                  <Icons.circleCheck className='size-6' />
+                </div>
+                <p className='text-muted-foreground font-mono text-xs'>REFERENCE · {submittedRef}</p>
+                <h2 className='mt-2 text-2xl font-medium tracking-tight'>We’ve received your request</h2>
+                <p className='text-muted-foreground mx-auto mt-3 max-w-md text-sm leading-relaxed'>
+                  Thank you, <strong className='text-foreground'>{fullName}</strong>. Our{' '}
+                  <strong className='text-foreground'>{topic}</strong> team will reach out to{' '}
+                  <span className='text-foreground'>{workEmail}</span> shortly.
+                </p>
+                <div className='mt-8 flex flex-wrap justify-center gap-3'>
+                  <Link href='/platform' className={cn(buttonVariants({ variant: 'outline' }), 'rounded-full px-5')}>
+                    Explore platform
+                  </Link>
+                  <Link href='/auth/sign-up' className={cn(buttonVariants(), 'gap-2 rounded-full px-5')}>
+                    Start free trial <Icons.arrowRight className='size-4' />
+                  </Link>
+                </div>
+              </motion.div>
+            ) : (
+              <form
+                onSubmit={handleSubmit}
+                className='bg-card/80 border-border/70 space-y-5 rounded-2xl border p-7 shadow-2xl backdrop-blur-md sm:p-10'
+              >
+                <div>
+                  <p className='text-muted-foreground mb-2.5 text-xs font-medium uppercase tracking-wider'>
+                    Inquiry Topic
+                  </p>
+                  <div className='bg-muted/40 border-border/60 inline-flex flex-wrap gap-1 rounded-xl border p-1'>
+                    {TOPICS.map((t) => (
+                      <button
+                        key={t}
+                        type='button'
+                        onClick={() => setTopic(t)}
+                        className={cn(
+                          'relative rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+                          topic === t ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        {topic === t && (
+                          <motion.span
+                            layoutId='contact-topic-pill'
+                            transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                            className='bg-primary absolute inset-0 rounded-lg'
+                          />
+                        )}
+                        <span className='relative z-10'>{t}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-              <p className='text-muted-foreground text-center text-xs'>
-                Prefer to evaluate immediately?{' '}
-                <Link href='/auth/sign-up' className='text-foreground font-medium hover:underline'>
-                  Start a 14-day free trial
-                </Link>
-              </p>
-            </form>
-          )}
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  <div className='space-y-1.5'>
+                    <label htmlFor='c-name' className='text-xs font-medium'>
+                      Full name
+                    </label>
+                    <input
+                      id='c-name'
+                      type='text'
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder='Jordan Ellis'
+                      className='bg-background/70 border-border/80 focus:ring-ring h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2'
+                    />
+                  </div>
+                  <div className='space-y-1.5'>
+                    <label htmlFor='c-email' className='text-xs font-medium'>
+                      Work email
+                    </label>
+                    <input
+                      id='c-email'
+                      type='email'
+                      value={workEmail}
+                      onChange={(e) => setWorkEmail(e.target.value)}
+                      placeholder='jordan@northwindcpa.com'
+                      className='bg-background/70 border-border/80 focus:ring-ring h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2'
+                    />
+                  </div>
+                </div>
+
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  <div className='space-y-1.5'>
+                    <label htmlFor='c-firm' className='text-xs font-medium'>
+                      Firm or organization
+                    </label>
+                    <input
+                      id='c-firm'
+                      type='text'
+                      value={firmName}
+                      onChange={(e) => setFirmName(e.target.value)}
+                      placeholder='Northwind Advisors LLP'
+                      className='bg-background/70 border-border/80 focus:ring-ring h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2'
+                    />
+                  </div>
+                  <div className='space-y-1.5'>
+                    <label htmlFor='c-size' className='text-xs font-medium'>
+                      Team size
+                    </label>
+                    <select
+                      id='c-size'
+                      value={firmSize}
+                      onChange={(e) => setFirmSize(e.target.value)}
+                      className='bg-background/70 border-border/80 focus:ring-ring h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2'
+                    >
+                      {FIRM_SIZES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className='space-y-1.5'>
+                  <label htmlFor='c-msg' className='text-xs font-medium'>
+                    How can we help?
+                  </label>
+                  <textarea
+                    id='c-msg'
+                    rows={4}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder='Tell us about your practice workflows, timeline, or compliance requirements…'
+                    className='bg-background/70 border-border/80 focus:ring-ring w-full rounded-xl border p-3.5 text-sm outline-none focus:ring-2'
+                  />
+                </div>
+
+                {error && <p className='text-destructive text-xs'>{error}</p>}
+
+                <button
+                  type='submit'
+                  className={cn(buttonVariants(), 'h-11 w-full gap-2 rounded-xl text-sm font-medium')}
+                >
+                  Send inquiry <Icons.arrowRight className='size-4' />
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       </Frame>
       <DottedRule />
       <Frame className='grid md:grid-cols-3'>
-        <div className='space-y-1.5 border-b p-6 md:border-r md:border-b-0 md:p-8'>
-          <p className='text-muted-foreground text-xs font-medium uppercase tracking-wider'>Sales & Demos</p>
-          <p className='text-base font-medium'>sales@avenra.com</p>
-          <p className='text-muted-foreground text-xs'>Tailored walkthroughs for accounting, audit, and legal teams.</p>
+        <div className='space-y-1 border-b px-8 py-8 md:border-r md:border-b-0'>
+          <p className='text-muted-foreground text-xs uppercase tracking-wider'>Enterprise Sales</p>
+          <p className='text-sm font-medium'>sales@avenra.com</p>
         </div>
-        <div className='space-y-1.5 border-b p-6 md:border-r md:border-b-0 md:p-8'>
-          <p className='text-muted-foreground text-xs font-medium uppercase tracking-wider'>Security & Trust</p>
-          <p className='text-base font-medium'>security@avenra.com</p>
-          <p className='text-muted-foreground text-xs'>Compliance documentation, DPAs, and architecture reviews.</p>
+        <div className='space-y-1 border-b px-8 py-8 md:border-r md:border-b-0'>
+          <p className='text-muted-foreground text-xs uppercase tracking-wider'>Security & Trust</p>
+          <p className='text-sm font-medium'>security@avenra.com</p>
         </div>
-        <div className='space-y-1.5 p-6 md:p-8'>
-          <p className='text-muted-foreground text-xs font-medium uppercase tracking-wider'>Customer Support</p>
-          <p className='text-base font-medium'>support@avenra.com</p>
-          <p className='text-muted-foreground text-xs'>Dedicated onboarding and workspace administration help.</p>
+        <div className='space-y-1 px-8 py-8'>
+          <p className='text-muted-foreground text-xs uppercase tracking-wider'>Customer Support</p>
+          <p className='text-sm font-medium'>support@avenra.com</p>
         </div>
       </Frame>
     </>
