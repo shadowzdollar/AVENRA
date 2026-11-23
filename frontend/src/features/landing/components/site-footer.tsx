@@ -83,9 +83,6 @@ export function SiteFooter() {
             </div>
           </div>
         </div>
-        <div className='bg-muted text-muted-foreground border-t py-5 text-center text-sm'>
-          © Copyright {new Date().getFullYear()} Avenra - All rights reserved.
-        </div>
       </Frame>
     </footer>
   );
