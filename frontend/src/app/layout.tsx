@@ -24,9 +24,12 @@ export const metadata: Metadata = {
   description:
     'Autonomous accounting execution platform for accounting firms and enterprises. Ingest documents, verify rules deterministically, and generate immutable audit trails.',
   icons: {
-    icon: '/icon.svg',
-    shortcut: '/icon.svg',
-    apple: '/icon.svg'
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/logo.png', type: 'image/png' }
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/logo.png'
   },
   openGraph: {
     title: 'Avenra | Autonomous Accounting & Verification Platform',

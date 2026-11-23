@@ -127,7 +127,7 @@ export function Hero() {
               alt='Avenra Command Center showing active work, verification pass rate, client requests and the exception queue'
               width={2880}
               height={1800}
-              priority
+              loading='eager'
               className='h-auto w-full rounded-t-lg'
             />
           </div>
