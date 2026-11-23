@@ -1,13 +1,18 @@
 package com.avenra.billing.application;
 
 import com.avenra.audit.AuditLog;
+import com.avenra.billing.domain.BillingInterval;
+import com.avenra.billing.domain.PaymentMethodType;
+import com.avenra.billing.domain.Plan;
 import com.avenra.billing.domain.SubscriptionStatus;
 import com.avenra.billing.infrastructure.BillingRepository;
 import com.avenra.billing.infrastructure.BillingRepository.EventRow;
+import com.avenra.billing.infrastructure.BillingRepository.InvoiceRow;
 import com.avenra.billing.infrastructure.BillingRepository.SubscriptionRow;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.Optional;
+import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * The subscription state machine (ADR-037). Every status change goes through here: provider events,
- * trials ending and cancellations taking effect. Runs in the organization's scope.
+ * The subscription state machine (ADR-037). Every status change, renewal, failed-payment retry,
+ * invoice receipt, and cancellation goes through here in the organization's tenant scope.
  */
 @Component
 class Subscriptions {
@@ -44,11 +49,6 @@ class Subscriptions {
         this.clock = clock;
     }
 
-    /**
-     * Applies a provider event once and in order: a repeated event changes nothing, an event older
-     * than the last applied is recorded as stale, a change the state machine forbids is recorded as
-     * refused.
-     */
     @Transactional(propagation = Propagation.MANDATORY)
     Outcome apply(ProviderEvent event) {
         if (repository.eventExists(event.provider(), event.id())) {
@@ -76,6 +76,7 @@ class Subscriptions {
                         .log("Billing event refused by the subscription state machine");
             } else {
                 repository.update(next, now);
+                recordInvoiceIfApplicable(next, event, now);
                 record(current, next, "billing.subscription_changed", event.id());
                 outcome = Outcome.APPLIED;
             }
@@ -93,7 +94,44 @@ class Subscriptions {
         return outcome;
     }
 
-    /** What the event makes of the subscription, or {@code null} when the state machine forbids it. */
+    private void recordInvoiceIfApplicable(SubscriptionRow next, ProviderEvent event, OffsetDateTime now) {
+        if (event.type() != ProviderEvent.Type.PAYMENT_SUCCEEDED
+                && event.type() != ProviderEvent.Type.PAYMENT_FAILED
+                && !(event.type() == ProviderEvent.Type.SUBSCRIPTION_UPDATED
+                        && next.status() == SubscriptionStatus.ACTIVE
+                        && event.amountCents() != null)) {
+            return;
+        }
+        Plan plan = next.plan();
+        BillingInterval interval = next.billingInterval();
+        PaymentMethodType method = next.paymentMethod();
+        long amount = event.amountCents() != null ? event.amountCents() : interval.listAmountCents(plan);
+        String currency = event.currency() != null ? event.currency() : "USD";
+        boolean paid = event.type() != ProviderEvent.Type.PAYMENT_FAILED;
+        String invoiceNum = "INV-" + now.getYear() + "-"
+                + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        repository.insertInvoice(new InvoiceRow(
+                UUID.randomUUID(),
+                next.organizationId(),
+                invoiceNum,
+                plan,
+                interval,
+                method,
+                amount,
+                currency,
+                paid ? "PAID" : "PAST_DUE",
+                event.provider(),
+                event.id(),
+                event.receiptUrl(),
+                event.receiptUrl(),
+                null,
+                interval == BillingInterval.ANNUAL ? "Annual subscription" : "Monthly subscription",
+                null,
+                now,
+                paid ? now : null,
+                now));
+    }
+
     private static @Nullable SubscriptionRow next(SubscriptionRow current, ProviderEvent event) {
         SubscriptionStatus target = switch (event.type()) {
             case SUBSCRIPTION_UPDATED -> event.status() == null ? current.status() : event.status();
@@ -107,15 +145,31 @@ class Subscriptions {
         OffsetDateTime pastDueSince = target != SubscriptionStatus.PAST_DUE
                 ? null
                 : current.status() == SubscriptionStatus.PAST_DUE ? current.pastDueSince() : event.occurredAt();
+
+        int failedAttempts = target == SubscriptionStatus.PAST_DUE
+                ? current.failedPaymentAttempts() + 1
+                : target == SubscriptionStatus.ACTIVE ? 0 : current.failedPaymentAttempts();
+
+        OffsetDateTime nextRetry = target == SubscriptionStatus.PAST_DUE && failedAttempts <= 3
+                ? event.occurredAt().plusHours(48)
+                : null;
+
+        boolean cancelAtEnd = target == SubscriptionStatus.CANCELED
+                ? false
+                : event.cancelAtPeriodEnd() == null ? current.cancelAtPeriodEnd() : event.cancelAtPeriodEnd();
+
         return new SubscriptionRow(
                 current.organizationId(),
                 event.plan() == null ? current.plan() : event.plan(),
                 target,
+                event.billingInterval() == null ? current.billingInterval() : event.billingInterval(),
+                event.paymentMethod() == null ? current.paymentMethod() : event.paymentMethod(),
+                !cancelAtEnd && target != SubscriptionStatus.CANCELED,
+                failedAttempts,
+                nextRetry,
                 current.trialEndsAt(),
                 event.currentPeriodEnd() == null ? current.currentPeriodEnd() : event.currentPeriodEnd(),
-                target == SubscriptionStatus.CANCELED
-                        ? false
-                        : event.cancelAtPeriodEnd() == null ? current.cancelAtPeriodEnd() : event.cancelAtPeriodEnd(),
+                cancelAtEnd,
                 pastDueSince,
                 event.provider(),
                 event.customerRef() == null ? current.customerRef() : event.customerRef(),
@@ -124,12 +178,8 @@ class Subscriptions {
                 current.updatedAt());
     }
 
-    /**
-     * Moves what time has decided: a trial that ended becomes past due (its grace starts at the end
-     * of the trial), and a cancellation takes effect at the end of its period.
-     */
     @Transactional(propagation = Propagation.MANDATORY)
-    void settle(java.util.UUID organizationId) {
+    void settle(UUID organizationId) {
         var locked = repository.lock(organizationId);
         if (locked.isEmpty()) {
             return;
@@ -155,16 +205,44 @@ class Subscriptions {
         }
     }
 
-    /** Marks the subscription to end at the end of its period (the provider confirms it later). */
     @Transactional(propagation = Propagation.MANDATORY)
     SubscriptionRow cancelAtPeriodEnd(SubscriptionRow current) {
         var next = new SubscriptionRow(
                 current.organizationId(),
                 current.plan(),
                 current.status(),
+                current.billingInterval(),
+                current.paymentMethod(),
+                false,
+                current.failedPaymentAttempts(),
+                current.nextRetryAt(),
                 current.trialEndsAt(),
                 current.currentPeriodEnd(),
                 true,
+                current.pastDueSince(),
+                current.provider(),
+                current.customerRef(),
+                current.subscriptionRef(),
+                current.lastEventAt(),
+                current.updatedAt());
+        repository.update(next, OffsetDateTime.now(clock));
+        return repository.find(current.organizationId()).orElseThrow();
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    SubscriptionRow reactivate(SubscriptionRow current) {
+        var next = new SubscriptionRow(
+                current.organizationId(),
+                current.plan(),
+                current.status(),
+                current.billingInterval(),
+                current.paymentMethod(),
+                true,
+                current.failedPaymentAttempts(),
+                current.nextRetryAt(),
+                current.trialEndsAt(),
+                current.currentPeriodEnd(),
+                false,
                 current.pastDueSince(),
                 current.provider(),
                 current.customerRef(),
@@ -184,6 +262,11 @@ class Subscriptions {
                 current.organizationId(),
                 current.plan(),
                 status,
+                current.billingInterval(),
+                current.paymentMethod(),
+                status != SubscriptionStatus.CANCELED && current.autoRenew(),
+                current.failedPaymentAttempts(),
+                status == SubscriptionStatus.PAST_DUE ? pastDueSince.plusHours(48) : null,
                 current.trialEndsAt(),
                 current.currentPeriodEnd(),
                 status == SubscriptionStatus.CANCELED ? false : current.cancelAtPeriodEnd(),

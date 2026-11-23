@@ -1,13 +1,22 @@
 package com.avenra.billing.application;
 
 import com.avenra.audit.AuditLog;
+import com.avenra.billing.BillingProperties;
+import com.avenra.billing.domain.BillingInterval;
+import com.avenra.billing.domain.PaymentMethodType;
 import com.avenra.billing.domain.Plan;
 import com.avenra.billing.infrastructure.BillingRepository;
+import com.avenra.billing.infrastructure.BillingRepository.InvoiceRow;
 import com.avenra.billing.infrastructure.BillingRepository.SubscriptionRow;
+import com.avenra.contract.v1.model.BillingHistoryItem;
+import com.avenra.contract.v1.model.BillingInvoice;
 import com.avenra.contract.v1.model.BillingLimit;
 import com.avenra.contract.v1.model.BillingOverview;
+import com.avenra.contract.v1.model.BillingPortal;
 import com.avenra.contract.v1.model.Checkout;
 import com.avenra.contract.v1.model.Entitlement;
+import com.avenra.contract.v1.model.EnterpriseInvoiceRequest;
+import com.avenra.contract.v1.model.InvoiceStatus;
 import com.avenra.contract.v1.model.PlanDescription;
 import com.avenra.contract.v1.model.PlanLimit;
 import com.avenra.contract.v1.model.Subscription;
@@ -33,20 +42,18 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-/** Plans, the organization's subscription and its usage, as people see and change them (ADR-037). */
+/** Central billing engine: multi-rail subscriptions, renewals, retries, invoices, and usage (ADR-037). */
 @Service
 public class BillingService {
 
-    /** New organizations try the Starter plan this long (product default). */
     static final Duration TRIAL = Duration.ofDays(30);
-
-    /** The longest stretch of usage records one request returns. */
     static final int MAX_USAGE_DAYS = 92;
 
     private final BillingRepository repository;
     private final BillingEntitlements entitlements;
     private final Subscriptions subscriptions;
     private final BillingProvider provider;
+    private final BillingProperties billingProperties;
     private final OrganizationAccess access;
     private final Idempotency idempotency;
     private final AuditLog audit;
@@ -58,6 +65,7 @@ public class BillingService {
             BillingEntitlements entitlements,
             Subscriptions subscriptions,
             BillingProvider provider,
+            BillingProperties billingProperties,
             OrganizationAccess access,
             Idempotency idempotency,
             AuditLog audit,
@@ -67,6 +75,7 @@ public class BillingService {
         this.entitlements = entitlements;
         this.subscriptions = subscriptions;
         this.provider = provider;
+        this.billingProperties = billingProperties;
         this.access = access;
         this.idempotency = idempotency;
         this.audit = audit;
@@ -74,7 +83,6 @@ public class BillingService {
         this.clock = clock;
     }
 
-    /** Every new organization starts on a trial, in the transaction that creates it. */
     @EventListener
     void on(OrganizationEvents.Created created) {
         OffsetDateTime now = OffsetDateTime.now(clock);
@@ -116,31 +124,46 @@ public class BillingService {
         });
     }
 
-    /** Sends the browser to the provider to pay for a self-serve plan. */
-    public Checkout checkout(UUID userId, UUID organizationId, String idempotencyKey, Plan plan) {
+    public Checkout checkout(
+            UUID userId,
+            UUID organizationId,
+            String idempotencyKey,
+            Plan plan,
+            BillingInterval interval,
+            PaymentMethodType paymentMethod,
+            @Nullable String phoneNumber,
+            @Nullable String currency) {
         return access.run(
                 userId,
                 organizationId,
                 Permission.BILLING_MANAGE,
                 granted -> idempotency.once(
-                        userId, "startCheckout", idempotencyKey, organizationId + "|" + plan, Checkout.class, () -> {
+                        userId,
+                        "startCheckout",
+                        idempotencyKey,
+                        organizationId + "|" + plan + "|" + interval + "|" + paymentMethod,
+                        Checkout.class,
+                        () -> {
                             if (!plan.selfServe()) {
                                 throw ApiException.conflict(
                                         "PLAN_NOT_SELF_SERVE",
-                                        "The " + plan.displayName() + " plan is agreed with us; please contact us.");
+                                        "The " + plan.displayName()
+                                                + " plan uses an Enterprise contract invoice.");
                             }
                             var current = repository.lock(organizationId).orElseThrow(ApiException::notFound);
-                            URI back = URI.create(publicBaseUrl.toString().replaceAll("/+$", "") + "/organizations/"
-                                    + organizationId + "/billing?checkout=returned");
-                            URI url = provider.checkout(current, plan, back);
+                            URI back = URI.create(publicBaseUrl.toString().replaceAll("/+$", "")
+                                    + "/dashboard/billing?checkout=returned");
+                            URI url = provider.checkout(
+                                    current, plan, interval, paymentMethod, phoneNumber, currency, back);
                             audit.record(AuditLog.Event.of("billing.checkout_started", organizationId, userId)
                                     .resource("subscription", organizationId)
-                                    .detail("plan", plan.name()));
+                                    .detail("plan", plan.name())
+                                    .detail("interval", interval.name())
+                                    .detail("paymentMethod", paymentMethod.name()));
                             return new Checkout(url.toString());
                         }));
     }
 
-    /** Ends the subscription at the end of its period (the trial's end, for a trial). */
     public Subscription cancel(UUID userId, UUID organizationId) {
         return access.run(userId, organizationId, Permission.BILLING_MANAGE, granted -> {
             var current = repository.lock(organizationId).orElseThrow(ApiException::notFound);
@@ -154,6 +177,111 @@ public class BillingService {
                     .resource("subscription", organizationId));
             return toApi(updated);
         });
+    }
+
+    public Subscription reactivate(UUID userId, UUID organizationId) {
+        return access.run(userId, organizationId, Permission.BILLING_MANAGE, granted -> {
+            var current = repository.lock(organizationId).orElseThrow(ApiException::notFound);
+            if (!current.cancelAtPeriodEnd()) {
+                return toApi(current);
+            }
+            provider.reactivate(current);
+            var updated = subscriptions.reactivate(current);
+            audit.record(AuditLog.Event.of("billing.subscription_reactivated", organizationId, userId)
+                    .resource("subscription", organizationId));
+            return toApi(updated);
+        });
+    }
+
+    public BillingPortal billingPortal(UUID userId, UUID organizationId) {
+        return access.run(userId, organizationId, Permission.BILLING_MANAGE, granted -> {
+            var current = repository.find(organizationId).orElseThrow(ApiException::notFound);
+            URI back = URI.create(publicBaseUrl.toString().replaceAll("/+$", "") + "/dashboard/billing");
+            return new BillingPortal(provider.billingPortal(current, back).toString());
+        });
+    }
+
+    public List<BillingInvoice> invoices(UUID userId, UUID organizationId) {
+        return access.run(
+                userId,
+                organizationId,
+                Permission.BILLING_READ,
+                granted -> repository.invoices(organizationId).stream().map(this::toApi).toList());
+    }
+
+    public BillingInvoice createEnterpriseInvoice(
+            UUID userId, UUID organizationId, String idempotencyKey, EnterpriseInvoiceRequest request) {
+        return access.run(
+                userId,
+                organizationId,
+                Permission.BILLING_MANAGE,
+                granted -> idempotency.once(
+                        userId,
+                        "createEnterpriseInvoice",
+                        idempotencyKey,
+                        organizationId + "|" + request.getBillingEmail() + "|" + request.getPurchaseOrder(),
+                        BillingInvoice.class,
+                        () -> {
+                            OffsetDateTime now = OffsetDateTime.now(clock);
+                            int seats = request.getSeats() == null ? 15 : request.getSeats();
+                            long annualCents = Math.max(382_800L, seats * 25_000L);
+                            String currency =
+                                    request.getCurrency() == null || request.getCurrency().isBlank()
+                                            ? "USD"
+                                            : request.getCurrency().toUpperCase();
+                            String invNumber = "INV-ENT-" + now.getYear() + "-"
+                                    + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+                            String wireRef = "AVR-WIRE-"
+                                    + organizationId.toString().substring(0, 6).toUpperCase()
+                                    + "-"
+                                    + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+                            String terms = request.getPaymentTerms() == null || request.getPaymentTerms().isBlank()
+                                    ? "Net 30 · Annual Bank Transfer (" + billingProperties.bankName() + " · "
+                                            + billingProperties.bankAccountName() + ")"
+                                    : request.getPaymentTerms();
+
+                            InvoiceRow row = new InvoiceRow(
+                                    UUID.randomUUID(),
+                                    organizationId,
+                                    invNumber,
+                                    Plan.ENTERPRISE,
+                                    BillingInterval.ANNUAL,
+                                    PaymentMethodType.BANK_TRANSFER,
+                                    annualCents,
+                                    currency,
+                                    "OPEN",
+                                    "enterprise_wire",
+                                    wireRef,
+                                    null,
+                                    null,
+                                    request.getPurchaseOrder(),
+                                    terms,
+                                    wireRef,
+                                    now.plusDays(30),
+                                    null,
+                                    now);
+                            repository.insertInvoice(row);
+                            audit.record(AuditLog.Event.of("billing.enterprise_invoice_created", organizationId, userId)
+                                    .resource("invoice", row.id())
+                                    .detail("invoiceNumber", invNumber)
+                                    .detail("wireReference", wireRef));
+                            return toApi(row);
+                        }));
+    }
+
+    public List<BillingHistoryItem> history(UUID userId, UUID organizationId) {
+        return access.run(
+                userId,
+                organizationId,
+                Permission.BILLING_READ,
+                granted -> repository.history(organizationId).stream()
+                        .map(e -> new BillingHistoryItem(
+                                e.eventId(),
+                                e.provider(),
+                                e.type(),
+                                e.outcome(),
+                                e.occurredAt().withOffsetSameInstant(ZoneOffset.UTC)))
+                        .toList());
     }
 
     public List<UsageRecord> usage(UUID userId, UUID organizationId, @Nullable LocalDate from, @Nullable LocalDate to) {
@@ -179,12 +307,42 @@ public class BillingService {
                         com.avenra.contract.v1.model.Plan.fromValue(row.plan().name()),
                         com.avenra.contract.v1.model.SubscriptionStatus.fromValue(
                                 row.status().name()),
+                        com.avenra.contract.v1.model.BillingInterval.fromValue(
+                                row.billingInterval().name()),
+                        com.avenra.contract.v1.model.PaymentMethodType.fromValue(
+                                row.paymentMethod().name()),
+                        row.autoRenew(),
+                        row.failedPaymentAttempts(),
                         entitlements.inGoodStanding(row),
                         row.cancelAtPeriodEnd(),
                         row.provider(),
                         row.updatedAt().withOffsetSameInstant(ZoneOffset.UTC))
+                .nextRetryAt(utc(row.nextRetryAt()))
                 .trialEndsAt(utc(row.trialEndsAt()))
                 .currentPeriodEnd(utc(row.currentPeriodEnd()));
+    }
+
+    private BillingInvoice toApi(InvoiceRow row) {
+        return new BillingInvoice(
+                        row.id(),
+                        row.invoiceNumber(),
+                        com.avenra.contract.v1.model.Plan.fromValue(row.plan().name()),
+                        com.avenra.contract.v1.model.BillingInterval.fromValue(
+                                row.billingInterval().name()),
+                        com.avenra.contract.v1.model.PaymentMethodType.fromValue(
+                                row.paymentMethod().name()),
+                        row.amountCents(),
+                        row.currency(),
+                        InvoiceStatus.fromValue(row.status()),
+                        row.provider(),
+                        row.createdAt().withOffsetSameInstant(ZoneOffset.UTC))
+                .hostedUrl(row.hostedUrl())
+                .receiptUrl(row.receiptUrl())
+                .purchaseOrder(row.purchaseOrder())
+                .paymentTerms(row.paymentTerms())
+                .wireReference(row.wireReference())
+                .dueAt(utc(row.dueAt()))
+                .paidAt(utc(row.paidAt()));
     }
 
     private static @Nullable OffsetDateTime utc(@Nullable OffsetDateTime value) {

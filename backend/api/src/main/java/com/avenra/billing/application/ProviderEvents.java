@@ -64,9 +64,13 @@ public class ProviderEvents {
             throw new ApiException(
                     "BILLING_SIGNATURE_INVALID", HttpStatus.UNAUTHORIZED, "The event signature is not valid.");
         }
+        receiveVerified(event);
+    }
+
+    /** Enqueues an event whose provider signature has already been verified at the webhook boundary. */
+    public void receiveVerified(ProviderEvent event) {
         transactions.runWithoutResult(TenantScope.system(event.organizationId()), () -> {
             if (repository.find(event.organizationId()).isEmpty()) {
-                // Retrying will not help; answer so the provider stops, and keep a trace.
                 log.atWarn()
                         .addKeyValue("billing.event_id", event.id())
                         .log("Billing event for an unknown organization ignored");
