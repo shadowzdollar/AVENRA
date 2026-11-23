@@ -44,6 +44,7 @@ export const NAV: NavLink[] = [
   },
   { label: 'Agent', href: '#agent', isNew: true },
   { label: 'Integrations', href: '#integrations' },
+  { label: 'Pricing', href: '#pricing' },
   { label: 'Security', href: '#trust' },
   {
     label: 'Resources',

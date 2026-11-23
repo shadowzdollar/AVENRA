@@ -2,7 +2,6 @@ import '../landing.css';
 import { AgentSection } from './agent-section';
 import {
   ComparisonSection,
-  CtaSection,
   IntegrationsSection,
   StatsSection,
   TrustSection
@@ -11,6 +10,7 @@ import { FaqSection, FloatingHelp } from './faq-section';
 import { DottedRule } from './frame';
 import { Hero } from './hero';
 import { CapabilityMarquee } from './marquee';
+import { PricingSection } from './pricing-section';
 import { SiteFooter } from './site-footer';
 import { SiteHeader } from './site-header';
 import { UnifiedSystem } from './unified-system';
@@ -41,7 +41,7 @@ export function LandingPage({ signedIn }: { signedIn: boolean }) {
         <DottedRule />
         <FaqSection />
         <DottedRule />
-        <CtaSection />
+        <PricingSection />
         <DottedRule />
       </main>
       <SiteFooter />
