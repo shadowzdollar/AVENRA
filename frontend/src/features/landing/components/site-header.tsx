@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { NAV, REPOSITORY_URL, SEARCH_ENTRIES } from '../content';
+import { NAV, SEARCH_ENTRIES } from '../content';
 
 const linkClass = 'text-foreground/90 hover:text-foreground relative text-[15px] transition-colors';
 
@@ -117,15 +117,6 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
           >
             <Icons.brightness className='size-4' />
           </button>
-          <a
-            href={REPOSITORY_URL}
-            target='_blank'
-            rel='noreferrer'
-            aria-label='Avenra on GitHub'
-            className={cn(iconButton, 'hidden sm:inline-flex')}
-          >
-            <Icons.github className='size-4' />
-          </a>
           {signedIn ? (
             <Link href='/dashboard/overview' className={cn(buttonVariants(), 'h-9 gap-1.5 px-4')}>
               <Icons.dashboard className='size-4' /> Open dashboard
