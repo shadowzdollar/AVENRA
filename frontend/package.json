@@ -21,7 +21,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@ai-sdk/react": "^4.0.142",
+    "@ai-sdk/react": "^4.0.177",
     "@avenra/contracts": "workspace:*",
     "@base-ui/react": "^1.9.0",
     "@base-ui/utils": "0.5.0",
